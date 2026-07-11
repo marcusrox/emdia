@@ -52,6 +52,16 @@ Acesse:
 http://localhost:3000
 ```
 
+Credenciais locais criadas pelo seed:
+
+```text
+E-mail: usuario@emdia.local
+Senha: emdia123
+```
+
+Para definir outra senha no primeiro seed, use a variavel
+`EMDIA_DEFAULT_PASSWORD` antes de iniciar a aplicacao.
+
 O banco local é criado automaticamente em:
 
 ```text

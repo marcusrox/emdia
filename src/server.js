@@ -6,6 +6,7 @@ const Entry = require("./models/FinancialEntry");
 const Settlement = require("./models/Settlement");
 const User = require("./models/User");
 const { dueDateFromCompetence, normalizeCompetence } = require("./services/dateService");
+const Auth = require("./services/authService");
 const { getPathParts, parseBody, redirect, sendHtml, sendJson } = require("./services/http");
 const {
   accountsView,
@@ -14,6 +15,7 @@ const {
   entriesListView,
   entryDetailView,
   entryFormView,
+  loginView,
   notFoundView,
   staticFile,
 } = require("./services/viewEngine");
@@ -31,7 +33,36 @@ function createServer() {
         return sendJson(res, { ok: true, service: "emdia" });
       }
 
-      const user = User.ensureDefaultUser();
+      User.ensureDefaultUser();
+      const session = Auth.getSession(req);
+      const user = session ? sessionUser(session) : null;
+      if (user) {
+        user.csrfToken = Auth.csrfToken(req);
+      }
+
+      if (url.pathname === "/login") {
+        if (req.method === "GET") {
+          return user ? redirect(res, "/dashboard") : sendHtml(res, loginView({ email: "" }));
+        }
+
+        if (req.method === "POST") {
+          const body = await parseBody(req);
+          return handleLogin(res, body);
+        }
+      }
+
+      if (url.pathname === "/logout" && req.method === "POST") {
+        const body = await parseBody(req);
+        if (!user || !Auth.verifyCsrf(req, body)) {
+          return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
+        }
+        Auth.invalidateSession(req);
+        return redirect(res, "/login", { "set-cookie": Auth.clearSessionCookie() });
+      }
+
+      if (!user) {
+        return redirect(res, "/login");
+      }
 
       if (req.method === "GET") {
         return handleGet(req, res, url, user);
@@ -39,6 +70,9 @@ function createServer() {
 
       if (req.method === "POST") {
         const body = await parseBody(req);
+        if (!Auth.verifyCsrf(req, body)) {
+          return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
+        }
         return handlePost(req, res, url, user, body);
       }
 
@@ -52,6 +86,30 @@ function createServer() {
       );
     }
   });
+}
+
+function sessionUser(session) {
+  return {
+    id: session.user_id,
+    name: session.name,
+    email: session.email,
+    timezone: session.timezone,
+    locale: session.locale,
+    is_active: session.is_active,
+  };
+}
+
+function handleLogin(res, body) {
+  const email = String(body.email || "").trim();
+  const password = String(body.password || "");
+  const user = User.findByEmail(email);
+
+  if (!user || !Auth.verifyPassword(password, user.password_hash)) {
+    return sendHtml(res, loginView({ email, error: "E-mail ou senha inválidos." }), 401);
+  }
+
+  const session = Auth.createSession(user.id);
+  return redirect(res, "/dashboard", { "set-cookie": session.cookie });
 }
 
 function handleGet(req, res, url, user) {

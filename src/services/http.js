@@ -5,8 +5,8 @@ function sendHtml(res, html, statusCode = 200) {
   res.end(html);
 }
 
-function redirect(res, location) {
-  res.writeHead(303, { location });
+function redirect(res, location, headers = {}) {
+  res.writeHead(303, { location, ...headers });
   res.end();
 }
 

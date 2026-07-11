@@ -17,6 +17,15 @@ function initializeDatabase() {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      token_hash TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      revoked_at TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS financial_accounts (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id),
@@ -122,6 +131,9 @@ function initializeDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_entries_user_competence
       ON financial_entries(user_id, competence_month, deleted_at);
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_token
+      ON sessions(token_hash, revoked_at, expires_at);
 
     CREATE INDEX IF NOT EXISTS idx_entries_due_date
       ON financial_entries(user_id, due_date, status);

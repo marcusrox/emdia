@@ -138,15 +138,128 @@ td small {
   padding: 8px 12px;
 }
 
+.user-menu {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.user-menu form {
+  margin: 0;
+}
+
+.auth-page {
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 34%),
+    linear-gradient(135deg, #f8fbf7 0%, #eef5f2 100%);
+  min-height: 100vh;
+}
+
+.auth-shell {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.auth-panel {
+  background: var(--surface);
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  box-shadow: 0 22px 70px rgba(23, 33, 31, 0.12);
+  display: grid;
+  gap: 24px;
+  max-width: 460px;
+  padding: 34px;
+  width: 100%;
+}
+
+.auth-brand {
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 4px;
+}
+
+.auth-brand-mark {
+  align-items: center;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.26);
+  color: white;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 900;
+  height: 48px;
+  justify-content: center;
+  letter-spacing: 0;
+  width: 48px;
+}
+
+.auth-brand-copy {
+  display: grid;
+  gap: 1px;
+}
+
+.auth-brand-copy strong {
+  color: var(--text);
+  font-size: 26px;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.auth-brand-copy small {
+  color: #31514c;
+  font-size: 14px;
+}
+
+.auth-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.auth-copy h1 {
+  font-size: 32px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.auth-copy p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 34rem;
+}
+
+.auth-panel label {
+  color: #3f5652;
+  font-size: 14px;
+}
+
+.auth-panel label input {
+  min-height: 48px;
+}
+
+.auth-panel button {
+  min-height: 48px;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  margin: 0;
+  padding: 10px 12px;
+}
+
 .page {
   margin: 0 auto;
   max-width: 1280px;
   padding: 28px;
 }
 
-.monthbar,
 .toolbar,
-.page-heading,
 .panel,
 .metric {
   background: var(--surface);
@@ -155,13 +268,23 @@ td small {
   box-shadow: var(--shadow);
 }
 
-.monthbar {
+.monthbar,
+.page-heading {
   align-items: center;
+  background: transparent;
+  border-bottom: 1px solid var(--line);
   display: flex;
+  gap: 16px;
   justify-content: space-between;
-  gap: 18px;
+  padding: 0 0 16px;
+}
+
+.monthbar {
+  margin-bottom: 20px;
+}
+
+.page-heading {
   margin-bottom: 18px;
-  padding: 22px;
 }
 
 .eyebrow {
@@ -176,6 +299,25 @@ td small {
 h1,
 h2 {
   margin: 0;
+}
+
+.monthbar h1,
+.page-heading h1 {
+  font-size: 24px;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.monthbar .eyebrow,
+.page-heading .eyebrow {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.page-heading p {
+  color: var(--muted);
+  margin: 4px 0 0;
+  max-width: 56rem;
 }
 
 h1 {
@@ -248,7 +390,6 @@ textarea {
 }
 
 .panel,
-.page-heading,
 .toolbar {
   padding: 20px;
 }
@@ -426,6 +567,11 @@ textarea {
   .toolbar {
     align-items: stretch;
     display: flex;
+    flex-direction: column;
+  }
+
+  .user-menu {
+    align-items: stretch;
     flex-direction: column;
   }
 
