@@ -212,6 +212,22 @@ Observacoes:
   descreva que a validacao visual nao foi executada.
 - Se uma validacao nao puder ser executada, informe claramente o motivo.
 
+## Validacao com servidor local
+
+- A porta `3000` e exclusiva do usuario/desenvolvedor e pode estar ocupada por
+  `npm run dev`.
+- O agente nunca deve iniciar, testar, reutilizar ou encerrar processos na porta
+  `3000`.
+- Para validacoes HTTP proprias, o agente deve usar a porta `3100` como padrao.
+- Sempre iniciar o servidor de validacao com a variavel `PORT` definida
+  explicitamente.
+- Se `3100` estiver ocupada, usar a proxima porta livre a partir de `3101`.
+- Ao iniciar servidor para validacao, capturar o PID do processo iniciado.
+- Ao finalizar a validacao, encerrar somente o processo iniciado pelo proprio
+  agente.
+- Nunca encerrar processos descobertos por porta quando eles nao foram iniciados
+  pelo agente.
+
 ## Git e preservacao do trabalho local
 
 - Verifique `git status --short` antes de mudancas maiores.
