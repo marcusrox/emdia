@@ -19,7 +19,8 @@ baixas financeiras, baseado no PRD tecnico `PRD_sistema_financas_pessoais.md`.
 - Services: `src/services/*.js`.
 - Renderizacao HTML: `src/services/viewEngine.js`.
 - Assets estaticos: `public/`.
-- Documentacao principal: `README.md` e `PRD_sistema_financas_pessoais.md`.
+- Documentacao principal: `README.md`, `PRD_sistema_financas_pessoais.md`,
+  `docs/patterns.md` e `docs/architecture.md`.
 
 O MVP atual usa CommonJS, servidor HTTP nativo do Node e `node:sqlite`. Nao
 assuma Express, EJS, Drizzle, TypeScript ou dependencias externas apenas porque
@@ -45,6 +46,10 @@ ser explicita e visivel na interface.
 ## Como trabalhar
 
 - Comece pelos arquivos diretamente relacionados ao pedido.
+- Consulte `docs/patterns.md` quando precisar confirmar padroes de codigo,
+  banco, rotas, renderizacao, seguranca ou validacao.
+- Consulte `docs/architecture.md` quando precisar entender organizacao geral,
+  fluxos principais, decisoes tecnicas ou limites do MVP.
 - Use `rg` ou `rg --files` para localizar codigo quando disponivel.
 - Evite varrer `node_modules`, `data/`, bancos SQLite, arquivos WAL/SHM e
   arquivos gerados.
@@ -61,7 +66,38 @@ ser explicita e visivel na interface.
 - Quando a mudanca afetar telas, preserve a navegacao mensal: mes anterior,
   proximo mes, seletor de competencia e retorno ao mes atual.
 
+
+### Assinatura em Task MD
+
+Ao criar ou alterar arquivos `docs/tasks/TASK-*.md`, adicione ao final do arquivo uma assinatura da LLM responsavel pela criacao ou atualizacao da task.
+
+Formato obrigatorio:
+
+```md
+---
+
+## Assinatura da LLM
+
+- Data: YYYY-MM-DD
+- Modelo: nome-do-modelo
+- Versao: versao-do-modelo-quando-disponivel
+- Acao: criacao | atualizacao
+```
+
+Regras:
+
+- Use a data atual do ambiente.
+- Informe o nome do modelo de linguagem usado quando estiver disponivel no ambiente ou na conversa.
+- Se a versao exata do modelo nao estiver disponivel, use `nao informado`.
+- Nao adicionar assinatura em arquivos de codigo-fonte, views, scripts, configs ou documentacao que nao seja task MD.
+- Ao atualizar uma task existente, preserve assinaturas anteriores e adicione uma nova assinatura ao final.
+- Nao usar essa assinatura como substituto de commit Git ou changelog.
+
 ## Padroes do projeto
+
+Para padroes detalhados de codigo, rotas, models, renderizacao, banco,
+frontend, seguranca e validacao, siga `docs/patterns.md`. Para visao estrutural,
+fluxos do sistema e decisoes arquiteturais, consulte `docs/architecture.md`.
 
 Regras essenciais:
 
@@ -196,3 +232,5 @@ Ao concluir, responda de forma breve:
 - riscos ou pendencias relevantes.
 
 Nao cole trechos longos de codigo se o arquivo ja foi alterado no workspace.
+
+Ao concluir a implementacao de uma task MD, informe de forma alarmante ao usuario a necessidade de fazer o `git commit`.
