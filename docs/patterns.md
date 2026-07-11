@@ -265,6 +265,9 @@ Padroes:
 - nao introduza frameworks CSS sem pedido explicito;
 - garanta que tabelas tenham `overflow-x` quando necessario;
 - botoes e links de acao devem ter estados visuais claros.
+- formularios de cadastro e edicao operacionais devem usar o padrao compacto
+  (`form-compact`) para reduzir rolagem e aumentar densidade sem perder
+  legibilidade.
 
 ## 13. Auditoria
 

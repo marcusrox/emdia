@@ -31,9 +31,19 @@ const ACCOUNT_TYPE_OPTIONS = [
 ];
 
 const ACCOUNT_TYPE_LABELS = Object.fromEntries(ACCOUNT_TYPE_OPTIONS);
+const FONT_SCALE_OPTIONS = [
+  ["small", "Pequena", "Mais informações visíveis em telas menores."],
+  ["medium", "Padrão", "Tamanho atual da interface."],
+  ["large", "Grande", "Leitura mais confortável."],
+];
+const FONT_SCALE_VALUES = new Set(FONT_SCALE_OPTIONS.map(([value]) => value));
 
 function accountTypeLabel(type) {
   return ACCOUNT_TYPE_LABELS[type] || type || "-";
+}
+
+function normalizeFontScale(value) {
+  return FONT_SCALE_VALUES.has(value) ? value : "medium";
 }
 
 function csrfInput(user) {
@@ -49,6 +59,8 @@ function layout({ title, user, active, body }) {
     ["/categories", "Categorias"],
   ];
 
+  const fontScale = normalizeFontScale(user?.font_scale);
+
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -57,7 +69,7 @@ function layout({ title, user, active, body }) {
   <title>${escapeHtml(title)} · EmDia</title>
   <link rel="stylesheet" href="/public/css/styles.css">
 </head>
-<body>
+<body class="font-scale-${fontScale}">
   <header class="topbar">
     <a class="brand auth-brand app-brand" href="/dashboard">
       <span class="auth-brand-mark" aria-hidden="true">
@@ -71,13 +83,16 @@ function layout({ title, user, active, body }) {
     <nav class="main-nav">
       ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
     </nav>
-    <div class="user-menu">
-      <span class="user-chip">${escapeHtml(user.name)}</span>
-      <form method="post" action="/logout">
-        ${csrfInput(user)}
-        <button class="ghost-button" type="submit">Sair</button>
-      </form>
-    </div>
+    <details class="user-menu">
+      <summary class="user-chip">${escapeHtml(user.name)}</summary>
+      <div class="user-menu-panel">
+        <a href="/settings">Configurações</a>
+        <form method="post" action="/logout">
+          ${csrfInput(user)}
+          <button type="submit">Sair</button>
+        </form>
+      </div>
+    </details>
   </header>
   <main class="page">${body}</main>
 </body>
@@ -297,7 +312,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
         <span class="eyebrow">${isEdit ? "Editar" : "Novo"}</span>
         <h1>${isEdit ? escapeHtml(entry.description) : "Lançamento financeiro"}</h1>
       </section>
-      <form method="post" action="${action}" class="form-grid panel">
+      <form method="post" action="${action}" class="form-grid form-compact panel">
         ${csrfInput(user)}
         <label>Tipo
           <select name="entry_type">
@@ -308,7 +323,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
         <label>Competência
           <input type="month" name="competence_month" value="${escapeHtml(selectedCompetence)}" required>
         </label>
-        <label class="wide">Descrição
+        <label class="field-span-2">Descrição
           <input name="description" value="${escapeHtml(entry?.description || "")}" required>
         </label>
         <label>Valor previsto
@@ -344,7 +359,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
         <label>Favorecido/Pagador
           <input name="party_name" value="${escapeHtml(entry?.party_name || "")}">
         </label>
-        <label class="wide">Observações
+        <label class="field-span-2">Observações
           <textarea name="notes">${escapeHtml(entry?.notes || "")}</textarea>
         </label>
         <div class="form-actions wide">
@@ -427,8 +442,8 @@ function accountsView({ user, accounts }) {
     active: "/accounts",
     body: `
       <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas</h1></section>
-      <section class="split">
-        <form method="post" action="/accounts" class="panel form-stack">
+      <section class="split compact-crud">
+        <form method="post" action="/accounts" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
           <label>Nome<input name="name" required></label>
           <label>Tipo
@@ -459,8 +474,8 @@ function categoriesView({ user, categories }) {
     active: "/categories",
     body: `
       <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Categorias</h1></section>
-      <section class="split">
-        <form method="post" action="/categories" class="panel form-stack">
+      <section class="split compact-crud">
+        <form method="post" action="/categories" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
           <label>Nome<input name="name" required></label>
           <label>Tipo
@@ -477,6 +492,42 @@ function categoriesView({ user, categories }) {
           ${categories.map((category) => `<tr><td>${escapeHtml(category.name)}</td><td>${escapeHtml(category.entry_type)}</td></tr>`).join("")}
         </tbody></table></div></article>
       </section>
+    `,
+  });
+}
+
+function settingsView({ user, saved = false }) {
+  return layout({
+    title: "Configurações",
+    user,
+    active: "",
+    body: `
+      <section class="page-heading">
+        <span class="eyebrow">Preferências</span>
+        <h1>Configurações</h1>
+        <p>Ajustes individuais da sua interface no EmDia.</p>
+      </section>
+      ${saved ? `<p class="alert-success">Configuração salva com sucesso.</p>` : ""}
+      <form method="post" action="/settings" class="panel form-stack form-compact settings-form">
+        ${csrfInput(user)}
+        <fieldset class="choice-group">
+          <legend>Tamanho da fonte</legend>
+          ${FONT_SCALE_OPTIONS.map(
+            ([value, label, description]) => `
+              <label class="choice-card">
+                <input type="radio" name="font_scale" value="${value}"${normalizeFontScale(user.font_scale) === value ? " checked" : ""}>
+                <span>
+                  <strong>${label}</strong>
+                  <small>${description}</small>
+                </span>
+              </label>`
+          ).join("")}
+        </fieldset>
+        <div class="form-actions">
+          <a class="ghost-button" href="/dashboard">Voltar</a>
+          <button type="submit">Salvar configurações</button>
+        </div>
+      </form>
     `,
   });
 }
@@ -504,5 +555,6 @@ module.exports = {
   escapeHtml,
   loginView,
   notFoundView,
+  settingsView,
   staticFile,
 };

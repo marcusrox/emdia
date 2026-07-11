@@ -17,6 +17,7 @@ const {
   entryFormView,
   loginView,
   notFoundView,
+  settingsView,
   staticFile,
 } = require("./services/viewEngine");
 
@@ -98,6 +99,7 @@ function sessionUser(session) {
     timezone: session.timezone,
     locale: session.locale,
     is_active: session.is_active,
+    font_scale: User.normalizeFontScale(session.font_scale),
   };
 }
 
@@ -244,6 +246,10 @@ function handleGet(req, res, url, user) {
     return sendHtml(res, categoriesView({ user, categories: Category.list(user.id) }));
   }
 
+  if (url.pathname === "/settings") {
+    return sendHtml(res, settingsView({ user, saved: url.searchParams.get("saved") === "1" }));
+  }
+
   return sendHtml(res, notFoundView(user), 404);
 }
 
@@ -284,6 +290,11 @@ function handlePost(req, res, url, user, body) {
   if (url.pathname === "/categories") {
     Category.create(user.id, body);
     return redirect(res, "/categories");
+  }
+
+  if (url.pathname === "/settings") {
+    User.updateFontScale(user.id, body.font_scale);
+    return redirect(res, "/settings?saved=1");
   }
 
   return sendHtml(res, notFoundView(user), 404);

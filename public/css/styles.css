@@ -23,7 +23,20 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: var(--font-scale, 16px);
   line-height: 1.45;
+}
+
+body.font-scale-small {
+  --font-scale: 14px;
+}
+
+body.font-scale-medium {
+  --font-scale: 16px;
+}
+
+body.font-scale-large {
+  --font-scale: 18px;
 }
 
 a {
@@ -139,12 +152,63 @@ td small {
 }
 
 .user-menu {
-  align-items: center;
-  display: flex;
-  gap: 8px;
+  position: relative;
 }
 
-.user-menu form {
+.user-menu summary {
+  cursor: pointer;
+  display: inline-flex;
+  list-style: none;
+}
+
+.user-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-menu summary::after {
+  content: "▾";
+  margin-left: 8px;
+}
+
+.user-menu[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.user-menu-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 10;
+}
+
+.user-menu-panel a,
+.user-menu-panel button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  justify-content: flex-start;
+  min-height: 36px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.user-menu-panel a:hover,
+.user-menu-panel button:hover {
+  background: var(--surface-2);
+}
+
+.user-menu form,
+.user-menu-panel form {
   margin: 0;
 }
 
@@ -254,6 +318,15 @@ td small {
   border-radius: 8px;
   color: #991b1b;
   margin: 0;
+  padding: 10px 12px;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  margin: 0 0 18px;
   padding: 10px 12px;
 }
 
@@ -401,6 +474,11 @@ textarea {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
 }
 
+.compact-crud {
+  align-items: start;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
+}
+
 .panel,
 .toolbar {
   padding: 20px;
@@ -523,6 +601,103 @@ th {
   gap: 14px;
 }
 
+.settings-form {
+  max-width: 760px;
+}
+
+.form-compact {
+  gap: 10px 12px;
+  padding: 14px;
+}
+
+.form-grid.form-compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.form-grid.form-short {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-stack.form-compact {
+  gap: 10px;
+}
+
+.form-compact label {
+  font-size: 12px;
+  gap: 4px;
+}
+
+.form-compact input,
+.form-compact select,
+.form-compact textarea {
+  min-height: 34px;
+  padding: 6px 9px;
+}
+
+.form-compact textarea {
+  min-height: 68px;
+}
+
+.form-compact button,
+.form-compact .primary-button,
+.form-compact .ghost-button {
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.form-short button {
+  align-self: end;
+}
+
+.field-span-2 {
+  grid-column: span 2;
+}
+
+.choice-group {
+  border: 0;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.choice-group legend {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.choice-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.choice-card:has(input:checked) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+}
+
+.choice-card input {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.choice-card span {
+  display: grid;
+  gap: 2px;
+}
+
+.choice-card small {
+  color: var(--muted);
+}
+
 label {
   color: var(--muted);
   display: grid;
@@ -583,8 +758,17 @@ textarea {
   }
 
   .user-menu {
-    align-items: stretch;
-    flex-direction: column;
+    width: 100%;
+  }
+
+  .user-menu summary {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .user-menu-panel {
+    position: static;
+    margin-top: 8px;
   }
 
   .metrics-grid,
@@ -592,6 +776,10 @@ textarea {
   .form-grid,
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .field-span-2 {
+    grid-column: 1 / -1;
   }
 
   .page {

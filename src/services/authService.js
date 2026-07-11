@@ -72,7 +72,7 @@ function getSession(req) {
   return getDatabase()
     .prepare(
       `
-      SELECT sessions.*, users.name, users.email, users.timezone, users.locale, users.is_active
+      SELECT sessions.*, users.name, users.email, users.timezone, users.locale, users.is_active, users.font_scale
       FROM sessions
       JOIN users ON users.id = sessions.user_id
       WHERE sessions.token_hash = ?

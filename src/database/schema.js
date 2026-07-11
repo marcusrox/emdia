@@ -141,6 +141,15 @@ function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_settlements_entry
       ON settlements(financial_entry_id, reversed_at);
   `);
+
+  ensureColumn(db, "users", "font_scale", "TEXT NOT NULL DEFAULT 'medium'");
+}
+
+function ensureColumn(db, tableName, columnName, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+  if (columns.some((column) => column.name === columnName)) return;
+
+  db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
 }
 
 module.exports = {
