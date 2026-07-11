@@ -1,0 +1,51 @@
+const { currentCompetence } = require("../services/dateService");
+const { formatMoney } = require("../services/moneyService");
+const { escapeHtml } = require("../services/viewHelpers");
+const { card, layout, monthSwitcher } = require("./layout");
+const { entriesTable } = require("./entriesView");
+
+function dashboardView({ user, competence, dashboard }) {
+  const current = currentCompetence(user.timezone);
+  const categoryRows = Object.entries(dashboard.byCategory)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, cents]) => `<li><span>${escapeHtml(name)}</span><strong>${formatMoney(cents)}</strong></li>`)
+    .join("");
+
+  return layout({
+    title: "Dashboard",
+    user,
+    active: "/dashboard",
+    body: `
+      ${monthSwitcher("/dashboard", competence, current)}
+      <section class="metrics-grid">
+        ${card("Saldo previsto", formatMoney(dashboard.cards.expectedBalance), dashboard.cards.expectedBalance >= 0 ? "good" : "bad")}
+        ${card("Receitas previstas", formatMoney(dashboard.cards.incomeExpected), "good")}
+        ${card("Receitas recebidas", formatMoney(dashboard.cards.incomeReceived), "good")}
+        ${card("Despesas previstas", formatMoney(dashboard.cards.expenseExpected), "bad")}
+        ${card("Despesas pagas", formatMoney(dashboard.cards.expensePaid))}
+        ${card("Despesas vencidas", formatMoney(dashboard.cards.expenseOverdue), "bad")}
+        ${card("Despesas pendentes", formatMoney(dashboard.cards.expensePending))}
+        ${card("Vencem hoje", String(dashboard.cards.dueToday))}
+      </section>
+      <section class="split">
+        <article class="panel">
+          <div class="section-title">
+            <h2>Próximos lançamentos</h2>
+            <a href="/entries?competence=${competence}">Ver todos</a>
+          </div>
+          ${entriesTable(dashboard.upcoming, { compact: true, user })}
+        </article>
+        <article class="panel">
+          <div class="section-title">
+            <h2>Despesas por categoria</h2>
+          </div>
+          <ul class="category-list">${categoryRows || "<li><span>Nenhuma despesa</span><strong>R$ 0,00</strong></li>"}</ul>
+        </article>
+      </section>
+    `,
+  });
+}
+
+module.exports = {
+  dashboardView,
+};

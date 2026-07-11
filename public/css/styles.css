@@ -748,6 +748,28 @@ textarea {
   text-align: center;
 }
 
+.app-footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px auto 0;
+  max-width: 1280px;
+  padding: 18px 28px 26px;
+  text-align: center;
+}
+
+.app-footer span {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
 @media (max-width: 980px) {
   .topbar,
   .monthbar,
@@ -788,5 +810,12 @@ textarea {
 
   .month-actions {
     flex-wrap: wrap;
+  }
+
+  .app-footer {
+    align-items: center;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px 22px;
   }
 }
