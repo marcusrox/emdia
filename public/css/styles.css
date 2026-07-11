@@ -181,6 +181,10 @@ td small {
   padding-bottom: 4px;
 }
 
+.app-brand {
+  padding-bottom: 0;
+}
+
 .auth-brand-mark {
   align-items: center;
   background: linear-gradient(135deg, #0f766e, #14b8a6);
@@ -268,14 +272,22 @@ td small {
   box-shadow: var(--shadow);
 }
 
-.monthbar,
-.page-heading {
+.monthbar {
   align-items: center;
   background: transparent;
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 16px;
   justify-content: space-between;
+  padding: 0 0 16px;
+}
+
+.page-heading {
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+  justify-items: start;
   padding: 0 0 16px;
 }
 

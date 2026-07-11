@@ -38,6 +38,8 @@ function createServer() {
       const user = session ? sessionUser(session) : null;
       if (user) {
         user.csrfToken = Auth.csrfToken(req);
+      } else if (canUseDevelopmentLogin(req)) {
+        return startDevelopmentSession(req, res, url);
       }
 
       if (url.pathname === "/login") {
@@ -110,6 +112,37 @@ function handleLogin(res, body) {
 
   const session = Auth.createSession(user.id);
   return redirect(res, "/dashboard", { "set-cookie": session.cookie });
+}
+
+function canUseDevelopmentLogin(req) {
+  return process.env.NODE_ENV === "development" && req.method === "GET" && isLocalhostRequest(req);
+}
+
+function isLocalhostRequest(req) {
+  const host = normalizeHost(req.headers.host);
+  const remoteAddress = String(req.socket.remoteAddress || "").toLowerCase();
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+  const localAddresses = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
+  return localHosts.has(host) && localAddresses.has(remoteAddress);
+}
+
+function normalizeHost(hostHeader) {
+  const host = String(hostHeader || "").toLowerCase();
+  if (host.startsWith("[")) {
+    const closingBracket = host.indexOf("]");
+    return closingBracket === -1 ? host : host.slice(1, closingBracket);
+  }
+
+  return host.split(":")[0];
+}
+
+function startDevelopmentSession(req, res, url) {
+  const devUser = User.ensureDefaultUser();
+  const session = Auth.createSession(devUser.id);
+  const nextPath = url.pathname === "/login" ? "/dashboard" : req.url;
+
+  return redirect(res, nextPath, { "set-cookie": session.cookie });
 }
 
 function handleGet(req, res, url, user) {

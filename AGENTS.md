@@ -234,3 +234,10 @@ Ao concluir, responda de forma breve:
 Nao cole trechos longos de codigo se o arquivo ja foi alterado no workspace.
 
 Ao concluir a implementacao de uma task MD, informe de forma alarmante ao usuario a necessidade de fazer o `git commit`.
+
+## Execução de comandos no Windows
+
+- Execute comandos PowerShell e processos externos sequencialmente.
+- Não dispare várias chamadas de shell em paralelo.
+- Agrupe leituras de arquivos em um único comando PowerShell quando possível.
+- Se ocorrer `CreateProcessAsUserW failed`, repita o comando uma vez de forma sequencial.

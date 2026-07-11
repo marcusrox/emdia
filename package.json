@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "node --watch app.js",
+    "dev": "set NODE_ENV=development&& node --disable-warning=ExperimentalWarning --watch app.js",
     "seed": "node src/database/seed.js",
     "check": "node --check app.js && node --check src/server.js && node --check src/database/connection.js && node --check src/database/schema.js && node --check src/database/seed.js && node --check src/models/User.js && node --check src/models/FinancialEntry.js && node --check src/services/authService.js && node --check src/services/viewEngine.js"
   },

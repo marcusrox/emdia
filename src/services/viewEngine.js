@@ -21,6 +21,21 @@ function moneyInput(cents) {
   return ((Number(cents) || 0) / 100).toFixed(2).replace(".", ",");
 }
 
+const ACCOUNT_TYPE_OPTIONS = [
+  ["CHECKING", "Conta corrente"],
+  ["SAVINGS", "Poupança"],
+  ["CASH", "Dinheiro"],
+  ["DIGITAL_WALLET", "Carteira digital"],
+  ["CREDIT_CARD", "Cartão de crédito"],
+  ["OTHER", "Outro"],
+];
+
+const ACCOUNT_TYPE_LABELS = Object.fromEntries(ACCOUNT_TYPE_OPTIONS);
+
+function accountTypeLabel(type) {
+  return ACCOUNT_TYPE_LABELS[type] || type || "-";
+}
+
 function csrfInput(user) {
   return `<input type="hidden" name="_csrf" value="${escapeHtml(user?.csrfToken || "")}">`;
 }
@@ -44,11 +59,13 @@ function layout({ title, user, active, body }) {
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/dashboard">
-      <span class="brand-mark">E</span>
-      <span>
+    <a class="brand auth-brand app-brand" href="/dashboard">
+      <span class="auth-brand-mark" aria-hidden="true">
+        <span>Em</span>
+      </span>
+      <span class="auth-brand-copy">
         <strong>EmDia</strong>
-        <small>Finanças do mês</small>
+        <small>Suas contas no tempo certo.</small>
       </span>
     </a>
     <nav class="main-nav">
@@ -267,7 +284,7 @@ function entriesListView({ user, competence, entries, filters, categories, accou
 }
 
 function entryFormView({ user, entry, competence, categories, accounts, action }) {
-  const isEdit = Boolean(entry);
+  const isEdit = Boolean(entry?.id);
   const selectedCompetence = entry ? entry.competence_month : competence;
   const type = entry ? entry.entry_type : "EXPENSE";
 
@@ -409,14 +426,14 @@ function accountsView({ user, accounts }) {
     user,
     active: "/accounts",
     body: `
-      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas financeiras</h1></section>
+      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas</h1></section>
       <section class="split">
         <form method="post" action="/accounts" class="panel form-stack">
           ${csrfInput(user)}
           <label>Nome<input name="name" required></label>
           <label>Tipo
             <select name="type">
-              ${["CHECKING", "SAVINGS", "CASH", "DIGITAL_WALLET", "CREDIT_CARD", "OTHER"].map((type) => option(type, type, "")).join("")}
+              ${ACCOUNT_TYPE_OPTIONS.map(([value, label]) => option(value, label, "")).join("")}
             </select>
           </label>
           <label>Instituição<input name="institution_name"></label>
@@ -431,7 +448,7 @@ function accountsView({ user, accounts }) {
 
 function accountsTable(accounts) {
   return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th>Saldo inicial</th></tr></thead><tbody>
-    ${accounts.map((account) => `<tr><td>${escapeHtml(account.name)}</td><td>${escapeHtml(account.type)}</td><td>${escapeHtml(account.institution_name || "-")}</td><td>${formatMoney(account.initial_balance_cents)}</td></tr>`).join("")}
+    ${accounts.map((account) => `<tr><td>${escapeHtml(account.name)}</td><td>${escapeHtml(accountTypeLabel(account.type))}</td><td>${escapeHtml(account.institution_name || "-")}</td><td>${formatMoney(account.initial_balance_cents)}</td></tr>`).join("")}
   </tbody></table></div>`;
 }
 
