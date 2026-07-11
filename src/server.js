@@ -307,9 +307,17 @@ function servePublic(pathname, res) {
   }
 
   const body = staticFile(normalized);
-  const contentType = normalized.endsWith(".css") ? "text/css; charset=utf-8" : "application/octet-stream";
+  const contentType = publicContentType(normalized);
   res.writeHead(200, { "content-type": contentType });
   res.end(body);
+}
+
+function publicContentType(filePath) {
+  if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
+  if (filePath.endsWith(".svg")) return "image/svg+xml; charset=utf-8";
+  if (filePath.endsWith(".ico")) return "image/x-icon";
+  if (filePath.endsWith(".png")) return "image/png";
+  return "application/octet-stream";
 }
 
 module.exports = {

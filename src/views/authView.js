@@ -7,6 +7,7 @@ function loginView({ email = "", error = "" } = {}) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login · EmDia</title>
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
   <link rel="stylesheet" href="/public/css/styles.css">
 </head>
 <body class="auth-page">

@@ -1,5 +1,6 @@
 const { addMonths, currentCompetence, monthLabel } = require("../services/dateService");
 const { csrfInput, escapeHtml, normalizeFontScale } = require("../services/viewHelpers");
+const { RELEASE_LABEL } = require("../config/release");
 
 function layout({ title, user, active, body }) {
   const nav = [
@@ -18,6 +19,7 @@ function layout({ title, user, active, body }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)} · EmDia</title>
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
   <link rel="stylesheet" href="/public/css/styles.css">
 </head>
 <body class="font-scale-${fontScale}">
@@ -31,9 +33,18 @@ function layout({ title, user, active, body }) {
         <small>Suas contas no tempo certo.</small>
       </span>
     </a>
-    <nav class="main-nav">
+    <nav class="main-nav desktop-nav">
       ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
     </nav>
+    <details class="mobile-nav-menu">
+      <summary aria-label="Abrir menu de navegação">
+        <span aria-hidden="true"></span>
+        <strong>Menu</strong>
+      </summary>
+      <nav class="main-nav mobile-nav">
+        ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
+      </nav>
+    </details>
     <details class="user-menu">
       <summary class="user-chip">${escapeHtml(user.name)}</summary>
       <div class="user-menu-panel">
@@ -48,7 +59,8 @@ function layout({ title, user, active, body }) {
   <main class="page">${body}</main>
   <footer class="app-footer">
     <span>EmDia</span>
-    <p>Boletos no calendário, sustos fora do orçamento.</p>
+    <p>Desenvolvido com <span class="footer-heart" aria-label="coração vermelho"></span> para você ficar sempre dentro do planejamento</p>
+    <small>${escapeHtml(RELEASE_LABEL)}</small>
   </footer>
 </body>
 </html>`;

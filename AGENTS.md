@@ -65,6 +65,8 @@ ser explicita e visivel na interface.
   competencia, vencimento, status e baixas em tabela propria.
 - Quando a mudanca afetar telas, preserve a navegacao mensal: mes anterior,
   proximo mes, seletor de competencia e retorno ao mes atual.
+- Ao concluir a implementacao de uma Task MD, atualize o controle de release em `src/config/release.js`, 
+  usando a data/hora atual do ambiente e incrementando em 1 o numero sequencial no formato `Release DD/MM/YYYY HH:mm - NNN`.
 
 
 ### Assinatura em Task MD
