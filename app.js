@@ -7,8 +7,8 @@ const port = Number(process.env.PORT || 3000);
 initializeDatabase();
 seedDatabase();
 
-const server = createServer();
+const app = createServer();
 
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`EmDia rodando em http://localhost:${port}`);
 });

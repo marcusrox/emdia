@@ -46,15 +46,14 @@ O MVP atual usa:
 
 - Node.js 22+;
 - CommonJS;
-- servidor HTTP nativo do Node;
+- Express 5.x;
 - SQLite via `node:sqlite`;
 - HTML renderizado no servidor em `src/services/viewEngine.js`;
-- CSS puro em `public/css/styles.css`;
-- sem dependencias externas obrigatorias.
+- CSS puro em `public/css/styles.css`.
 
-Nao assuma Express, EJS, TypeScript, Drizzle ou bibliotecas de UI no codigo
-atual. Essas tecnologias podem aparecer no PRD como evolucao futura, mas nao
-fazem parte da implementacao vigente.
+Nao assuma EJS, TypeScript, Drizzle ou bibliotecas de UI no codigo atual. Essas
+tecnologias podem aparecer no PRD como evolucao futura, mas nao fazem parte da
+implementacao vigente.
 
 ## 3. Organizacao de arquivos
 
@@ -74,7 +73,7 @@ public/css/styles.css
 Responsabilidades:
 
 - `app.js`: bootstrap da aplicacao, inicializacao do banco, seed e servidor.
-- `src/server.js`: roteamento HTTP, parsing basico e composicao dos fluxos.
+- `src/server.js`: app Express, middlewares, rotas HTTP e composicao dos fluxos.
 - `src/database/connection.js`: conexao SQLite e pragmas.
 - `src/database/schema.js`: schema, tabelas e indices.
 - `src/database/seed.js`: dados locais iniciais.
@@ -209,8 +208,11 @@ Padroes:
 - GET renderiza telas ou retorna informacoes de leitura.
 - POST altera dados.
 - Redirecione apos POST com status 303.
-- Use `parseBody` para formularios URL encoded.
-- Use `sendHtml` para telas e `sendJson` para endpoints de saude/API simples.
+- Use `express.urlencoded({ extended: false, limit: "1mb" })` para formularios
+  URL encoded.
+- Use helpers locais de resposta para telas HTML, redirects 303 e JSON
+  pretty-print quando necessario.
+- Sirva assets com o prefixo `/public` por `express.static`.
 - Preserve URLs com `competence` quando a tela fizer parte do fluxo mensal.
 
 Rotas principais atuais:
@@ -365,7 +367,7 @@ Itens previstos no PRD, mas ainda nao implementados no MVP atual:
 - testes automatizados;
 - migracoes formais;
 - TypeScript;
-- Express/EJS/Drizzle.
+- EJS/Drizzle.
 
 Ao implementar qualquer item futuro, preserve os principios atuais:
 

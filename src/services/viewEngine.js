@@ -1,5 +1,3 @@
-const fs = require("node:fs");
-const path = require("node:path");
 const { accountsView } = require("../views/accountsView");
 const { categoriesView } = require("../views/categoriesView");
 const { dashboardView } = require("../views/dashboardView");
@@ -8,10 +6,6 @@ const { loginView } = require("../views/authView");
 const { notFoundView } = require("../views/errorsView");
 const { settingsView } = require("../views/settingsView");
 const { escapeHtml } = require("./viewHelpers");
-
-function staticFile(filePath) {
-  return fs.readFileSync(path.join(__dirname, "..", "..", filePath));
-}
 
 module.exports = {
   accountsView,
@@ -24,5 +18,4 @@ module.exports = {
   loginView,
   notFoundView,
   settingsView,
-  staticFile,
 };

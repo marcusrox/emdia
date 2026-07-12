@@ -25,22 +25,22 @@ Stack vigente:
 
 - Node.js 22+;
 - CommonJS;
-- servidor HTTP nativo do Node;
+- Express 5.x;
 - SQLite via `node:sqlite`;
 - HTML renderizado por funcoes em `src/services/viewEngine.js`;
-- CSS puro em `public/css/styles.css`;
-- sem dependencias externas obrigatorias.
+- CSS puro em `public/css/styles.css`.
 
 Decisoes intencionais:
 
-- evitar dependencia externa no MVP inicial;
+- manter o pipeline HTTP pequeno, com Express usado apenas para rotas,
+  middlewares basicos e arquivos estaticos;
 - manter persistencia local simples;
 - manter regras financeiras em models/services;
 - preservar a competencia mensal como regra central de produto;
 - manter a aplicacao facil de executar com `npm start`.
 
-O PRD cita tecnologias como Express, EJS, TypeScript e Drizzle como caminhos
-possiveis, mas elas ainda nao fazem parte da arquitetura implementada.
+O PRD cita tecnologias como EJS, TypeScript e Drizzle como caminhos possiveis,
+mas elas ainda nao fazem parte da arquitetura implementada.
 
 ## 3. Mapa de modulos
 
@@ -74,7 +74,6 @@ src/services/
   dateService.js
   moneyService.js
   statusService.js
-  http.js
   id.js
   viewEngine.js
 
@@ -89,7 +88,7 @@ npm start
     -> initializeDatabase()
     -> seedDatabase()
     -> createServer()
-    -> server.listen(PORT)
+    -> app.listen(PORT)
 ```
 
 Responsabilidades:
@@ -97,7 +96,7 @@ Responsabilidades:
 - `initializeDatabase`: cria tabelas e indices se nao existirem.
 - `seedDatabase`: cria usuario local, contas, categorias e exemplos se o banco
   ainda estiver vazio.
-- `createServer`: registra o handler HTTP unico.
+- `createServer`: cria o Express app, registra middlewares e rotas.
 
 O banco padrao fica em:
 
@@ -112,7 +111,7 @@ Fluxo geral:
 ```text
 Navegador
   -> src/server.js
-    -> parse URL/body
+    -> middlewares Express
     -> User.ensureDefaultUser()
     -> model/service necessario
     -> viewEngine ou JSON
@@ -311,7 +310,7 @@ Evolucoes provaveis:
 5. integrar WhatsApp/Evolution API;
 6. extrair relatorios;
 7. adicionar testes automatizados;
-8. avaliar migracao para Express/EJS/TypeScript/Drizzle se o projeto crescer.
+8. avaliar migracao para EJS/TypeScript/Drizzle se o projeto crescer.
 
 Qualquer evolucao deve preservar:
 

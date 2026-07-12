@@ -1,4 +1,4 @@
-const http = require("node:http");
+const express = require("express");
 const path = require("node:path");
 const Account = require("./models/FinancialAccount");
 const Category = require("./models/Category");
@@ -7,7 +7,6 @@ const Settlement = require("./models/Settlement");
 const User = require("./models/User");
 const { dueDateFromCompetence, normalizeCompetence } = require("./services/dateService");
 const Auth = require("./services/authService");
-const { getPathParts, parseBody, redirect, sendHtml, sendJson } = require("./services/http");
 const {
   accountsView,
   categoriesView,
@@ -18,77 +17,234 @@ const {
   loginView,
   notFoundView,
   settingsView,
-  staticFile,
 } = require("./services/viewEngine");
 
 function createServer() {
-  return http.createServer(async (req, res) => {
-    try {
-      const url = new URL(req.url, "http://localhost");
+  const app = express();
 
-      if (url.pathname.startsWith("/public/")) {
-        return servePublic(url.pathname, res);
-      }
+  app.use("/public", express.static(path.join(__dirname, "..", "public")));
+  app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
-      if (url.pathname === "/health" || url.pathname === "/ready") {
-        return sendJson(res, { ok: true, service: "emdia" });
-      }
-
-      User.ensureDefaultUser();
-      const session = Auth.getSession(req);
-      const user = session ? sessionUser(session) : null;
-      if (user) {
-        user.csrfToken = Auth.csrfToken(req);
-      } else if (canUseDevelopmentLogin(req)) {
-        return startDevelopmentSession(req, res, url);
-      }
-
-      if (url.pathname === "/login") {
-        if (req.method === "GET") {
-          return user ? redirect(res, "/dashboard") : sendHtml(res, loginView({ email: "" }));
-        }
-
-        if (req.method === "POST") {
-          const body = await parseBody(req);
-          return handleLogin(res, body);
-        }
-      }
-
-      if (url.pathname === "/logout" && req.method === "POST") {
-        const body = await parseBody(req);
-        if (!user || !Auth.verifyCsrf(req, body)) {
-          return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
-        }
-        Auth.invalidateSession(req);
-        return redirect(res, "/login", { "set-cookie": Auth.clearSessionCookie() });
-      }
-
-      if (!user) {
-        return redirect(res, "/login");
-      }
-
-      if (req.method === "GET") {
-        return handleGet(req, res, url, user);
-      }
-
-      if (req.method === "POST") {
-        const body = await parseBody(req);
-        if (!Auth.verifyCsrf(req, body)) {
-          return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
-        }
-        return handlePost(req, res, url, user, body);
-      }
-
-      sendJson(res, { error: "Método não permitido" }, 405);
-    } catch (error) {
-      console.error(error);
-      sendHtml(
-        res,
-        `<h1>Erro no EmDia</h1><p>${String(error.message || error)}</p><p><a href="/dashboard">Voltar ao dashboard</a></p>`,
-        500
-      );
-    }
+  app.all(["/health", "/ready"], (req, res) => {
+    return sendJson(res, { ok: true, service: "emdia" });
   });
+
+  app.use(loadSession);
+
+  app.get("/login", (req, res) => {
+    return req.user ? redirect(res, "/dashboard") : sendHtml(res, loginView({ email: "" }));
+  });
+
+  app.post("/login", (req, res) => {
+    return handleLogin(res, req.body);
+  });
+
+  app.use(requireAuth);
+
+  app.post("/logout", requireCsrf, (req, res) => {
+    Auth.invalidateSession(req);
+    res.set("Set-Cookie", Auth.clearSessionCookie());
+    return redirect(res, "/login");
+  });
+
+  app.get("/", (req, res) => {
+    return redirect(res, "/dashboard");
+  });
+
+  app.get("/dashboard", (req, res) => {
+    const user = req.user;
+    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    return sendHtml(res, dashboardView({ user, competence, dashboard: Entry.dashboard(user, competence) }));
+  });
+
+  app.get("/entries", (req, res) => {
+    const user = req.user;
+    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    const filters = {
+      competence,
+      q: queryValue(req, "q"),
+      entry_type: queryValue(req, "entry_type"),
+      status: queryValue(req, "status"),
+      category_id: queryValue(req, "category_id"),
+      account_id: queryValue(req, "account_id"),
+    };
+
+    return sendHtml(
+      res,
+      entriesListView({
+        user,
+        competence,
+        entries: Entry.list(user, filters),
+        filters,
+        categories: Category.list(user.id),
+        accounts: Account.active(user.id),
+      })
+    );
+  });
+
+  app.get("/entries/new", (req, res) => {
+    const user = req.user;
+    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    const entry = {
+      entry_type: "EXPENSE",
+      competence_month: competence,
+      due_date: dueDateFromCompetence(competence, 10),
+      expected_amount_cents: 0,
+      realized_amount_cents: 0,
+    };
+
+    return sendHtml(
+      res,
+      entryFormView({
+        user,
+        entry,
+        competence,
+        categories: Category.list(user.id),
+        accounts: Account.active(user.id),
+        action: "/entries",
+      })
+    );
+  });
+
+  app.get("/entries/:id", (req, res) => {
+    const user = req.user;
+    const entry = Entry.getById(user.id, req.params.id);
+    if (!entry) return sendHtml(res, notFoundView(user), 404);
+
+    return sendHtml(
+      res,
+      entryDetailView({
+        user,
+        entry,
+        settlements: Settlement.listByEntry(entry.id),
+        accounts: Account.active(user.id),
+      })
+    );
+  });
+
+  app.get("/entries/:id/edit", (req, res) => {
+    const user = req.user;
+    const entry = Entry.getById(user.id, req.params.id);
+    if (!entry) return sendHtml(res, notFoundView(user), 404);
+
+    return sendHtml(
+      res,
+      entryFormView({
+        user,
+        entry,
+        competence: entry.competence_month,
+        categories: Category.list(user.id),
+        accounts: Account.active(user.id),
+        action: `/entries/${entry.id}`,
+      })
+    );
+  });
+
+  app.post("/entries", requireCsrf, (req, res) => {
+    const entry = Entry.create(req.user, req.body);
+    return redirect(res, `/entries?competence=${entry.competence_month}`);
+  });
+
+  app.post("/entries/:id", requireCsrf, (req, res) => {
+    const entry = Entry.update(req.user, req.params.id, req.body);
+    const competence = entry ? entry.competence_month : normalizeCompetence(req.body.competence_month, req.user.timezone);
+    return redirect(res, `/entries?competence=${competence}`);
+  });
+
+  app.post("/entries/:id/cancel", requireCsrf, (req, res) => {
+    const entry = Entry.getById(req.user.id, req.params.id);
+    Entry.cancel(req.user, req.params.id);
+    const competence = entry ? entry.competence_month : normalizeCompetence("", req.user.timezone);
+    return redirect(res, `/entries?competence=${competence}`);
+  });
+
+  app.post("/entries/:id/duplicate", requireCsrf, (req, res) => {
+    const entry = Entry.duplicate(req.user, req.params.id);
+    const competence = entry ? entry.competence_month : normalizeCompetence("", req.user.timezone);
+    return redirect(res, `/entries?competence=${competence}`);
+  });
+
+  app.post("/entries/:id/settlements", requireCsrf, (req, res) => {
+    const entry = Entry.settle(req.user, req.params.id, req.body);
+    return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
+  });
+
+  app.get("/accounts", (req, res) => {
+    return sendHtml(res, accountsView({ user: req.user, accounts: Account.list(req.user.id) }));
+  });
+
+  app.post("/accounts", requireCsrf, (req, res) => {
+    Account.create(req.user.id, req.body);
+    return redirect(res, "/accounts");
+  });
+
+  app.get("/categories", (req, res) => {
+    return sendHtml(res, categoriesView({ user: req.user, categories: Category.list(req.user.id) }));
+  });
+
+  app.post("/categories", requireCsrf, (req, res) => {
+    Category.create(req.user.id, req.body);
+    return redirect(res, "/categories");
+  });
+
+  app.get("/settings", (req, res) => {
+    return sendHtml(res, settingsView({ user: req.user, saved: queryValue(req, "saved") === "1" }));
+  });
+
+  app.post("/settings", requireCsrf, (req, res) => {
+    User.updateFontScale(req.user.id, req.body.font_scale);
+    return redirect(res, "/settings?saved=1");
+  });
+
+  app.use((req, res) => {
+    if (req.method === "GET") {
+      return sendHtml(res, notFoundView(req.user), 404);
+    }
+
+    return sendJson(res, { error: "Método não permitido" }, 405);
+  });
+
+  app.use((err, req, res, next) => {
+    console.error(err);
+    if (res.headersSent) return next(err);
+
+    return sendHtml(
+      res,
+      `<h1>Erro no EmDia</h1><p>${String(err.message || err)}</p><p><a href="/dashboard">Voltar ao dashboard</a></p>`,
+      500
+    );
+  });
+
+  return app;
+}
+
+function loadSession(req, res, next) {
+  User.ensureDefaultUser();
+  const session = Auth.getSession(req);
+  const user = session ? sessionUser(session) : null;
+
+  if (user) {
+    user.csrfToken = Auth.csrfToken(req);
+    req.user = user;
+    return next();
+  }
+
+  if (canUseDevelopmentLogin(req)) {
+    return startDevelopmentSession(req, res);
+  }
+
+  req.user = null;
+  return next();
+}
+
+function requireAuth(req, res, next) {
+  if (req.user) return next();
+  return redirect(res, "/login");
+}
+
+function requireCsrf(req, res, next) {
+  if (Auth.verifyCsrf(req, req.body)) return next();
+  return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
 }
 
 function sessionUser(session) {
@@ -113,7 +269,8 @@ function handleLogin(res, body) {
   }
 
   const session = Auth.createSession(user.id);
-  return redirect(res, "/dashboard", { "set-cookie": session.cookie });
+  res.set("Set-Cookie", session.cookie);
+  return redirect(res, "/dashboard");
 }
 
 function canUseDevelopmentLogin(req) {
@@ -139,186 +296,31 @@ function normalizeHost(hostHeader) {
   return host.split(":")[0];
 }
 
-function startDevelopmentSession(req, res, url) {
+function startDevelopmentSession(req, res) {
   const devUser = User.ensureDefaultUser();
   const session = Auth.createSession(devUser.id);
-  const nextPath = url.pathname === "/login" ? "/dashboard" : req.url;
+  const nextPath = req.path === "/login" ? "/dashboard" : req.originalUrl;
 
-  return redirect(res, nextPath, { "set-cookie": session.cookie });
+  res.set("Set-Cookie", session.cookie);
+  return redirect(res, nextPath);
 }
 
-function handleGet(req, res, url, user) {
-  const parts = getPathParts(url.pathname);
-
-  if (url.pathname === "/") {
-    return redirect(res, "/dashboard");
-  }
-
-  if (url.pathname === "/dashboard") {
-    const competence = normalizeCompetence(url.searchParams.get("competence"), user.timezone);
-    return sendHtml(res, dashboardView({ user, competence, dashboard: Entry.dashboard(user, competence) }));
-  }
-
-  if (url.pathname === "/entries") {
-    const competence = normalizeCompetence(url.searchParams.get("competence"), user.timezone);
-    const filters = {
-      competence,
-      q: url.searchParams.get("q") || "",
-      entry_type: url.searchParams.get("entry_type") || "",
-      status: url.searchParams.get("status") || "",
-      category_id: url.searchParams.get("category_id") || "",
-      account_id: url.searchParams.get("account_id") || "",
-    };
-
-    return sendHtml(
-      res,
-      entriesListView({
-        user,
-        competence,
-        entries: Entry.list(user, filters),
-        filters,
-        categories: Category.list(user.id),
-        accounts: Account.active(user.id),
-      })
-    );
-  }
-
-  if (url.pathname === "/entries/new") {
-    const competence = normalizeCompetence(url.searchParams.get("competence"), user.timezone);
-    const entry = {
-      entry_type: "EXPENSE",
-      competence_month: competence,
-      due_date: dueDateFromCompetence(competence, 10),
-      expected_amount_cents: 0,
-      realized_amount_cents: 0,
-    };
-
-    return sendHtml(
-      res,
-      entryFormView({
-        user,
-        entry,
-        competence,
-        categories: Category.list(user.id),
-        accounts: Account.active(user.id),
-        action: "/entries",
-      })
-    );
-  }
-
-  if (parts[0] === "entries" && parts[1] && !parts[2]) {
-    const entry = Entry.getById(user.id, parts[1]);
-    if (!entry) return sendHtml(res, notFoundView(user), 404);
-
-    return sendHtml(
-      res,
-      entryDetailView({
-        user,
-        entry,
-        settlements: Settlement.listByEntry(entry.id),
-        accounts: Account.active(user.id),
-      })
-    );
-  }
-
-  if (parts[0] === "entries" && parts[1] && parts[2] === "edit") {
-    const entry = Entry.getById(user.id, parts[1]);
-    if (!entry) return sendHtml(res, notFoundView(user), 404);
-
-    return sendHtml(
-      res,
-      entryFormView({
-        user,
-        entry,
-        competence: entry.competence_month,
-        categories: Category.list(user.id),
-        accounts: Account.active(user.id),
-        action: `/entries/${entry.id}`,
-      })
-    );
-  }
-
-  if (url.pathname === "/accounts") {
-    return sendHtml(res, accountsView({ user, accounts: Account.list(user.id) }));
-  }
-
-  if (url.pathname === "/categories") {
-    return sendHtml(res, categoriesView({ user, categories: Category.list(user.id) }));
-  }
-
-  if (url.pathname === "/settings") {
-    return sendHtml(res, settingsView({ user, saved: url.searchParams.get("saved") === "1" }));
-  }
-
-  return sendHtml(res, notFoundView(user), 404);
+function queryValue(req, name) {
+  const value = req.query[name];
+  if (Array.isArray(value)) return String(value[0] || "");
+  return String(value || "");
 }
 
-function handlePost(req, res, url, user, body) {
-  const parts = getPathParts(url.pathname);
-
-  if (url.pathname === "/entries") {
-    const entry = Entry.create(user, body);
-    return redirect(res, `/entries?competence=${entry.competence_month}`);
-  }
-
-  if (parts[0] === "entries" && parts[1] && !parts[2]) {
-    const entry = Entry.update(user, parts[1], body);
-    return redirect(res, `/entries?competence=${entry ? entry.competence_month : normalizeCompetence(body.competence_month, user.timezone)}`);
-  }
-
-  if (parts[0] === "entries" && parts[1] && parts[2] === "cancel") {
-    const entry = Entry.getById(user.id, parts[1]);
-    Entry.cancel(user, parts[1]);
-    return redirect(res, `/entries?competence=${entry ? entry.competence_month : normalizeCompetence("", user.timezone)}`);
-  }
-
-  if (parts[0] === "entries" && parts[1] && parts[2] === "duplicate") {
-    const entry = Entry.duplicate(user, parts[1]);
-    return redirect(res, `/entries?competence=${entry ? entry.competence_month : normalizeCompetence("", user.timezone)}`);
-  }
-
-  if (parts[0] === "entries" && parts[1] && parts[2] === "settlements") {
-    const entry = Entry.settle(user, parts[1], body);
-    return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
-  }
-
-  if (url.pathname === "/accounts") {
-    Account.create(user.id, body);
-    return redirect(res, "/accounts");
-  }
-
-  if (url.pathname === "/categories") {
-    Category.create(user.id, body);
-    return redirect(res, "/categories");
-  }
-
-  if (url.pathname === "/settings") {
-    User.updateFontScale(user.id, body.font_scale);
-    return redirect(res, "/settings?saved=1");
-  }
-
-  return sendHtml(res, notFoundView(user), 404);
+function sendHtml(res, html, statusCode = 200) {
+  return res.status(statusCode).type("html").send(html);
 }
 
-function servePublic(pathname, res) {
-  const normalized = path.normalize(pathname.replace(/^\/+/, ""));
-  if (!normalized.startsWith("public")) {
-    return sendJson(res, { error: "Arquivo inválido" }, 400);
-  }
-
-  const body = staticFile(normalized);
-  const contentType = publicContentType(normalized);
-  res.writeHead(200, { "content-type": contentType });
-  res.end(body);
+function redirect(res, location) {
+  return res.redirect(303, location);
 }
 
-function publicContentType(filePath) {
-  if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
-  if (filePath.endsWith(".js")) return "text/javascript; charset=utf-8";
-  if (filePath.endsWith(".svg")) return "image/svg+xml; charset=utf-8";
-  if (filePath.endsWith(".ico")) return "image/x-icon";
-  if (filePath.endsWith(".png")) return "image/png";
-  return "application/octet-stream";
+function sendJson(res, payload, statusCode = 200) {
+  return res.status(statusCode).type("json").send(JSON.stringify(payload, null, 2));
 }
 
 module.exports = {
