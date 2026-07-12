@@ -58,7 +58,7 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
           <th>Conta</th>
           <th>Valor</th>
           <th>Status</th>
-          ${compact ? "" : "<th>Ações</th>"}
+          ${compact ? "" : "<th class=\"actions-cell\">Ações</th>"}
         </tr>
       </thead>
       <tbody>

@@ -55,7 +55,7 @@ function accountsView({ user, accounts, account = null, action = "/accounts" }) 
             <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
           </div>
         </form>
-        <article class="panel">
+        <article class="panel list-panel">
           <div class="panel-heading">
             <h2>Contas cadastradas</h2>
             <a class="record-action-button" href="/accounts/deleted" title="Ver contas arquivadas" aria-label="Ver contas arquivadas">${ACTION_ICONS.archive}</a>
@@ -83,12 +83,12 @@ function deletedAccountsView({ user, accounts }) {
 }
 
 function accountsTable(accounts, user) {
-  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th>Saldo inicial</th><th>Ações</th></tr></thead><tbody>
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th class="money-cell">Saldo inicial</th><th class="actions-cell">Ações</th></tr></thead><tbody>
     ${accounts.map((account) => `<tr>
       <td>${escapeHtml(account.name)}</td>
       <td>${escapeHtml(accountTypeLabel(account.type))}</td>
       <td>${escapeHtml(account.institution_name || "-")}</td>
-      <td>${formatMoney(account.initial_balance_cents)}</td>
+      <td class="money-cell">${formatMoney(account.initial_balance_cents)}</td>
       <td class="record-actions-cell">
         <div class="record-actions">
           ${recordActionLink({
@@ -115,12 +115,12 @@ function deletedAccountsTable(accounts, user) {
     return `<div class="empty-state">Nenhum item arquivado.</div>`;
   }
 
-  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th>Saldo inicial</th><th>Arquivado em</th><th>Ações</th></tr></thead><tbody>
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th class="money-cell">Saldo inicial</th><th>Arquivado em</th><th class="actions-cell">Ações</th></tr></thead><tbody>
     ${accounts.map((account) => `<tr>
       <td>${escapeHtml(account.name)}</td>
       <td>${escapeHtml(accountTypeLabel(account.type))}</td>
       <td>${escapeHtml(account.institution_name || "-")}</td>
-      <td>${formatMoney(account.initial_balance_cents)}</td>
+      <td class="money-cell">${formatMoney(account.initial_balance_cents)}</td>
       <td>${escapeHtml(formatArchivedAt(account.deleted_at, user.timezone))}</td>
       <td class="record-actions-cell">
         <div class="record-actions">

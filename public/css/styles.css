@@ -728,6 +728,38 @@ textarea {
   padding: 20px;
 }
 
+.list-panel {
+  padding: 12px 14px 14px;
+}
+
+.list-panel .panel-heading {
+  gap: 8px;
+  margin: 0 0 6px;
+  padding-bottom: 6px;
+}
+
+.list-panel .panel-heading h2 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.list-panel .panel-heading .record-action-button {
+  --record-action-size: 28px;
+  border-radius: 7px;
+}
+
+.list-panel .panel-heading .record-action-button svg {
+  height: 15px;
+  width: 15px;
+}
+
+.list-panel th,
+.list-panel td {
+  padding-block: calc(var(--table-cell-block) * 0.82);
+}
+
 .section-title {
   align-items: center;
   display: flex;
@@ -767,7 +799,23 @@ td {
 th {
   color: var(--muted);
   font-size: var(--table-heading-size);
+  font-weight: 800;
+  letter-spacing: 0;
   text-transform: uppercase;
+}
+
+tbody tr {
+  transition: background 0.16s ease;
+}
+
+tbody tr:hover {
+  background: #f6fbf9;
+}
+
+.money-cell {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .strong-link {
@@ -807,14 +855,18 @@ th {
   color: #854d0e;
 }
 
+.actions-cell,
 .record-actions-cell {
   min-width: 126px;
+  text-align: right;
+  width: 1%;
 }
 
 .record-actions {
   align-items: center;
   display: flex;
   gap: var(--record-actions-gap);
+  justify-content: flex-end;
   white-space: nowrap;
 }
 
@@ -834,6 +886,7 @@ th {
   justify-content: center;
   min-height: var(--record-action-size);
   padding: 0;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
   width: var(--record-action-size);
 }
 

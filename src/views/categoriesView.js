@@ -52,12 +52,12 @@ function categoriesView({ user, categories, category = null, action = "/categori
             <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
           </div>
         </form>
-        <article class="panel">
+        <article class="panel list-panel">
           <div class="panel-heading">
             <h2>Categorias cadastradas</h2>
             <a class="record-action-button" href="/categories/deleted" title="Ver categorias arquivadas" aria-label="Ver categorias arquivadas">${ACTION_ICONS.archive}</a>
           </div>
-          <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Ações</th></tr></thead><tbody>
+          <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th class="actions-cell">Ações</th></tr></thead><tbody>
           ${categories.map((category) => `<tr>
             <td>${escapeHtml(category.name)}</td>
             <td>${escapeHtml(entryTypeLabel(category.entry_type))}</td>
@@ -105,7 +105,7 @@ function deletedCategoriesTable(categories, user) {
     return `<div class="empty-state">Nenhum item arquivado.</div>`;
   }
 
-  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Arquivada em</th><th>Ações</th></tr></thead><tbody>
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Arquivada em</th><th class="actions-cell">Ações</th></tr></thead><tbody>
     ${categories.map((category) => `<tr>
       <td>${escapeHtml(category.name)}</td>
       <td>${escapeHtml(entryTypeLabel(category.entry_type))}</td>
