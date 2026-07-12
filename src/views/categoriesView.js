@@ -24,7 +24,10 @@ function categoriesView({ user, categories }) {
             </select>
           </label>
           <label>Cor<input type="color" name="color" value="#0f766e"></label>
-          <button type="submit">Adicionar categoria</button>
+          <div class="form-actions wide">
+            <a class="ghost-button" href="/dashboard">Voltar</a>
+            <button type="submit">Salvar</button>
+          </div>
         </form>
         <article class="panel"><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th></tr></thead><tbody>
           ${categories.map((category) => `<tr><td>${escapeHtml(category.name)}</td><td>${escapeHtml(entryTypeLabel(category.entry_type))}</td></tr>`).join("")}

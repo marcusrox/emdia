@@ -86,6 +86,14 @@ Fluxos manuais:
 Esta task registra a padronizacao solicitada pelo usuario. A implementacao nao
 deve ser feita nesta etapa.
 
+## Implementacao
+
+- Formularios de Contas e Categorias passaram a usar `form-actions wide`, como
+  o formulario de Lancamentos.
+- Botoes principais foram renomeados para `Salvar`.
+- Foi adicionado o botao secundario `Voltar` com `ghost-button`.
+- A release foi atualizada para registrar a entrega da task.
+
 ---
 
 ## Assinatura da LLM
@@ -94,3 +102,12 @@ deve ser feita nesta etapa.
 - Modelo: GPT-5 Codex
 - Versao: nao informado
 - Acao: criacao
+
+---
+
+## Assinatura da LLM
+
+- Data: 2026-07-11
+- Modelo: GPT-5 Codex
+- Versao: nao informado
+- Acao: atualizacao

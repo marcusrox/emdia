@@ -26,7 +26,10 @@ function accountsView({ user, accounts }) {
           </label>
           <label>Instituição<input name="institution_name"></label>
           <label>Saldo inicial<input name="initial_balance" inputmode="decimal" value="0,00"></label>
-          <button type="submit">Adicionar conta</button>
+          <div class="form-actions wide">
+            <a class="ghost-button" href="/dashboard">Voltar</a>
+            <button type="submit">Salvar</button>
+          </div>
         </form>
         <article class="panel">${accountsTable(accounts)}</article>
       </section>
