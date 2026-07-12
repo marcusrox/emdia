@@ -28,6 +28,19 @@ function recordActionForm({ action, icon, label, tone = "", user, confirmMessage
   </form>`;
 }
 
+function normalizeHexColor(value) {
+  return /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#0f766e";
+}
+
+function categoryNameWithColor(category) {
+  const color = normalizeHexColor(category.color);
+
+  return `<span class="category-name-with-color">
+    <span class="category-color-dot" style="background-color: ${escapeHtml(color)};" title="${escapeHtml(color)}" aria-label="Cor da categoria ${escapeHtml(color)}"></span>
+    <span>${escapeHtml(category.name)}</span>
+  </span>`;
+}
+
 function categoriesView({ user, categories, category = null, action = "/categories" }) {
   const isEdit = Boolean(category?.id);
 
@@ -59,7 +72,7 @@ function categoriesView({ user, categories, category = null, action = "/categori
           </div>
           <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th class="actions-cell">Ações</th></tr></thead><tbody>
           ${categories.map((category) => `<tr>
-            <td>${escapeHtml(category.name)}</td>
+            <td>${categoryNameWithColor(category)}</td>
             <td>${escapeHtml(entryTypeLabel(category.entry_type))}</td>
             <td class="record-actions-cell">
               <div class="record-actions">
@@ -107,7 +120,7 @@ function deletedCategoriesTable(categories, user) {
 
   return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Arquivada em</th><th class="actions-cell">Ações</th></tr></thead><tbody>
     ${categories.map((category) => `<tr>
-      <td>${escapeHtml(category.name)}</td>
+      <td>${categoryNameWithColor(category)}</td>
       <td>${escapeHtml(entryTypeLabel(category.entry_type))}</td>
       <td>${escapeHtml(formatArchivedAt(category.deleted_at, user.timezone))}</td>
       <td class="record-actions-cell">
