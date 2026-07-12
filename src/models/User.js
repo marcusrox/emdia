@@ -1,5 +1,5 @@
 const { getDatabase } = require("../database/connection");
-const { hashPassword } = require("../services/authService");
+const { hashPassword, verifyPassword } = require("../services/authService");
 const { newId } = require("../services/id");
 
 const DEFAULT_EMAIL = "usuario@emdia.local";
@@ -67,6 +67,89 @@ function findByEmail(email) {
     .get(String(email || "").trim());
 }
 
+function getById(userId) {
+  return getDatabase()
+    .prepare("SELECT * FROM users WHERE id = ? AND is_active = 1 LIMIT 1")
+    .get(userId);
+}
+
+function updateProfile(userId, data) {
+  const current = getById(userId);
+  if (!current) {
+    return { ok: false, errors: ["Usuário não encontrado."], profile: normalizeProfile(data) };
+  }
+
+  const profile = normalizeProfile(data);
+  const errors = validateProfile(current, profile);
+  if (errors.length) {
+    return { ok: false, errors, profile };
+  }
+
+  const passwordHash = profile.new_password ? hashPassword(profile.new_password) : current.password_hash;
+
+  getDatabase()
+    .prepare(
+      `
+      UPDATE users
+      SET name = ?, email = ?, password_hash = ?, updated_at = ?
+      WHERE id = ? AND is_active = 1
+    `
+    )
+    .run(profile.name, profile.email, passwordHash, new Date().toISOString(), userId);
+
+  return { ok: true, user: getById(userId) };
+}
+
+function normalizeProfile(data) {
+  return {
+    name: String(data.name || "").trim(),
+    email: String(data.email || "").trim().toLowerCase(),
+    current_password: String(data.current_password || ""),
+    new_password: String(data.new_password || ""),
+    confirm_password: String(data.confirm_password || ""),
+  };
+}
+
+function validateProfile(current, profile) {
+  const errors = [];
+  const wantsPasswordChange = Boolean(profile.current_password || profile.new_password || profile.confirm_password);
+
+  if (!profile.name) {
+    errors.push("Informe o nome do usuário.");
+  }
+
+  if (!isValidEmail(profile.email)) {
+    errors.push("Informe um e-mail válido.");
+  } else {
+    const emailOwner = findByEmail(profile.email);
+    if (emailOwner && emailOwner.id !== current.id) {
+      errors.push("Este e-mail já está em uso.");
+    }
+  }
+
+  if (wantsPasswordChange) {
+    if (!verifyPassword(profile.current_password, current.password_hash)) {
+      errors.push("Senha atual incorreta.");
+    }
+
+    if (!profile.new_password) {
+      errors.push("Informe a nova senha.");
+    } else if (profile.new_password.length < 6) {
+      errors.push("A nova senha deve ter pelo menos 6 caracteres.");
+    }
+
+    if (profile.new_password !== profile.confirm_password) {
+      errors.push("A confirmação da nova senha não confere.");
+    }
+  }
+
+  return errors;
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function updateFontScale(userId, fontScale) {
   const normalized = normalizeFontScale(fontScale);
   getDatabase()
@@ -81,7 +164,9 @@ module.exports = {
   FONT_SCALE_OPTIONS: Array.from(FONT_SCALE_OPTIONS),
   findByEmail,
   ensureDefaultUser,
+  getById,
   getDefaultUser,
   normalizeFontScale,
   updateFontScale,
+  updateProfile,
 };

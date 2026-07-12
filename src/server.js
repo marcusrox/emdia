@@ -16,6 +16,7 @@ const {
   entryFormView,
   loginView,
   notFoundView,
+  profileView,
   settingsView,
 } = require("./services/viewEngine");
 
@@ -185,6 +186,20 @@ function createServer() {
   app.post("/categories", requireCsrf, (req, res) => {
     Category.create(req.user.id, req.body);
     return redirect(res, "/categories");
+  });
+
+  app.get("/profile", (req, res) => {
+    return sendHtml(res, profileView({ user: req.user, saved: queryValue(req, "saved") === "1" }));
+  });
+
+  app.post("/profile", requireCsrf, (req, res) => {
+    const result = User.updateProfile(req.user.id, req.body);
+    if (!result.ok) {
+      const profile = { ...req.user, ...result.profile };
+      return sendHtml(res, profileView({ user: req.user, profile, errors: result.errors }), 400);
+    }
+
+    return redirect(res, "/profile?saved=1");
   });
 
   app.get("/settings", (req, res) => {

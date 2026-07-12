@@ -47,6 +47,7 @@ function layout({ title, user, active, body }) {
           <span aria-hidden="true"></span>
         </summary>
         <div class="user-menu-panel">
+          <a href="/profile">Perfil</a>
           <a href="/settings">Configurações</a>
           <form method="post" action="/logout">
             ${csrfInput(user)}
@@ -73,6 +74,7 @@ function layout({ title, user, active, body }) {
         <span>${escapeHtml(user.name)}</span>
       </summary>
       <div class="user-menu-panel">
+        <a href="/profile">Perfil</a>
         <a href="/settings">Configurações</a>
         <form method="post" action="/logout">
           ${csrfInput(user)}

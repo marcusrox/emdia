@@ -126,6 +126,17 @@ Fluxos manuais:
 Esta task registra a solicitacao de criacao da tela de Perfil e do novo item de
 menu. A implementacao nao deve ser feita nesta etapa.
 
+## Implementacao
+
+- Criada a view `src/views/profileView.js` para exibicao e edicao do perfil.
+- Adicionados os links `Perfil` ao menu do usuario no desktop e no mobile.
+- Criadas as rotas autenticadas `GET /profile` e `POST /profile`.
+- Adicionada a persistencia de nome, e-mail e senha em `User.updateProfile`.
+- Alteracao de senha exige senha atual correta e confirmacao da nova senha.
+- Nome, e-mail e senha sao validados antes da gravacao.
+- Dados sensiveis como hash de senha nao sao renderizados na tela.
+- Release atualizada para registrar a entrega da task.
+
 ---
 
 ## Assinatura da LLM
@@ -134,6 +145,15 @@ menu. A implementacao nao deve ser feita nesta etapa.
 - Modelo: GPT-5 Codex
 - Versao: nao informado
 - Acao: criacao
+
+---
+
+## Assinatura da LLM
+
+- Data: 2026-07-11
+- Modelo: GPT-5 Codex
+- Versao: nao informado
+- Acao: atualizacao
 
 ---
 

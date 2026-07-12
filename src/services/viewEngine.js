@@ -4,6 +4,7 @@ const { dashboardView } = require("../views/dashboardView");
 const { entriesListView, entryDetailView, entryFormView } = require("../views/entriesView");
 const { loginView } = require("../views/authView");
 const { notFoundView } = require("../views/errorsView");
+const { profileView } = require("../views/profileView");
 const { settingsView } = require("../views/settingsView");
 const { escapeHtml } = require("./viewHelpers");
 
@@ -17,5 +18,6 @@ module.exports = {
   escapeHtml,
   loginView,
   notFoundView,
+  profileView,
   settingsView,
 };
