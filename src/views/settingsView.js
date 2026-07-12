@@ -1,4 +1,10 @@
-const { FONT_SCALE_OPTIONS, csrfInput, normalizeFontScale } = require("../services/viewHelpers");
+const {
+  FONT_SCALE_OPTIONS,
+  LIST_DENSITY_OPTIONS,
+  csrfInput,
+  normalizeFontScale,
+  normalizeListDensity,
+} = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function settingsView({ user, saved = false }) {
@@ -21,6 +27,19 @@ function settingsView({ user, saved = false }) {
             ([value, label, description]) => `
               <label class="choice-card">
                 <input type="radio" name="font_scale" value="${value}"${normalizeFontScale(user.font_scale) === value ? " checked" : ""}>
+                <span>
+                  <strong>${label}</strong>
+                  <small>${description}</small>
+                </span>
+              </label>`
+          ).join("")}
+        </fieldset>
+        <fieldset class="choice-group">
+          <legend>Densidade das listagens</legend>
+          ${LIST_DENSITY_OPTIONS.map(
+            ([value, label, description]) => `
+              <label class="choice-card">
+                <input type="radio" name="list_density" value="${value}"${normalizeListDensity(user.list_density) === value ? " checked" : ""}>
                 <span>
                   <strong>${label}</strong>
                   <small>${description}</small>

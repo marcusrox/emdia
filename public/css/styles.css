@@ -19,6 +19,13 @@
 }
 
 body {
+  --record-action-size: 34px;
+  --record-actions-gap: 6px;
+  --status-padding-block: 5px;
+  --status-padding-inline: 9px;
+  --table-cell-block: 12px;
+  --table-cell-inline: 10px;
+  --table-heading-size: 12px;
   margin: 0;
   background: var(--bg);
   color: var(--text);
@@ -37,6 +44,36 @@ body.font-scale-medium {
 
 body.font-scale-large {
   --font-scale: 18px;
+}
+
+body.list-density-comfortable {
+  --record-action-size: 38px;
+  --record-actions-gap: 8px;
+  --status-padding-block: 6px;
+  --status-padding-inline: 11px;
+  --table-cell-block: 15px;
+  --table-cell-inline: 12px;
+  --table-heading-size: 12px;
+}
+
+body.list-density-standard {
+  --record-action-size: 34px;
+  --record-actions-gap: 6px;
+  --status-padding-block: 5px;
+  --status-padding-inline: 9px;
+  --table-cell-block: 12px;
+  --table-cell-inline: 10px;
+  --table-heading-size: 12px;
+}
+
+body.list-density-compact {
+  --record-action-size: 30px;
+  --record-actions-gap: 4px;
+  --status-padding-block: 3px;
+  --status-padding-inline: 7px;
+  --table-cell-block: 7px;
+  --table-cell-inline: 8px;
+  --table-heading-size: 11px;
 }
 
 a {
@@ -722,14 +759,14 @@ table {
 th,
 td {
   border-bottom: 1px solid var(--line);
-  padding: 12px 10px;
+  padding: var(--table-cell-block) var(--table-cell-inline);
   text-align: left;
   vertical-align: middle;
 }
 
 th {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--table-heading-size);
   text-transform: uppercase;
 }
 
@@ -743,7 +780,7 @@ th {
   display: inline-flex;
   font-size: 12px;
   font-weight: 800;
-  padding: 5px 9px;
+  padding: var(--status-padding-block) var(--status-padding-inline);
   white-space: nowrap;
 }
 
@@ -777,7 +814,7 @@ th {
 .record-actions {
   align-items: center;
   display: flex;
-  gap: 6px;
+  gap: var(--record-actions-gap);
   white-space: nowrap;
 }
 
@@ -795,9 +832,9 @@ th {
   color: var(--primary);
   display: inline-flex;
   justify-content: center;
-  min-height: 34px;
+  min-height: var(--record-action-size);
   padding: 0;
-  width: 34px;
+  width: var(--record-action-size);
 }
 
 .record-action-button svg {

@@ -277,7 +277,7 @@ function createServer() {
   });
 
   app.post("/settings", requireCsrf, (req, res) => {
-    User.updateFontScale(req.user.id, req.body.font_scale);
+    User.updateInterfacePreferences(req.user.id, req.body);
     return redirect(res, "/settings?saved=1");
   });
 
@@ -341,6 +341,7 @@ function sessionUser(session) {
     locale: session.locale,
     is_active: session.is_active,
     font_scale: User.normalizeFontScale(session.font_scale),
+    list_density: User.normalizeListDensity(session.list_density),
   };
 }
 

@@ -1,5 +1,5 @@
 const { addMonths, currentCompetence, monthLabel } = require("../services/dateService");
-const { csrfInput, escapeHtml, normalizeFontScale, renderNotifications } = require("../services/viewHelpers");
+const { csrfInput, escapeHtml, normalizeFontScale, normalizeListDensity, renderNotifications } = require("../services/viewHelpers");
 const { RELEASE_LABEL } = require("../config/release");
 
 function layout({ title, user, active, body, notifications = [] }) {
@@ -12,6 +12,7 @@ function layout({ title, user, active, body, notifications = [] }) {
   ];
 
   const fontScale = normalizeFontScale(user?.font_scale);
+  const listDensity = normalizeListDensity(user?.list_density);
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -22,7 +23,7 @@ function layout({ title, user, active, body, notifications = [] }) {
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
   <link rel="stylesheet" href="/public/css/styles.css">
 </head>
-<body class="font-scale-${fontScale}">
+<body class="font-scale-${fontScale} list-density-${listDensity}">
   <header class="topbar">
     <div class="mobile-top-row">
       <details class="mobile-nav-menu" name="mobile-top-menu">

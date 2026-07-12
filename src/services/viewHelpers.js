@@ -48,6 +48,14 @@ const FONT_SCALE_OPTIONS = [
 
 const FONT_SCALE_VALUES = new Set(FONT_SCALE_OPTIONS.map(([value]) => value));
 
+const LIST_DENSITY_OPTIONS = [
+  ["comfortable", "Confortável", "Mais espaço entre linhas para leitura tranquila."],
+  ["standard", "Padrão", "Equilíbrio atual entre leitura e quantidade de informação."],
+  ["compact", "Compacta", "Reduz espaços para mostrar mais registros na tela."],
+];
+
+const LIST_DENSITY_VALUES = new Set(LIST_DENSITY_OPTIONS.map(([value]) => value));
+
 function accountTypeLabel(type) {
   return ACCOUNT_TYPE_LABELS[type] || type || "-";
 }
@@ -62,6 +70,10 @@ function categoryOptionLabel(category) {
 
 function normalizeFontScale(value) {
   return FONT_SCALE_VALUES.has(value) ? value : "medium";
+}
+
+function normalizeListDensity(value) {
+  return LIST_DENSITY_VALUES.has(value) ? value : "standard";
 }
 
 function csrfInput(user) {
@@ -122,6 +134,7 @@ module.exports = {
   ACCOUNT_TYPE_OPTIONS,
   ENTRY_TYPE_OPTIONS,
   FONT_SCALE_OPTIONS,
+  LIST_DENSITY_OPTIONS,
   accountTypeLabel,
   categoryOptionLabel,
   csrfInput,
@@ -130,6 +143,7 @@ module.exports = {
   lucideIcon,
   moneyInput,
   normalizeFontScale,
+  normalizeListDensity,
   option,
   renderNotifications,
 };

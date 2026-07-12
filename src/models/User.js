@@ -6,10 +6,17 @@ const DEFAULT_EMAIL = "usuario@emdia.local";
 const DEFAULT_PASSWORD = process.env.EMDIA_DEFAULT_PASSWORD || "emdia123";
 const FONT_SCALE_OPTIONS = new Set(["small", "medium", "large"]);
 const DEFAULT_FONT_SCALE = "medium";
+const LIST_DENSITY_OPTIONS = new Set(["comfortable", "standard", "compact"]);
+const DEFAULT_LIST_DENSITY = "standard";
 
 function normalizeFontScale(value) {
   const scale = String(value || "").trim();
   return FONT_SCALE_OPTIONS.has(scale) ? scale : DEFAULT_FONT_SCALE;
+}
+
+function normalizeListDensity(value) {
+  const density = String(value || "").trim();
+  return LIST_DENSITY_OPTIONS.has(density) ? density : DEFAULT_LIST_DENSITY;
 }
 
 function getDefaultUser() {
@@ -159,14 +166,32 @@ function updateFontScale(userId, fontScale) {
   return normalized;
 }
 
+function updateInterfacePreferences(userId, data) {
+  const fontScale = normalizeFontScale(data.font_scale);
+  const listDensity = normalizeListDensity(data.list_density);
+
+  getDatabase()
+    .prepare("UPDATE users SET font_scale = ?, list_density = ?, updated_at = ? WHERE id = ? AND is_active = 1")
+    .run(fontScale, listDensity, new Date().toISOString(), userId);
+
+  return {
+    font_scale: fontScale,
+    list_density: listDensity,
+  };
+}
+
 module.exports = {
   DEFAULT_FONT_SCALE,
+  DEFAULT_LIST_DENSITY,
   FONT_SCALE_OPTIONS: Array.from(FONT_SCALE_OPTIONS),
+  LIST_DENSITY_OPTIONS: Array.from(LIST_DENSITY_OPTIONS),
   findByEmail,
   ensureDefaultUser,
   getById,
   getDefaultUser,
   normalizeFontScale,
+  normalizeListDensity,
   updateFontScale,
+  updateInterfacePreferences,
   updateProfile,
 };
