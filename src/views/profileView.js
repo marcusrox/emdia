@@ -6,14 +6,16 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
     title: "Perfil",
     user,
     active: "",
+    notifications: [
+      ...(saved ? [{ type: "success", message: "Perfil atualizado com sucesso." }] : []),
+      ...errors.map((error) => ({ type: "error", message: error })),
+    ],
     body: `
       <section class="page-heading">
         <span class="eyebrow">Conta do usuario</span>
         <h1>Perfil</h1>
         <p>Dados de acesso e identificacao usados na sua conta EmDia.</p>
       </section>
-      ${saved ? `<p class="alert-success">Perfil atualizado com sucesso.</p>` : ""}
-      ${errors.map((error) => `<p class="alert-error">${escapeHtml(error)}</p>`).join("")}
       <form method="post" action="/profile" class="panel form-grid form-compact profile-form">
         ${csrfInput(user)}
         <label class="profile-field-half">Nome

@@ -7,5 +7,20 @@
     });
   }
 
+  function closeNotification(event) {
+    var button = event.target.closest(".notification-close");
+
+    if (!button) {
+      return;
+    }
+
+    var notification = button.closest(".notification");
+
+    if (notification) {
+      notification.remove();
+    }
+  }
+
   document.addEventListener("click", closeDetailsOnOutsideClick);
+  document.addEventListener("click", closeNotification);
 })();

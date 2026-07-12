@@ -62,6 +62,42 @@ function csrfInput(user) {
   return `<input type="hidden" name="_csrf" value="${escapeHtml(user?.csrfToken || "")}">`;
 }
 
+function normalizeNotifications(notifications = []) {
+  return notifications
+    .filter(Boolean)
+    .map((notification) => {
+      if (typeof notification === "string") {
+        return { type: "info", message: notification };
+      }
+
+      return {
+        type: notification.type || "info",
+        message: notification.message || "",
+      };
+    })
+    .filter((notification) => notification.message);
+}
+
+function renderNotifications(notifications = []) {
+  const items = normalizeNotifications(notifications);
+
+  if (!items.length) {
+    return "";
+  }
+
+  return `<div class="notification-stack" aria-live="polite">
+    ${items.map((notification) => {
+      const type = ["error", "success", "warning", "info"].includes(notification.type) ? notification.type : "info";
+      const role = type === "error" ? "alert" : "status";
+
+      return `<div class="notification notification-${type}" role="${role}">
+        <p>${escapeHtml(notification.message)}</p>
+        <button type="button" class="notification-close" aria-label="Fechar mensagem">X</button>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
 module.exports = {
   ACCOUNT_TYPE_OPTIONS,
   ENTRY_TYPE_OPTIONS,
@@ -74,4 +110,5 @@ module.exports = {
   moneyInput,
   normalizeFontScale,
   option,
+  renderNotifications,
 };

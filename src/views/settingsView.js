@@ -6,13 +6,13 @@ function settingsView({ user, saved = false }) {
     title: "Configurações",
     user,
     active: "",
+    notifications: saved ? [{ type: "success", message: "Configuração salva com sucesso." }] : [],
     body: `
       <section class="page-heading">
         <span class="eyebrow">Preferências</span>
         <h1>Configurações</h1>
         <p>Ajustes individuais da sua interface no EmDia.</p>
       </section>
-      ${saved ? `<p class="alert-success">Configuração salva com sucesso.</p>` : ""}
       <form method="post" action="/settings" class="panel form-stack form-compact settings-form">
         ${csrfInput(user)}
         <fieldset class="choice-group">

@@ -1,4 +1,4 @@
-const { escapeHtml } = require("../services/viewHelpers");
+const { escapeHtml, renderNotifications } = require("../services/viewHelpers");
 
 function loginView({ email = "", error = "" } = {}) {
   return `<!doctype html>
@@ -11,6 +11,7 @@ function loginView({ email = "", error = "" } = {}) {
   <link rel="stylesheet" href="/public/css/styles.css">
 </head>
 <body class="auth-page">
+  ${renderNotifications(error ? [{ type: "error", message: error }] : [])}
   <main class="auth-shell">
     <section class="auth-panel">
       <div class="brand auth-brand">
@@ -27,7 +28,6 @@ function loginView({ email = "", error = "" } = {}) {
         <h1>Entrar no EmDia</h1>
         <p>Confira vencimentos, receitas e baixas da competencia atual em poucos cliques.</p>
       </div>
-      ${error ? `<p class="alert-error">${escapeHtml(error)}</p>` : ""}
       <form class="form-stack" method="post" action="/login">
         <label>E-mail
           <input type="email" name="email" value="${escapeHtml(email)}" autocomplete="email" required autofocus>

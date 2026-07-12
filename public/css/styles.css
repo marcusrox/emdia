@@ -433,22 +433,86 @@ td small {
   min-height: 48px;
 }
 
-.alert-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #991b1b;
-  margin: 0;
-  padding: 10px 12px;
+.notification-stack {
+  display: grid;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 32px));
+  position: fixed;
+  right: 24px;
+  top: 88px;
+  width: 420px;
+  z-index: 30;
 }
 
-.alert-success {
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
+.auth-page .notification-stack {
+  top: 24px;
+}
+
+.notification {
+  align-items: start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--primary);
   border-radius: 8px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  padding: 12px 10px 12px 14px;
+}
+
+.notification p {
+  margin: 0;
+}
+
+.notification-error {
+  background: #fff7f7;
+  border-color: #fecaca;
+  border-left-color: #dc2626;
+  color: #991b1b;
+}
+
+.notification-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  border-left-color: #059669;
   color: #166534;
-  margin: 0 0 18px;
-  padding: 10px 12px;
+}
+
+.notification-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  border-left-color: #d97706;
+  color: #92400e;
+}
+
+.notification-info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  border-left-color: #2563eb;
+  color: #1e40af;
+}
+
+.notification-close {
+  align-items: center;
+  aspect-ratio: 1;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: currentColor;
+  display: inline-flex;
+  font-size: 22px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 32px;
+  padding: 0;
+  width: 32px;
+}
+
+.notification-close:hover,
+.notification-close:focus-visible {
+  background: rgba(15, 23, 42, 0.08);
 }
 
 .page {
@@ -935,6 +999,18 @@ textarea {
 }
 
 @media (max-width: 980px) {
+  .notification-stack {
+    left: 16px;
+    max-width: none;
+    right: 16px;
+    top: 76px;
+    width: auto;
+  }
+
+  .auth-page .notification-stack {
+    top: 16px;
+  }
+
   .monthbar,
   .toolbar {
     align-items: stretch;

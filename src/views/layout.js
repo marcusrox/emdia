@@ -1,8 +1,8 @@
 const { addMonths, currentCompetence, monthLabel } = require("../services/dateService");
-const { csrfInput, escapeHtml, normalizeFontScale } = require("../services/viewHelpers");
+const { csrfInput, escapeHtml, normalizeFontScale, renderNotifications } = require("../services/viewHelpers");
 const { RELEASE_LABEL } = require("../config/release");
 
-function layout({ title, user, active, body }) {
+function layout({ title, user, active, body, notifications = [] }) {
   const nav = [
     ["/dashboard", "Dashboard"],
     ["/entries", "Lançamentos"],
@@ -83,6 +83,7 @@ function layout({ title, user, active, body }) {
       </div>
     </details>
   </header>
+  ${renderNotifications(notifications)}
   <main class="page">${body}</main>
   <footer class="app-footer">
     <span>EmDia</span>
