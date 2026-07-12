@@ -174,8 +174,33 @@ function createServer() {
     return sendHtml(res, accountsView({ user: req.user, accounts: Account.list(req.user.id) }));
   });
 
+  app.get("/accounts/:id/edit", (req, res) => {
+    const account = Account.getById(req.user.id, req.params.id);
+    if (!account) return sendHtml(res, notFoundView(req.user), 404);
+
+    return sendHtml(
+      res,
+      accountsView({
+        user: req.user,
+        accounts: Account.list(req.user.id),
+        account,
+        action: `/accounts/${account.id}`,
+      })
+    );
+  });
+
   app.post("/accounts", requireCsrf, (req, res) => {
     Account.create(req.user.id, req.body);
+    return redirect(res, "/accounts");
+  });
+
+  app.post("/accounts/:id", requireCsrf, (req, res) => {
+    Account.update(req.user.id, req.params.id, req.body);
+    return redirect(res, "/accounts");
+  });
+
+  app.post("/accounts/:id/delete", requireCsrf, (req, res) => {
+    Account.softDelete(req.user.id, req.params.id);
     return redirect(res, "/accounts");
   });
 
@@ -183,8 +208,33 @@ function createServer() {
     return sendHtml(res, categoriesView({ user: req.user, categories: Category.list(req.user.id) }));
   });
 
+  app.get("/categories/:id/edit", (req, res) => {
+    const category = Category.getById(req.user.id, req.params.id);
+    if (!category) return sendHtml(res, notFoundView(req.user), 404);
+
+    return sendHtml(
+      res,
+      categoriesView({
+        user: req.user,
+        categories: Category.list(req.user.id),
+        category,
+        action: `/categories/${category.id}`,
+      })
+    );
+  });
+
   app.post("/categories", requireCsrf, (req, res) => {
     Category.create(req.user.id, req.body);
+    return redirect(res, "/categories");
+  });
+
+  app.post("/categories/:id", requireCsrf, (req, res) => {
+    Category.update(req.user.id, req.params.id, req.body);
+    return redirect(res, "/categories");
+  });
+
+  app.post("/categories/:id/delete", requireCsrf, (req, res) => {
+    Category.softDelete(req.user.id, req.params.id);
     return redirect(res, "/categories");
   });
 

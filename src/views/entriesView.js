@@ -181,6 +181,9 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
       </section>
       <form method="post" action="${action}" class="form-grid form-compact panel">
         ${csrfInput(user)}
+                <label class="field-span-2">Descrição
+          <input name="description" value="${escapeHtml(entry?.description || "")}" required>
+        </label>
         <label>Tipo
           <select name="entry_type">
             ${option("EXPENSE", entryTypeLabel("EXPENSE"), type)}
@@ -190,9 +193,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
         <label>Competência
           <input type="month" name="competence_month" value="${escapeHtml(selectedCompetence)}" required>
         </label>
-        <label class="field-span-2">Descrição
-          <input name="description" value="${escapeHtml(entry?.description || "")}" required>
-        </label>
+
         <label>Valor previsto
           <input name="expected_amount" inputmode="decimal" value="${escapeHtml(moneyInput(entry?.expected_amount_cents))}" required>
         </label>

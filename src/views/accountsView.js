@@ -4,42 +4,86 @@ const {
   accountTypeLabel,
   csrfInput,
   escapeHtml,
+  lucideIcon,
+  moneyInput,
   option,
 } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
-function accountsView({ user, accounts }) {
+const ACTION_ICONS = {
+  edit: lucideIcon("pencil"),
+  delete: lucideIcon("trash-2"),
+};
+
+function recordActionLink({ href, icon, label, tone = "" }) {
+  return `<a class="record-action-button ${tone}" href="${escapeHtml(href)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</a>`;
+}
+
+function recordActionForm({ action, icon, label, tone = "", user, confirmMessage = "" }) {
+  const confirmAttribute = confirmMessage ? ` onsubmit="return confirm('${escapeHtml(confirmMessage)}')"` : "";
+
+  return `<form class="record-action-form" method="post" action="${escapeHtml(action)}"${confirmAttribute}>
+    ${csrfInput(user)}
+    <button type="submit" class="record-action-button ${tone}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</button>
+  </form>`;
+}
+
+function accountsView({ user, accounts, account = null, action = "/accounts" }) {
+  const isEdit = Boolean(account?.id);
+
   return layout({
-    title: "Contas",
+    title: isEdit ? "Editar conta" : "Contas",
     user,
     active: "/accounts",
     body: `
-      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas</h1></section>
+      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>${isEdit ? "Editar conta" : "Contas"}</h1></section>
       <section class="split compact-crud">
-        <form method="post" action="/accounts" class="panel form-grid form-compact form-short">
+        <form method="post" action="${escapeHtml(action)}" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
-          <label>Nome<input name="name" required></label>
+          <label>Nome<input name="name" value="${escapeHtml(account?.name || "")}" required></label>
           <label>Tipo
             <select name="type">
-              ${ACCOUNT_TYPE_OPTIONS.map(([value, label]) => option(value, label, "")).join("")}
+              ${ACCOUNT_TYPE_OPTIONS.map(([value, label]) => option(value, label, account?.type || "")).join("")}
             </select>
           </label>
-          <label>Instituição<input name="institution_name"></label>
-          <label>Saldo inicial<input name="initial_balance" inputmode="decimal" value="0,00"></label>
+          <label>Instituição<input name="institution_name" value="${escapeHtml(account?.institution_name || "")}"></label>
+          <label>Saldo inicial<input name="initial_balance" inputmode="decimal" value="${escapeHtml(moneyInput(account?.initial_balance_cents))}"></label>
           <div class="form-actions wide">
-            <a class="ghost-button" href="/dashboard">Voltar</a>
-            <button type="submit">Salvar</button>
+            <a class="ghost-button" href="${isEdit ? "/accounts" : "/dashboard"}">Voltar</a>
+            <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
           </div>
         </form>
-        <article class="panel">${accountsTable(accounts)}</article>
+        <article class="panel">${accountsTable(accounts, user)}</article>
       </section>
     `,
   });
 }
 
-function accountsTable(accounts) {
-  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th>Saldo inicial</th></tr></thead><tbody>
-    ${accounts.map((account) => `<tr><td>${escapeHtml(account.name)}</td><td>${escapeHtml(accountTypeLabel(account.type))}</td><td>${escapeHtml(account.institution_name || "-")}</td><td>${formatMoney(account.initial_balance_cents)}</td></tr>`).join("")}
+function accountsTable(accounts, user) {
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th>Saldo inicial</th><th>Ações</th></tr></thead><tbody>
+    ${accounts.map((account) => `<tr>
+      <td>${escapeHtml(account.name)}</td>
+      <td>${escapeHtml(accountTypeLabel(account.type))}</td>
+      <td>${escapeHtml(account.institution_name || "-")}</td>
+      <td>${formatMoney(account.initial_balance_cents)}</td>
+      <td class="record-actions-cell">
+        <div class="record-actions">
+          ${recordActionLink({
+            href: `/accounts/${account.id}/edit`,
+            icon: "edit",
+            label: "Editar conta",
+          })}
+          ${recordActionForm({
+            action: `/accounts/${account.id}/delete`,
+            icon: "delete",
+            label: "Excluir conta",
+            tone: "danger",
+            user,
+            confirmMessage: "Excluir esta conta?",
+          })}
+        </div>
+      </td>
+    </tr>`).join("")}
   </tbody></table></div>`;
 }
 

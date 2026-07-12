@@ -40,6 +40,45 @@ function create(userId, data) {
   return getById(userId, id);
 }
 
+function update(userId, id, data) {
+  const now = new Date().toISOString();
+
+  getDatabase()
+    .prepare(`
+      UPDATE categories
+      SET
+        name = ?,
+        entry_type = ?,
+        icon = ?,
+        color = ?,
+        updated_at = ?
+      WHERE user_id = ? AND id = ? AND deleted_at IS NULL
+    `)
+    .run(
+      data.name,
+      data.entry_type || "EXPENSE",
+      data.icon || null,
+      data.color || "#0f766e",
+      now,
+      userId,
+      id
+    );
+
+  return getById(userId, id);
+}
+
+function softDelete(userId, id) {
+  const now = new Date().toISOString();
+
+  return getDatabase()
+    .prepare(`
+      UPDATE categories
+      SET deleted_at = ?, is_active = 0, updated_at = ?
+      WHERE user_id = ? AND id = ? AND deleted_at IS NULL
+    `)
+    .run(now, now, userId, id);
+}
+
 function getById(userId, id) {
   return getDatabase()
     .prepare("SELECT * FROM categories WHERE user_id = ? AND id = ? AND deleted_at IS NULL")
@@ -51,4 +90,6 @@ module.exports = {
   create,
   getById,
   list,
+  softDelete,
+  update,
 };
