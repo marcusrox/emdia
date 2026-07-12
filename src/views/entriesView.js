@@ -5,11 +5,43 @@ const {
   csrfInput,
   entryTypeLabel,
   escapeHtml,
+  lucideIcon,
   moneyInput,
   option,
 } = require("../services/viewHelpers");
 const { currentCompetence } = require("../services/dateService");
 const { layout, monthSwitcher } = require("./layout");
+
+const ACTION_ICONS = {
+  edit: lucideIcon("pencil"),
+  duplicate: lucideIcon("copy"),
+  cancel: lucideIcon("circle-x"),
+};
+
+const TOOLBAR_ICONS = {
+  filter: lucideIcon("filter"),
+  clear: lucideIcon("eraser"),
+  new: lucideIcon("plus"),
+};
+
+function recordActionLink({ href, icon, label, tone = "" }) {
+  return `<a class="record-action-button ${tone}" href="${escapeHtml(href)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</a>`;
+}
+
+function recordActionForm({ action, icon, label, tone = "", user }) {
+  return `<form class="record-action-form" method="post" action="${escapeHtml(action)}">
+    ${csrfInput(user)}
+    <button type="submit" class="record-action-button ${tone}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</button>
+  </form>`;
+}
+
+function toolbarIconLink({ href, icon, label, tone = "" }) {
+  return `<a class="toolbar-icon-button ${tone}" href="${escapeHtml(href)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${TOOLBAR_ICONS[icon]}</a>`;
+}
+
+function toolbarIconButton({ icon, label, tone = "" }) {
+  return `<button type="submit" class="toolbar-icon-button ${tone}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${TOOLBAR_ICONS[icon]}</button>`;
+}
 
 function entriesTable(entries, { compact = false, user = null } = {}) {
   if (!entries.length) {
@@ -45,10 +77,27 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
               ${
                 compact
                   ? ""
-                  : `<td class="actions">
-                    <a href="/entries/${entry.id}/edit">Editar</a>
-                    <form method="post" action="/entries/${entry.id}/duplicate">${csrfInput(user)}<button type="submit">Duplicar</button></form>
-                    <form method="post" action="/entries/${entry.id}/cancel">${csrfInput(user)}<button type="submit">Cancelar</button></form>
+                  : `<td class="record-actions-cell">
+                    <div class="record-actions">
+                      ${recordActionLink({
+                        href: `/entries/${entry.id}/edit`,
+                        icon: "edit",
+                        label: "Editar lançamento",
+                      })}
+                      ${recordActionForm({
+                        action: `/entries/${entry.id}/duplicate`,
+                        icon: "duplicate",
+                        label: "Duplicar lançamento",
+                        user,
+                      })}
+                      ${recordActionForm({
+                        action: `/entries/${entry.id}/cancel`,
+                        icon: "cancel",
+                        label: "Cancelar lançamento",
+                        tone: "danger",
+                        user,
+                      })}
+                    </div>
                   </td>`
               }
             </tr>`
@@ -91,10 +140,25 @@ function entriesListView({ user, competence, entries, filters, categories, accou
             ${option("", "Todas as contas", filters.account_id)}
             ${accounts.map((account) => option(account.id, account.name, filters.account_id)).join("")}
           </select>
-          <button type="submit">Filtrar</button>
-          <a class="ghost-button" href="/entries?competence=${competence}">Limpar</a>
+          <div class="toolbar-actions">
+            ${toolbarIconButton({
+              icon: "filter",
+              label: "Filtrar lançamentos",
+              tone: "primary",
+            })}
+            ${toolbarIconLink({
+              href: `/entries?competence=${competence}`,
+              icon: "clear",
+              label: "Limpar filtros",
+            })}
+          </div>
         </form>
-        <a class="primary-button" href="/entries/new?competence=${competence}">Novo lançamento</a>
+        ${toolbarIconLink({
+          href: `/entries/new?competence=${competence}`,
+          icon: "new",
+          label: "Novo lançamento",
+          tone: "primary",
+        })}
       </section>
       ${entriesTable(entries, { user })}
     `,

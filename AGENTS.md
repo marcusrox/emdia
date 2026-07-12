@@ -22,9 +22,9 @@ baixas financeiras, baseado no PRD tecnico `PRD_sistema_financas_pessoais.md`.
 - Documentacao principal: `README.md`, `PRD_sistema_financas_pessoais.md`,
   `docs/patterns.md` e `docs/architecture.md`.
 
-O MVP atual usa CommonJS, servidor HTTP nativo do Node e `node:sqlite`. Nao
-assuma Express, EJS, Drizzle, TypeScript ou dependencias externas apenas porque
-o PRD cita essas possibilidades futuras.
+O MVP atual usa CommonJS, Express, `node:sqlite` e `lucide-static` para icones
+SVG. Nao assuma EJS, Drizzle, TypeScript ou outras dependencias externas apenas
+porque o PRD cita essas possibilidades futuras.
 
 ## Regra de produto mais importante
 
@@ -106,6 +106,8 @@ Regras essenciais:
 - Use CommonJS (`require`, `module.exports`). Nao introduza ESM sem migracao
   planejada.
 - Mantenha mensagens de usuario em portugues.
+- Use `lucide-static` como fonte padrao de icones da interface, preferindo o
+  helper `lucideIcon` em vez de SVGs avulsos nas views.
 - Use valores monetarios em centavos inteiros; nunca use `float` como modelo de
   persistencia financeira.
 - Models SQLite devem usar placeholders `?`, nunca concatenacao de SQL com

@@ -601,8 +601,7 @@ h2 {
 
 .month-actions,
 .month-form,
-.form-actions,
-.actions {
+.form-actions {
   align-items: center;
   display: flex;
   gap: 8px;
@@ -749,18 +748,59 @@ th {
   color: #854d0e;
 }
 
-.actions form {
-  display: inline-flex;
+.record-actions-cell {
+  min-width: 126px;
 }
 
-.actions button,
-.actions a {
-  background: transparent;
-  border: 0;
+.record-actions {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.record-action-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.record-action-button {
+  align-items: center;
+  aspect-ratio: 1;
+  background: #eef7f6;
+  border: 1px solid #c8dddd;
+  border-radius: 8px;
   color: var(--primary);
-  font-weight: 700;
-  min-height: auto;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 34px;
   padding: 0;
+  width: 34px;
+}
+
+.record-action-button svg {
+  fill: none;
+  height: 18px;
+  stroke: currentColor;
+  width: 18px;
+}
+
+.record-action-button:hover,
+.record-action-button:focus-visible {
+  background: #dff2ef;
+  border-color: var(--primary);
+}
+
+.record-action-button.danger {
+  background: #fff7f7;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.record-action-button.danger:hover,
+.record-action-button.danger:focus-visible {
+  background: #fee2e2;
+  border-color: #ef4444;
 }
 
 .toolbar {
@@ -774,8 +814,53 @@ th {
 .filters {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(180px, 1.4fr) repeat(4, minmax(130px, 1fr)) auto auto;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(4, minmax(130px, 1fr)) auto;
   width: 100%;
+}
+
+.toolbar-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.toolbar-icon-button {
+  align-items: center;
+  aspect-ratio: 1;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--primary);
+  display: inline-flex;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0;
+  width: 40px;
+}
+
+.toolbar-icon-button svg {
+  fill: none;
+  height: 18px;
+  stroke: currentColor;
+  width: 18px;
+}
+
+.toolbar-icon-button:hover,
+.toolbar-icon-button:focus-visible {
+  background: #eef7f6;
+  border-color: var(--primary);
+}
+
+.toolbar-icon-button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.toolbar-icon-button.primary:hover,
+.toolbar-icon-button.primary:focus-visible {
+  background: #0b6f67;
+  border-color: #0b6f67;
 }
 
 .form-grid {

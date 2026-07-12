@@ -1,3 +1,9 @@
+const fs = require("node:fs");
+const path = require("node:path");
+
+const LUCIDE_ICONS_PATH = path.join(path.dirname(require.resolve("lucide-static/package.json")), "icons");
+const LUCIDE_ICON_CACHE = new Map();
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -62,6 +68,20 @@ function csrfInput(user) {
   return `<input type="hidden" name="_csrf" value="${escapeHtml(user?.csrfToken || "")}">`;
 }
 
+function lucideIcon(name) {
+  if (!LUCIDE_ICON_CACHE.has(name)) {
+    const filePath = path.join(LUCIDE_ICONS_PATH, `${name}.svg`);
+    const svg = fs
+      .readFileSync(filePath, "utf8")
+      .replace(/<!--[\s\S]*?-->\s*/g, "")
+      .replace("<svg", '<svg aria-hidden="true" focusable="false"');
+
+    LUCIDE_ICON_CACHE.set(name, svg);
+  }
+
+  return LUCIDE_ICON_CACHE.get(name);
+}
+
 function normalizeNotifications(notifications = []) {
   return notifications
     .filter(Boolean)
@@ -107,6 +127,7 @@ module.exports = {
   csrfInput,
   entryTypeLabel,
   escapeHtml,
+  lucideIcon,
   moneyInput,
   normalizeFontScale,
   option,

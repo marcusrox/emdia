@@ -28,10 +28,10 @@ baixas financeiras. O projeto foi implementado a partir do PRD técnico
 
 - 🟩 Node.js 22+
 - 🗄️ SQLite via `node:sqlite`
-- 🌐 Servidor HTTP nativo do Node
+- 🌐 Express 5.x
 - 🎨 HTML renderizado no servidor
 - 💅 CSS puro
-- 📦 Sem dependências externas obrigatórias no MVP atual
+- 🎯 Ícones SVG via `lucide-static`
 
 > ℹ️ O módulo `node:sqlite` pode exibir um aviso experimental no Node 22. Isso é
 > esperado nesta versão do MVP.

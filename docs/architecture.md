@@ -28,7 +28,8 @@ Stack vigente:
 - Express 5.x;
 - SQLite via `node:sqlite`;
 - HTML renderizado por funcoes em `src/services/viewEngine.js`;
-- CSS puro em `public/css/styles.css`.
+- CSS puro em `public/css/styles.css`;
+- icones SVG do pacote `lucide-static`.
 
 Decisoes intencionais:
 
@@ -36,6 +37,8 @@ Decisoes intencionais:
   middlewares basicos e arquivos estaticos;
 - manter persistencia local simples;
 - manter regras financeiras em models/services;
+- centralizar iconografia de interface com `lucide-static` e helper server-side,
+  evitando CDN e SVGs avulsos espalhados pelas views;
 - preservar a competencia mensal como regra central de produto;
 - manter a aplicacao facil de executar com `npm start`.
 

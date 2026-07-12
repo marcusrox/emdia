@@ -49,7 +49,8 @@ O MVP atual usa:
 - Express 5.x;
 - SQLite via `node:sqlite`;
 - HTML renderizado no servidor em `src/services/viewEngine.js`;
-- CSS puro em `public/css/styles.css`.
+- CSS puro em `public/css/styles.css`;
+- icones SVG via `lucide-static`, renderizados por helper server-side.
 
 Nao assuma EJS, TypeScript, Drizzle ou bibliotecas de UI no codigo atual. Essas
 tecnologias podem aparecer no PRD como evolucao futura, mas nao fazem parte da
@@ -92,6 +93,8 @@ Evite criar novas camadas se uma alteracao localizada resolver o problema.
 - Use nomes descritivos em ingles para codigo e entidades tecnicas.
 - Mantenha textos visiveis ao usuario em portugues.
 - Evite dependencias novas sem necessidade clara.
+- Use `lucide-static` como fonte padrao de icones antes de adicionar outra
+  biblioteca ou SVG avulso.
 - Evite estado global mutavel fora de modulos de infraestrutura, como conexao
   com banco.
 - Use retorno explicito de objetos quando isso melhorar leitura do fluxo.
@@ -250,6 +253,8 @@ Padroes:
 - mantenha o seletor de competencia visivel em telas mensais;
 - preserve acoes esperadas: mes anterior, proximo mes, aplicar competencia e
   voltar para mes atual.
+- use o helper `lucideIcon` de `src/services/viewHelpers.js` para renderizar
+  icones Lucide quando uma view precisar de iconografia.
 
 Se uma tela crescer demais, extraia helpers dentro do proprio `viewEngine.js`
 antes de criar uma nova arquitetura.
@@ -266,7 +271,13 @@ Padroes:
 - evite estilos inline;
 - nao introduza frameworks CSS sem pedido explicito;
 - garanta que tabelas tenham `overflow-x` quando necessario;
-- botoes e links de acao devem ter estados visuais claros.
+- botoes e links de acao devem ter estados visuais claros;
+- icones de interface devem vir de `lucide-static`, com SVG renderizado via
+  helper, `aria-hidden="true"` no SVG e texto acessivel no controle por
+  `aria-label` ou texto visivel;
+- acoes por registro em listagens devem usar o padrao `record-actions` e
+  `record-action-button`, preservando semantica de link para `GET` e formulario
+  para `POST`;
 - formularios de cadastro e edicao operacionais devem usar o padrao compacto
   (`form-compact`) para reduzir rolagem e aumentar densidade sem perder
   legibilidade.
