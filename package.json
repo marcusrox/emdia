@@ -7,7 +7,7 @@
     "start": "node app.js",
     "dev": "set NODE_ENV=development&& node --disable-warning=ExperimentalWarning --watch app.js",
     "seed": "node src/database/seed.js",
-    "check": "node --check app.js && node --check src/server.js && node --check src/config/release.js && node --check src/database/connection.js && node --check src/database/schema.js && node --check src/database/seed.js && node --check src/models/User.js && node --check src/models/FinancialEntry.js && node --check src/services/authService.js && node --check src/services/viewHelpers.js && node --check src/services/viewEngine.js && node --check src/views/layout.js && node --check src/views/authView.js && node --check src/views/dashboardView.js && node --check src/views/entriesView.js && node --check src/views/accountsView.js && node --check src/views/categoriesView.js && node --check src/views/settingsView.js && node --check src/views/errorsView.js"
+    "check": "node --check app.js && node --check src/server.js && node --check src/config/release.js && node --check src/database/connection.js && node --check src/database/schema.js && node --check src/database/seed.js && node --check src/models/User.js && node --check src/models/FinancialEntry.js && node --check src/services/authService.js && node --check src/services/viewHelpers.js && node --check src/services/viewEngine.js && node --check src/views/layout.js && node --check src/views/authView.js && node --check src/views/dashboardView.js && node --check src/views/entriesView.js && node --check src/views/accountsView.js && node --check src/views/categoriesView.js && node --check src/views/settingsView.js && node --check src/views/errorsView.js && node --check public/js/app.js"
   },
   "keywords": [],
   "author": "",

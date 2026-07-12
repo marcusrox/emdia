@@ -116,6 +116,21 @@ Fluxos manuais:
 Esta task registra o escopo solicitado, mas a implementacao ainda nao deve ser
 feita neste momento.
 
+## Implementacao
+
+- Topo mobile reorganizado em uma unica linha com menu sanduiche, logo e menu do
+  usuario.
+- Menu sanduiche mobile passou a ser apenas icone, ao lado do logo.
+- Menu do usuario mobile passou a ser um icone de usuario, sem exibir o nome.
+- Icone de usuario mobile foi reduzido, alinhado a direita e ficou sem fundo
+  circular.
+- Menus mobile passaram a compartilhar o mesmo grupo de `<details>`, evitando
+  sobreposicao quando um menu e aberto enquanto o outro ja estava aberto.
+- Menu do usuario desktop continua exibindo o nome do usuario.
+- Navegacao horizontal desktop foi preservada.
+- Menus mobile seguem usando `<details>` e CSS, sem JavaScript.
+- Controle de release atualizado para `Release 11/07/2026 11:35 - 003`.
+
 ---
 
 ## Assinatura da LLM
@@ -124,3 +139,12 @@ feita neste momento.
 - Modelo: GPT-5 Codex
 - Versao: nao informado
 - Acao: criacao
+
+---
+
+## Assinatura da LLM
+
+- Data: 2026-07-11
+- Modelo: GPT-5 Codex
+- Versao: nao informado
+- Acao: atualizacao

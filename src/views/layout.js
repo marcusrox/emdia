@@ -24,7 +24,38 @@ function layout({ title, user, active, body }) {
 </head>
 <body class="font-scale-${fontScale}">
   <header class="topbar">
-    <a class="brand auth-brand app-brand" href="/dashboard">
+    <div class="mobile-top-row">
+      <details class="mobile-nav-menu" name="mobile-top-menu">
+        <summary aria-label="Abrir menu de navegação">
+          <span aria-hidden="true"></span>
+        </summary>
+        <nav class="main-nav mobile-nav">
+          ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
+        </nav>
+      </details>
+      <a class="brand auth-brand app-brand" href="/dashboard">
+        <span class="auth-brand-mark" aria-hidden="true">
+          <span>Em</span>
+        </span>
+        <span class="auth-brand-copy">
+          <strong>EmDia</strong>
+          <small>Suas contas no tempo certo.</small>
+        </span>
+      </a>
+      <details class="user-menu mobile-user-menu" name="mobile-top-menu">
+        <summary class="user-chip user-icon-button" aria-label="Abrir menu do usuário">
+          <span aria-hidden="true"></span>
+        </summary>
+        <div class="user-menu-panel">
+          <a href="/settings">Configurações</a>
+          <form method="post" action="/logout">
+            ${csrfInput(user)}
+            <button type="submit">Sair</button>
+          </form>
+        </div>
+      </details>
+    </div>
+    <a class="brand auth-brand app-brand desktop-brand" href="/dashboard">
       <span class="auth-brand-mark" aria-hidden="true">
         <span>Em</span>
       </span>
@@ -36,17 +67,11 @@ function layout({ title, user, active, body }) {
     <nav class="main-nav desktop-nav">
       ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
     </nav>
-    <details class="mobile-nav-menu">
-      <summary aria-label="Abrir menu de navegação">
-        <span aria-hidden="true"></span>
-        <strong>Menu</strong>
+    <details class="user-menu desktop-user-menu">
+      <summary class="user-chip desktop-user-chip">
+        <span class="user-icon-small" aria-hidden="true"></span>
+        <span>${escapeHtml(user.name)}</span>
       </summary>
-      <nav class="main-nav mobile-nav">
-        ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
-      </nav>
-    </details>
-    <details class="user-menu">
-      <summary class="user-chip">${escapeHtml(user.name)}</summary>
       <div class="user-menu-panel">
         <a href="/settings">Configurações</a>
         <form method="post" action="/logout">
@@ -62,6 +87,7 @@ function layout({ title, user, active, body }) {
     <p>Desenvolvido com <span class="footer-heart" aria-label="coração vermelho"></span> para você ficar sempre dentro do planejamento</p>
     <small>${escapeHtml(RELEASE_LABEL)}</small>
   </footer>
+  <script src="/public/js/app.js"></script>
 </body>
 </html>`;
 }

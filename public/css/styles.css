@@ -100,6 +100,10 @@ button,
   z-index: 5;
 }
 
+.mobile-top-row {
+  display: none;
+}
+
 .brand {
   align-items: center;
   display: flex;
@@ -160,7 +164,8 @@ td small {
   justify-content: center;
   list-style: none;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0;
+  width: 40px;
 }
 
 .mobile-nav-menu summary::-webkit-details-marker {
@@ -196,15 +201,40 @@ td small {
   top: 6px;
 }
 
-.mobile-nav-menu summary strong {
-  font-size: 13px;
-}
-
 .user-chip {
   background: var(--surface-2);
   border-radius: 999px;
   color: var(--muted);
   padding: 8px 12px;
+}
+
+.desktop-user-chip {
+  align-items: center;
+  border-radius: 8px;
+  gap: 8px;
+}
+
+.user-icon-small {
+  border: 2px solid var(--primary);
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 14px;
+  position: relative;
+  width: 14px;
+}
+
+.user-icon-small::after {
+  border: 2px solid var(--primary);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+  content: "";
+  height: 8px;
+  left: 50%;
+  position: absolute;
+  top: 13px;
+  transform: translateX(-50%);
+  width: 22px;
 }
 
 .user-menu {
@@ -266,6 +296,41 @@ td small {
 .user-menu form,
 .user-menu-panel form {
   margin: 0;
+}
+
+.mobile-user-menu {
+  display: none;
+}
+
+.user-icon-button {
+  align-items: center;
+  border: 1px solid var(--line);
+  justify-content: center;
+  min-height: 40px;
+  padding: 0;
+  width: 40px;
+}
+
+.user-icon-button span {
+  border: 2px solid var(--primary);
+  border-radius: 999px;
+  display: block;
+  height: 17px;
+  position: relative;
+  width: 17px;
+}
+
+.user-icon-button span::after {
+  border: 2px solid var(--primary);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+  content: "";
+  height: 10px;
+  left: 50%;
+  position: absolute;
+  top: 16px;
+  transform: translateX(-50%);
+  width: 26px;
 }
 
 .auth-page {
@@ -853,7 +918,6 @@ textarea {
 }
 
 @media (max-width: 980px) {
-  .topbar,
   .monthbar,
   .toolbar {
     align-items: stretch;
@@ -861,18 +925,36 @@ textarea {
     flex-direction: column;
   }
 
+  .topbar {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px 16px;
+  }
+
+  .mobile-top-row {
+    align-items: center;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 40px minmax(0, auto) minmax(32px, 1fr);
+    justify-content: start;
+  }
+
+  .desktop-brand,
   .desktop-nav {
     display: none;
   }
 
   .mobile-nav-menu {
-    display: grid;
-    gap: 8px;
-    width: 100%;
+    display: block;
+    position: relative;
+    width: 40px;
   }
 
   .mobile-nav-menu summary {
-    justify-self: stretch;
+    justify-self: auto;
   }
 
   .mobile-nav {
@@ -881,8 +963,13 @@ textarea {
     border-radius: 8px;
     display: grid;
     gap: 4px;
+    left: 0;
+    min-width: min(300px, calc(100vw - 32px));
     overflow: visible;
     padding: 8px;
+    position: absolute;
+    top: calc(100% + 8px);
+    z-index: 12;
   }
 
   .mobile-nav a {
@@ -891,17 +978,67 @@ textarea {
   }
 
   .user-menu {
-    width: 100%;
+    width: auto;
   }
 
-  .user-menu summary {
-    justify-content: space-between;
-    width: 100%;
+  .desktop-user-menu {
+    display: none;
+  }
+
+  .mobile-user-menu {
+    display: block;
+    position: relative;
+    justify-self: end;
   }
 
   .user-menu-panel {
-    position: static;
-    margin-top: 8px;
+    left: 0;
+    margin-top: 0;
+    right: auto;
+    top: calc(100% + 8px);
+  }
+
+  .user-menu summary::after {
+    content: "";
+    margin-left: 0;
+  }
+
+  .mobile-user-menu .user-menu-panel {
+    left: auto;
+    right: 0;
+  }
+
+  .mobile-top-row .app-brand .auth-brand-mark {
+    height: 40px;
+    width: 40px;
+  }
+
+  .mobile-top-row .auth-brand-copy strong {
+    font-size: 22px;
+  }
+
+  .mobile-top-row .auth-brand-copy small {
+    display: none;
+  }
+
+  .mobile-top-row .user-icon-button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    min-height: 32px;
+    padding: 0;
+    width: 32px;
+  }
+
+  .mobile-top-row .user-icon-button span {
+    height: 13px;
+    width: 13px;
+  }
+
+  .mobile-top-row .user-icon-button span::after {
+    height: 8px;
+    top: 12px;
+    width: 20px;
   }
 
   .metrics-grid,
