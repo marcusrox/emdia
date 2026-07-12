@@ -16,6 +16,17 @@ function byType(userId, entryType) {
   return list(userId).filter((category) => category.entry_type === entryType || category.entry_type === "BOTH");
 }
 
+function listDeleted(userId) {
+  return getDatabase()
+    .prepare(`
+      SELECT *
+      FROM categories
+      WHERE user_id = ? AND deleted_at IS NOT NULL
+      ORDER BY deleted_at DESC, entry_type, name
+    `)
+    .all(userId);
+}
+
 function create(userId, data) {
   const now = new Date().toISOString();
   const id = newId("cat");
@@ -79,6 +90,18 @@ function softDelete(userId, id) {
     .run(now, now, userId, id);
 }
 
+function restore(userId, id) {
+  const now = new Date().toISOString();
+
+  return getDatabase()
+    .prepare(`
+      UPDATE categories
+      SET deleted_at = NULL, is_active = 1, updated_at = ?
+      WHERE user_id = ? AND id = ? AND deleted_at IS NOT NULL
+    `)
+    .run(now, userId, id);
+}
+
 function getById(userId, id) {
   return getDatabase()
     .prepare("SELECT * FROM categories WHERE user_id = ? AND id = ? AND deleted_at IS NULL")
@@ -90,6 +113,8 @@ module.exports = {
   create,
   getById,
   list,
+  listDeleted,
+  restore,
   softDelete,
   update,
 };

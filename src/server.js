@@ -11,6 +11,8 @@ const {
   accountsView,
   categoriesView,
   dashboardView,
+  deletedAccountsView,
+  deletedCategoriesView,
   entriesListView,
   entryDetailView,
   entryFormView,
@@ -174,6 +176,10 @@ function createServer() {
     return sendHtml(res, accountsView({ user: req.user, accounts: Account.list(req.user.id) }));
   });
 
+  app.get("/accounts/deleted", (req, res) => {
+    return sendHtml(res, deletedAccountsView({ user: req.user, accounts: Account.listDeleted(req.user.id) }));
+  });
+
   app.get("/accounts/:id/edit", (req, res) => {
     const account = Account.getById(req.user.id, req.params.id);
     if (!account) return sendHtml(res, notFoundView(req.user), 404);
@@ -204,8 +210,17 @@ function createServer() {
     return redirect(res, "/accounts");
   });
 
+  app.post("/accounts/:id/restore", requireCsrf, (req, res) => {
+    Account.restore(req.user.id, req.params.id);
+    return redirect(res, "/accounts/deleted");
+  });
+
   app.get("/categories", (req, res) => {
     return sendHtml(res, categoriesView({ user: req.user, categories: Category.list(req.user.id) }));
+  });
+
+  app.get("/categories/deleted", (req, res) => {
+    return sendHtml(res, deletedCategoriesView({ user: req.user, categories: Category.listDeleted(req.user.id) }));
   });
 
   app.get("/categories/:id/edit", (req, res) => {
@@ -236,6 +251,11 @@ function createServer() {
   app.post("/categories/:id/delete", requireCsrf, (req, res) => {
     Category.softDelete(req.user.id, req.params.id);
     return redirect(res, "/categories");
+  });
+
+  app.post("/categories/:id/restore", requireCsrf, (req, res) => {
+    Category.restore(req.user.id, req.params.id);
+    return redirect(res, "/categories/deleted");
   });
 
   app.get("/profile", (req, res) => {

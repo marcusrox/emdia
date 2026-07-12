@@ -9,8 +9,10 @@ const {
 const { layout } = require("./layout");
 
 const ACTION_ICONS = {
+  archive: lucideIcon("archive"),
   edit: lucideIcon("pencil"),
   delete: lucideIcon("trash-2"),
+  restore: lucideIcon("rotate-ccw"),
 };
 
 function recordActionLink({ href, icon, label, tone = "" }) {
@@ -50,7 +52,12 @@ function categoriesView({ user, categories, category = null, action = "/categori
             <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
           </div>
         </form>
-        <article class="panel"><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Ações</th></tr></thead><tbody>
+        <article class="panel">
+          <div class="panel-heading">
+            <h2>Categorias cadastradas</h2>
+            <a class="record-action-button" href="/categories/deleted" title="Ver categorias arquivadas" aria-label="Ver categorias arquivadas">${ACTION_ICONS.archive}</a>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Ações</th></tr></thead><tbody>
           ${categories.map((category) => `<tr>
             <td>${escapeHtml(category.name)}</td>
             <td>${escapeHtml(entryTypeLabel(category.entry_type))}</td>
@@ -78,6 +85,56 @@ function categoriesView({ user, categories, category = null, action = "/categori
   });
 }
 
+function deletedCategoriesView({ user, categories }) {
+  return layout({
+    title: "Categorias arquivadas",
+    user,
+    active: "/categories",
+    body: `
+      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Categorias arquivadas</h1></section>
+      <div class="page-actions">
+        <a class="ghost-button" href="/categories">Voltar para categorias ativas</a>
+      </div>
+      <article class="panel">${deletedCategoriesTable(categories, user)}</article>
+    `,
+  });
+}
+
+function deletedCategoriesTable(categories, user) {
+  if (!categories.length) {
+    return `<div class="empty-state">Nenhum item arquivado.</div>`;
+  }
+
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Arquivada em</th><th>Ações</th></tr></thead><tbody>
+    ${categories.map((category) => `<tr>
+      <td>${escapeHtml(category.name)}</td>
+      <td>${escapeHtml(entryTypeLabel(category.entry_type))}</td>
+      <td>${escapeHtml(formatArchivedAt(category.deleted_at, user.timezone))}</td>
+      <td class="record-actions-cell">
+        <div class="record-actions">
+          ${recordActionForm({
+            action: `/categories/${category.id}/restore`,
+            icon: "restore",
+            label: "Restaurar categoria",
+            user,
+          })}
+        </div>
+      </td>
+    </tr>`).join("")}
+  </tbody></table></div>`;
+}
+
+function formatArchivedAt(value, timezone = "America/Bahia") {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
 module.exports = {
   categoriesView,
+  deletedCategoriesView,
 };

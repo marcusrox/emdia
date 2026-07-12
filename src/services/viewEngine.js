@@ -1,5 +1,5 @@
-const { accountsView } = require("../views/accountsView");
-const { categoriesView } = require("../views/categoriesView");
+const { accountsView, deletedAccountsView } = require("../views/accountsView");
+const { categoriesView, deletedCategoriesView } = require("../views/categoriesView");
 const { dashboardView } = require("../views/dashboardView");
 const { entriesListView, entryDetailView, entryFormView } = require("../views/entriesView");
 const { loginView } = require("../views/authView");
@@ -12,6 +12,8 @@ module.exports = {
   accountsView,
   categoriesView,
   dashboardView,
+  deletedAccountsView,
+  deletedCategoriesView,
   entriesListView,
   entryDetailView,
   entryFormView,

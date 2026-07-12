@@ -11,8 +11,10 @@ const {
 const { layout } = require("./layout");
 
 const ACTION_ICONS = {
+  archive: lucideIcon("archive"),
   edit: lucideIcon("pencil"),
   delete: lucideIcon("trash-2"),
+  restore: lucideIcon("rotate-ccw"),
 };
 
 function recordActionLink({ href, icon, label, tone = "" }) {
@@ -53,8 +55,29 @@ function accountsView({ user, accounts, account = null, action = "/accounts" }) 
             <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
           </div>
         </form>
-        <article class="panel">${accountsTable(accounts, user)}</article>
+        <article class="panel">
+          <div class="panel-heading">
+            <h2>Contas cadastradas</h2>
+            <a class="record-action-button" href="/accounts/deleted" title="Ver contas arquivadas" aria-label="Ver contas arquivadas">${ACTION_ICONS.archive}</a>
+          </div>
+          ${accountsTable(accounts, user)}
+        </article>
       </section>
+    `,
+  });
+}
+
+function deletedAccountsView({ user, accounts }) {
+  return layout({
+    title: "Contas arquivadas",
+    user,
+    active: "/accounts",
+    body: `
+      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas arquivadas</h1></section>
+      <div class="page-actions">
+        <a class="ghost-button" href="/accounts">Voltar para contas ativas</a>
+      </div>
+      <article class="panel">${deletedAccountsTable(accounts, user)}</article>
     `,
   });
 }
@@ -87,6 +110,43 @@ function accountsTable(accounts, user) {
   </tbody></table></div>`;
 }
 
+function deletedAccountsTable(accounts, user) {
+  if (!accounts.length) {
+    return `<div class="empty-state">Nenhum item arquivado.</div>`;
+  }
+
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Instituição</th><th>Saldo inicial</th><th>Arquivado em</th><th>Ações</th></tr></thead><tbody>
+    ${accounts.map((account) => `<tr>
+      <td>${escapeHtml(account.name)}</td>
+      <td>${escapeHtml(accountTypeLabel(account.type))}</td>
+      <td>${escapeHtml(account.institution_name || "-")}</td>
+      <td>${formatMoney(account.initial_balance_cents)}</td>
+      <td>${escapeHtml(formatArchivedAt(account.deleted_at, user.timezone))}</td>
+      <td class="record-actions-cell">
+        <div class="record-actions">
+          ${recordActionForm({
+            action: `/accounts/${account.id}/restore`,
+            icon: "restore",
+            label: "Restaurar conta",
+            user,
+          })}
+        </div>
+      </td>
+    </tr>`).join("")}
+  </tbody></table></div>`;
+}
+
+function formatArchivedAt(value, timezone = "America/Bahia") {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
 module.exports = {
   accountsView,
+  deletedAccountsView,
 };

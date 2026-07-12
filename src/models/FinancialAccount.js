@@ -17,6 +17,17 @@ function active(userId) {
   return list(userId).filter((account) => account.is_active);
 }
 
+function listDeleted(userId) {
+  return getDatabase()
+    .prepare(`
+      SELECT *
+      FROM financial_accounts
+      WHERE user_id = ? AND deleted_at IS NOT NULL
+      ORDER BY deleted_at DESC, name
+    `)
+    .all(userId);
+}
+
 function create(userId, data) {
   const now = new Date().toISOString();
   const id = newId("acc");
@@ -90,6 +101,18 @@ function softDelete(userId, id) {
     .run(now, now, userId, id);
 }
 
+function restore(userId, id) {
+  const now = new Date().toISOString();
+
+  return getDatabase()
+    .prepare(`
+      UPDATE financial_accounts
+      SET deleted_at = NULL, is_active = 1, updated_at = ?
+      WHERE user_id = ? AND id = ? AND deleted_at IS NOT NULL
+    `)
+    .run(now, userId, id);
+}
+
 function getById(userId, id) {
   return getDatabase()
     .prepare("SELECT * FROM financial_accounts WHERE user_id = ? AND id = ? AND deleted_at IS NULL")
@@ -101,6 +124,8 @@ module.exports = {
   create,
   getById,
   list,
+  listDeleted,
+  restore,
   softDelete,
   update,
 };
