@@ -1171,8 +1171,74 @@ tbody tr:hover {
 }
 
 .form-compact label {
+  align-self: start;
   font-size: 12px;
   gap: 4px;
+}
+
+.field-label-row {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.field-help {
+  display: inline-flex;
+  position: relative;
+}
+
+.field-help summary {
+  align-items: center;
+  background: #eef7f6;
+  border: 1px solid #c8dddd;
+  border-radius: 999px;
+  color: var(--primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 18px;
+  justify-content: center;
+  line-height: 1;
+  list-style: none;
+  width: 18px;
+}
+
+.field-help summary::-webkit-details-marker {
+  display: none;
+}
+
+.field-help summary:hover,
+.field-help summary:focus-visible {
+  background: #dff2ef;
+  border-color: var(--primary);
+  outline: 2px solid rgba(37, 99, 235, 0.18);
+  outline-offset: 1px;
+}
+
+.field-help-popover {
+  background: var(--text);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(23, 33, 31, 0.18);
+  color: white;
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  left: 50%;
+  line-height: 1.35;
+  max-width: min(280px, calc(100vw - 48px));
+  min-width: 220px;
+  padding: 9px 10px;
+  position: absolute;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 20;
+}
+
+.field-help[open] .field-help-popover {
+  display: block;
 }
 
 .form-compact input,

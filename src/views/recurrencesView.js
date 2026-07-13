@@ -59,44 +59,42 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action }) 
       </section>
       <form method="post" action="${escapeHtml(action)}" class="form-grid form-compact panel">
         ${csrfInput(user)}
-        <label class="field-span-2">Descrição
+        <label class="field-span-2">${fieldLabel("Descrição")}
           <input name="description" value="${escapeHtml(recurrence?.description || "")}" required>
         </label>
-        <label>Categoria
+        <label>${fieldLabel("Categoria", "A categoria define se esta recorrência é receita ou despesa.")}
           <select name="category_id" required>
             ${option("", "Selecione", recurrence?.category_id)}
             ${categories.map((category) => option(category.id, categoryOptionLabel(category), recurrence?.category_id)).join("")}
           </select>
-          <small>A categoria define se esta recorrência é receita ou despesa.</small>
         </label>
-        <label>Valor previsto
+        <label>${fieldLabel("Valor previsto")}
           <input name="expected_amount" inputmode="decimal" value="${escapeHtml(moneyInput(recurrence?.expected_amount_cents))}" required>
         </label>
-        <label>Dia de vencimento
+        <label>${fieldLabel("Dia de vencimento", "Quando o mês não tiver esse dia, será usado o último dia do mês.")}
           <input type="number" name="due_day" min="1" max="31" value="${escapeHtml(recurrence?.due_day || 10)}" required>
-          <small>Quando o mês não tiver esse dia, será usado o último dia do mês.</small>
         </label>
-        <label>Competência inicial
+        <label>${fieldLabel("Competência inicial")}
           <input type="month" name="start_competence_month" value="${escapeHtml(selectedStart)}" required>
         </label>
-        <label>Competência final
+        <label>${fieldLabel("Competência final")}
           <input type="month" name="end_competence_month" value="${escapeHtml(recurrence?.end_competence_month || "")}">
         </label>
-        <label>Status
+        <label>${fieldLabel("Status")}
           <select name="status">
             ${Object.entries(STATUS_LABELS).map(([value, label]) => option(value, label, recurrence?.status || "ACTIVE")).join("")}
           </select>
         </label>
-        <label>Conta prevista
+        <label>${fieldLabel("Conta prevista")}
           <select name="financial_account_id">
             ${option("", "Sem conta", recurrence?.financial_account_id)}
             ${accounts.map((account) => option(account.id, account.name, recurrence?.financial_account_id)).join("")}
           </select>
         </label>
-        <label>Favorecido/Pagador
+        <label>${fieldLabel("Favorecido/Pagador")}
           <input name="party_name" value="${escapeHtml(recurrence?.party_name || "")}">
         </label>
-        <label class="field-span-2">Observações
+        <label class="field-span-2">${fieldLabel("Observações")}
           <textarea name="notes">${escapeHtml(recurrence?.notes || "")}</textarea>
         </label>
         <div class="form-actions wide">
@@ -106,6 +104,17 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action }) 
       </form>
     `,
   });
+}
+
+function fieldLabel(label, helpText = "") {
+  const help = helpText
+    ? `<details class="field-help">
+        <summary aria-label="Ajuda sobre ${escapeHtml(label)}">?</summary>
+        <span class="field-help-popover">${escapeHtml(helpText)}</span>
+      </details>`
+    : "";
+
+  return `<span class="field-label-row"><span>${escapeHtml(label)}</span>${help}</span>`;
 }
 
 function recurrencesTable(recurrences, user) {
