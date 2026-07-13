@@ -46,12 +46,14 @@ function list(user, filters = {}) {
         c.color AS category_color,
         p.name AS party_name,
         ea.name AS expected_account_name,
-        aa.name AS actual_account_name
+        aa.name AS actual_account_name,
+        r.description AS recurrence_description
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id
       LEFT JOIN financial_accounts ea ON ea.id = e.expected_account_id
       LEFT JOIN financial_accounts aa ON aa.id = e.actual_account_id
+      LEFT JOIN recurrences r ON r.id = e.recurrence_rule_id
       WHERE ${clauses.join(" AND ")}
       ORDER BY e.due_date ASC, e.description ASC
     `)
@@ -66,12 +68,14 @@ function getById(userId, id) {
         c.name AS category_name,
         p.name AS party_name,
         ea.name AS expected_account_name,
-        aa.name AS actual_account_name
+        aa.name AS actual_account_name,
+        r.description AS recurrence_description
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id
       LEFT JOIN financial_accounts ea ON ea.id = e.expected_account_id
       LEFT JOIN financial_accounts aa ON aa.id = e.actual_account_id
+      LEFT JOIN recurrences r ON r.id = e.recurrence_rule_id
       WHERE e.user_id = ? AND e.id = ? AND e.deleted_at IS NULL
     `)
     .get(userId, id);

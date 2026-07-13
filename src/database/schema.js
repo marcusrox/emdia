@@ -101,6 +101,23 @@ function initializeDatabase() {
       deleted_at TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS recurrences (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      description TEXT NOT NULL,
+      category_id TEXT NOT NULL REFERENCES categories(id),
+      financial_account_id TEXT REFERENCES financial_accounts(id),
+      party_id TEXT REFERENCES parties(id),
+      expected_amount_cents INTEGER NOT NULL,
+      due_day INTEGER NOT NULL,
+      start_competence_month TEXT NOT NULL,
+      end_competence_month TEXT,
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS settlements (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id),
@@ -137,6 +154,13 @@ function initializeDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_entries_due_date
       ON financial_entries(user_id, due_date, status);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_entries_recurrence_competence
+      ON financial_entries(user_id, recurrence_rule_id, competence_month)
+      WHERE recurrence_rule_id IS NOT NULL AND deleted_at IS NULL;
+
+    CREATE INDEX IF NOT EXISTS idx_recurrences_user_status
+      ON recurrences(user_id, status, start_competence_month, end_competence_month);
 
     CREATE INDEX IF NOT EXISTS idx_settlements_entry
       ON settlements(financial_entry_id, reversed_at);

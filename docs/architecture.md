@@ -27,7 +27,8 @@ Stack vigente:
 - CommonJS;
 - Express 5.x;
 - SQLite via `node:sqlite`;
-- HTML renderizado por funcoes em `src/services/viewEngine.js`;
+- HTML renderizado por funcoes em `src/views/*.js`;
+- `src/services/viewEngine.js` como agregador de views para o servidor;
 - CSS puro em `public/css/styles.css`;
 - icones SVG do pacote `lucide-static`.
 
@@ -56,7 +57,7 @@ app.js
 src/server.js
   roteia requests
   chama models
-  chama views
+  chama views exportadas pelo viewEngine
   responde HTML/JSON/redirecionamentos
 
 src/database/
@@ -79,6 +80,10 @@ src/services/
   statusService.js
   id.js
   viewEngine.js
+
+src/views/
+  layout.js
+  *View.js
 
 public/css/styles.css
 ```
@@ -117,7 +122,7 @@ Navegador
     -> middlewares Express
     -> User.ensureDefaultUser()
     -> model/service necessario
-    -> viewEngine ou JSON
+    -> view exportada pelo viewEngine ou JSON
   -> resposta HTTP
 ```
 
@@ -248,11 +253,20 @@ Regras gerais:
 
 ## 10. Renderizacao
 
-A renderizacao server-side fica em `src/services/viewEngine.js`.
+A renderizacao server-side fica em `src/views/*.js`. Cada arquivo de view tende
+a representar um dominio ou conjunto de telas relacionado, por exemplo
+`entriesView.js`, `categoriesView.js`, `accountsView.js` ou
+`recurrencesView.js`.
+
+O arquivo `src/services/viewEngine.js` funciona como agregador/exportador das
+views consumidas por `src/server.js`. Ele preserva um ponto central de import no
+servidor, mas nao deve concentrar a implementacao de novas telas.
 
 Componentes principais:
 
-- layout global;
+- `src/views/layout.js`: layout global, navegacao superior e seletor mensal;
+- `src/services/viewHelpers.js`: escape HTML, inputs, labels, botoes, CSRF e
+  icones;
 - navegacao superior;
 - seletor de competencia;
 - cards de metricas;

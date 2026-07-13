@@ -48,7 +48,8 @@ O MVP atual usa:
 - CommonJS;
 - Express 5.x;
 - SQLite via `node:sqlite`;
-- HTML renderizado no servidor em `src/services/viewEngine.js`;
+- HTML renderizado no servidor por views em `src/views/*.js`;
+- `src/services/viewEngine.js` como agregador de exports das views;
 - CSS puro em `public/css/styles.css`;
 - icones SVG via `lucide-static`, renderizados por helper server-side.
 
@@ -68,6 +69,7 @@ src/database/schema.js
 src/database/seed.js
 src/models/*.js
 src/services/*.js
+src/views/*.js
 public/css/styles.css
 ```
 
@@ -80,7 +82,12 @@ Responsabilidades:
 - `src/database/seed.js`: dados locais iniciais.
 - `src/models/*.js`: persistencia e regras proximas dos dados.
 - `src/services/*.js`: utilitarios e regras reutilizaveis.
-- `src/services/viewEngine.js`: renderizacao HTML server-side.
+- `src/views/*.js`: renderizacao HTML server-side por dominio/tela.
+- `src/views/layout.js`: layout global, navegacao e componentes estruturais.
+- `src/services/viewHelpers.js`: helpers compartilhados de HTML, formularios,
+  labels, botoes e icones.
+- `src/services/viewEngine.js`: agregador/exportador das views usadas pelo
+  servidor.
 - `public/css/styles.css`: estilos globais da aplicacao.
 
 Evite criar novas camadas se uma alteracao localizada resolver o problema.
@@ -242,7 +249,10 @@ POST /categories
 
 ## 11. Renderizacao HTML
 
-A renderizacao atual fica em `src/services/viewEngine.js`.
+A renderizacao atual fica em `src/views/*.js`. O arquivo
+`src/services/viewEngine.js` deve permanecer como agregador/exportador das views
+para uso em `src/server.js`, nao como destino padrao para implementar telas
+novas.
 
 Padroes:
 
@@ -250,14 +260,21 @@ Padroes:
 - mantenha textos de interface em portugues;
 - prefira componentes pequenos de string quando repetidos;
 - nao renderize HTML vindo de entrada externa sem sanitizacao;
+- prefira uma view por dominio/tela, como `entriesView.js`,
+  `categoriesView.js` ou `recurrencesView.js`;
+- use `src/views/layout.js` para layout global, navegacao, seletor mensal e
+  estruturas compartilhadas;
+- use `src/services/viewHelpers.js` para `escapeHtml`, `csrfInput`,
+  `buttonContent`, `buttonLink`, `option`, labels e icones;
 - mantenha o seletor de competencia visivel em telas mensais;
 - preserve acoes esperadas: mes anterior, proximo mes, aplicar competencia e
   voltar para mes atual.
 - use o helper `lucideIcon` de `src/services/viewHelpers.js` para renderizar
   icones Lucide quando uma view precisar de iconografia.
 
-Se uma tela crescer demais, extraia helpers dentro do proprio `viewEngine.js`
-antes de criar uma nova arquitetura.
+Se uma tela crescer demais, extraia helpers pequenos dentro da propria view ou,
+quando forem reutilizaveis entre telas, mova-os para `viewHelpers.js`. Evite
+concentrar implementacao de telas em `viewEngine.js`.
 
 ## 12. CSS e interface
 

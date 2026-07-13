@@ -17,7 +17,8 @@ baixas financeiras, baseado no PRD tecnico `PRD_sistema_financas_pessoais.md`.
 - Seed local: `src/database/seed.js`.
 - Models: `src/models/*.js`.
 - Services: `src/services/*.js`.
-- Renderizacao HTML: `src/services/viewEngine.js`.
+- Views HTML: `src/views/*.js`.
+- Agregador de views: `src/services/viewEngine.js`.
 - Assets estaticos: `public/`.
 - Documentacao principal: `README.md`, `PRD_sistema_financas_pessoais.md`,
   `docs/patterns.md` e `docs/architecture.md`.
@@ -54,8 +55,10 @@ ser explicita e visivel na interface.
 - Evite varrer `node_modules`, `data/`, bancos SQLite, arquivos WAL/SHM e
   arquivos gerados.
 - Prefira patches pequenos e localizados.
-- Nao reescreva `src/services/viewEngine.js`, `src/server.js` ou models inteiros
-  quando um ajuste pontual resolve.
+- Nao reescreva `src/server.js`, models inteiros ou views inteiras quando um
+  ajuste pontual resolve.
+- Para novas telas, prefira criar ou alterar arquivos em `src/views/*.js` e
+  exporta-los por `src/services/viewEngine.js`, que deve atuar como agregador.
 - Nao atualize dependencias, `package-lock.json` ou formato global do projeto
   sem pedido explicito.
 - Nao altere `.env`, dados SQLite, `node_modules` ou arquivos gerados.
@@ -117,6 +120,9 @@ Regras essenciais:
 - Regras de negocio devem ficar em models/services, nao espalhadas no servidor
   HTTP ou na renderizacao.
 - Renderizacao HTML deve escapar dados de usuario com `escapeHtml`.
+- Views devem usar `layout.js` para estrutura comum e `viewHelpers.js` para
+  helpers como `escapeHtml`, `csrfInput`, `buttonContent`, `buttonLink`,
+  `option`, labels e icones.
 - Formularios que alteram dados devem usar POST.
 - Baixas financeiras devem ser persistidas em `settlements`; nao sobrescreva
   apenas o valor realizado sem registrar a baixa.
@@ -152,11 +158,15 @@ emdia/
       moneyService.js
       statusService.js
       viewEngine.js
+    views/
+      layout.js
+      *View.js
     server.js
 ```
 
-Algumas pastas podem existir para evolucao futura, mas ainda nao estao em uso
-ativo. Nao mova codigo para elas sem necessidade clara.
+`src/views/` e ativo e deve receber a implementacao das telas. O arquivo
+`src/services/viewEngine.js` permanece como ponto central de exportacao das
+views para compatibilidade com o servidor.
 
 ## Seguranca obrigatoria
 

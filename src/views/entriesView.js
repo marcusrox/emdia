@@ -70,7 +70,7 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
               <td>${escapeHtml(entry.due_date)}</td>
               <td>
                 <a class="strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
-                <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
+                <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.recurrence_rule_id ? " · Recorrente" : ""}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
               </td>
               <td>${escapeHtml(entry.category_name || "Sem categoria")}</td>
               <td>${escapeHtml(entry.actual_account_name || entry.expected_account_name || "-")}</td>
@@ -258,6 +258,11 @@ function entryDetailView({ user, entry, settlements, accounts }) {
           <p><span>Valor realizado</span><strong>${formatMoney(entry.realized_amount_cents)}</strong></p>
           <p><span>Vencimento</span><strong>${escapeHtml(entry.due_date)}</strong></p>
           <p><span>Categoria</span><strong>${escapeHtml(entry.category_name || "-")}</strong></p>
+          ${
+            entry.recurrence_rule_id
+              ? `<p><span>Origem</span><strong><a class="strong-link" href="/recurrences/${entry.recurrence_rule_id}/edit">Recorrência: ${escapeHtml(entry.recurrence_description || entry.description)}</a></strong></p>`
+              : ""
+          }
           <p><span>Conta</span><strong>${escapeHtml(entry.actual_account_name || entry.expected_account_name || "-")}</strong></p>
           <p><span>Favorecido/Pagador</span><strong>${escapeHtml(entry.party_name || "-")}</strong></p>
           <div class="form-actions">

@@ -3,6 +3,7 @@ const path = require("node:path");
 const Account = require("./models/FinancialAccount");
 const Category = require("./models/Category");
 const Entry = require("./models/FinancialEntry");
+const Recurrence = require("./models/Recurrence");
 const Settlement = require("./models/Settlement");
 const User = require("./models/User");
 const { dueDateFromCompetence, normalizeCompetence } = require("./services/dateService");
@@ -19,6 +20,8 @@ const {
   loginView,
   notFoundView,
   profileView,
+  recurrenceFormView,
+  recurrencesListView,
   settingsView,
 } = require("./services/viewEngine");
 
@@ -57,6 +60,7 @@ function createServer() {
   app.get("/dashboard", (req, res) => {
     const user = req.user;
     const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    Recurrence.generateForCompetence(user, competence);
     return sendHtml(res, dashboardView({ user, competence, dashboard: Entry.dashboard(user, competence) }));
   });
 
@@ -71,6 +75,7 @@ function createServer() {
       category_id: queryValue(req, "category_id"),
       account_id: queryValue(req, "account_id"),
     };
+    Recurrence.generateForCompetence(user, competence);
 
     return sendHtml(
       res,
@@ -170,6 +175,63 @@ function createServer() {
   app.post("/entries/:id/settlements", requireCsrf, (req, res) => {
     const entry = Entry.settle(req.user, req.params.id, req.body);
     return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
+  });
+
+  app.get("/recurrences", (req, res) => {
+    return sendHtml(res, recurrencesListView({ user: req.user, recurrences: Recurrence.list(req.user.id) }));
+  });
+
+  app.get("/recurrences/new", (req, res) => {
+    return sendHtml(
+      res,
+      recurrenceFormView({
+        user: req.user,
+        categories: Category.list(req.user.id),
+        accounts: Account.active(req.user.id),
+        action: "/recurrences",
+      })
+    );
+  });
+
+  app.get("/recurrences/:id/edit", (req, res) => {
+    const recurrence = Recurrence.getById(req.user.id, req.params.id);
+    if (!recurrence) return sendHtml(res, notFoundView(req.user), 404);
+
+    return sendHtml(
+      res,
+      recurrenceFormView({
+        user: req.user,
+        recurrence,
+        categories: Category.list(req.user.id),
+        accounts: Account.active(req.user.id),
+        action: `/recurrences/${recurrence.id}`,
+      })
+    );
+  });
+
+  app.post("/recurrences", requireCsrf, (req, res) => {
+    Recurrence.create(req.user, req.body);
+    return redirect(res, "/recurrences");
+  });
+
+  app.post("/recurrences/:id", requireCsrf, (req, res) => {
+    Recurrence.update(req.user, req.params.id, req.body);
+    return redirect(res, "/recurrences");
+  });
+
+  app.post("/recurrences/:id/pause", requireCsrf, (req, res) => {
+    Recurrence.pause(req.user, req.params.id);
+    return redirect(res, "/recurrences");
+  });
+
+  app.post("/recurrences/:id/activate", requireCsrf, (req, res) => {
+    Recurrence.activate(req.user, req.params.id);
+    return redirect(res, "/recurrences");
+  });
+
+  app.post("/recurrences/:id/end", requireCsrf, (req, res) => {
+    Recurrence.end(req.user, req.params.id);
+    return redirect(res, "/recurrences");
   });
 
   app.get("/accounts", (req, res) => {
