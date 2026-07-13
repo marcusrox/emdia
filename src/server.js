@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("node:path");
 const Account = require("./models/FinancialAccount");
+const AuditLog = require("./models/AuditLog");
 const Category = require("./models/Category");
 const Entry = require("./models/FinancialEntry");
 const Recurrence = require("./models/Recurrence");
@@ -11,6 +12,7 @@ const Auth = require("./services/authService");
 const { logError, logInfo, logWarn } = require("./services/operationalLogger");
 const {
   accountsView,
+  auditView,
   categoriesView,
   dashboardView,
   deletedAccountsView,
@@ -128,6 +130,7 @@ function createServer() {
         entry,
         settlements: Settlement.listByEntry(entry.id),
         accounts: Account.active(user.id),
+        auditEvents: AuditLog.listEntityHistory(user.id, "financial_entry", entry.id),
       })
     );
   });
@@ -195,6 +198,9 @@ function createServer() {
 
   app.post("/entries/:id/duplicate", requireCsrf, (req, res) => {
     const entry = Entry.duplicate(req.user, req.params.id);
+    if (entry) {
+      AuditLog.record(req.user.id, "financial_entry", entry.id, "duplicated", { source_entry_id: req.params.id });
+    }
     const competence = entry ? entry.competence_month : normalizeCompetence("", req.user.timezone);
     return redirect(res, `/entries?competence=${competence}`);
   });
@@ -381,6 +387,11 @@ function createServer() {
       return sendHtml(res, profileView({ user: req.user, profile, errors: result.errors }), 400);
     }
 
+    AuditLog.record(req.user.id, "user", req.user.id, "profile_updated", {
+      name: result.user.name,
+      email: result.user.email,
+      password_changed: Boolean(req.body.new_password),
+    });
     return redirect(res, "/profile?saved=1");
   });
 
@@ -390,12 +401,28 @@ function createServer() {
 
   app.post("/settings", requireCsrf, (req, res) => {
     User.updateInterfacePreferences(req.user.id, req.body);
+    AuditLog.record(req.user.id, "settings", req.user.id, "settings_updated", {
+      font_scale: req.body.font_scale,
+      list_density: req.body.list_density,
+    });
     logInfo("sensitive.settings.updated", "Preferências de interface atualizadas.", {
       user: req.user,
       entity: "user",
       entityId: req.user.id,
     });
     return redirect(res, "/settings?saved=1");
+  });
+
+  app.get("/audit", (req, res) => {
+    const filters = {
+      from_date: queryValue(req, "from_date"),
+      to_date: queryValue(req, "to_date"),
+      entity_type: queryValue(req, "entity_type"),
+      action: queryValue(req, "action"),
+      q: queryValue(req, "q"),
+    };
+
+    return sendHtml(res, auditView({ user: req.user, entries: AuditLog.list(req.user.id, filters), filters }));
   });
 
   app.use((req, res) => {

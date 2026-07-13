@@ -1025,6 +1025,47 @@ tbody tr:hover {
   gap: 8px;
 }
 
+.audit-filters {
+  align-items: end;
+  gap: 12px;
+  grid-template-columns: minmax(138px, 0.62fr) minmax(138px, 0.62fr) minmax(180px, 0.95fr) minmax(170px, 0.9fr) minmax(210px, 1.1fr) auto;
+}
+
+.audit-filters label {
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+  letter-spacing: 0;
+}
+
+.audit-filters input,
+.audit-filters select,
+.audit-filters button,
+.audit-filters .ghost-button {
+  min-height: 44px;
+}
+
+.audit-filters input,
+.audit-filters select {
+  font-size: 14px;
+  padding: 0 12px;
+}
+
+.audit-filters .toolbar-actions {
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.audit-filters button,
+.audit-filters .ghost-button {
+  border-radius: 8px;
+  padding-inline: 14px;
+}
+
 .toolbar-icon-button {
   align-items: center;
   aspect-ratio: 1;

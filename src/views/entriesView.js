@@ -12,6 +12,7 @@ const {
   option,
 } = require("../services/viewHelpers");
 const { currentCompetence } = require("../services/dateService");
+const { auditHistoryList } = require("./auditView");
 const { layout, monthSwitcher } = require("./layout");
 
 const ACTION_ICONS = {
@@ -249,7 +250,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
   });
 }
 
-function entryDetailView({ user, entry, settlements, accounts }) {
+function entryDetailView({ user, entry, settlements, accounts, auditEvents = [] }) {
   return layout({
     title: entry.description,
     user,
@@ -312,6 +313,8 @@ function entryDetailView({ user, entry, settlements, accounts }) {
                 : "<li><span>Nenhuma baixa registrada</span><strong>-</strong></li>"
             }
           </ul>
+          <div class="section-title compact"><h2>Histórico</h2></div>
+          ${auditHistoryList(auditEvents)}
         </article>
       </section>
     `,

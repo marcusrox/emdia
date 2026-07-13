@@ -59,6 +59,7 @@ function layout({ title, user, active, body, notifications = [] }) {
         <div class="user-menu-panel">
           <a href="/profile">Perfil</a>
           <a href="/settings">Configurações</a>
+          <a href="/audit">Auditoria</a>
           <form method="post" action="/logout">
             ${csrfInput(user)}
             <button type="submit">${buttonContent("Sair", "log-out")}</button>
@@ -86,6 +87,7 @@ function layout({ title, user, active, body, notifications = [] }) {
       <div class="user-menu-panel">
         <a href="/profile">Perfil</a>
         <a href="/settings">Configurações</a>
+        <a href="/audit">Auditoria</a>
         <form method="post" action="/logout">
           ${csrfInput(user)}
           <button type="submit">${buttonContent("Sair", "log-out")}</button>

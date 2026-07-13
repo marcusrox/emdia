@@ -1,4 +1,4 @@
-const RELEASE_LABEL = "Release 12/07/2026 23:43 - 020";
+const RELEASE_LABEL = "Release 13/07/2026 00:04 - 021";
 
 module.exports = {
   RELEASE_LABEL,

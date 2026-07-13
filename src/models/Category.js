@@ -1,4 +1,5 @@
 const { getDatabase } = require("../database/connection");
+const AuditLog = require("./AuditLog");
 const { newId } = require("../services/id");
 
 function list(userId) {
@@ -48,13 +49,14 @@ function create(userId, data) {
       now
     );
 
+  AuditLog.record(userId, "category", id, "created", { name: data.name, entry_type: data.entry_type || "EXPENSE" });
   return getById(userId, id);
 }
 
 function update(userId, id, data) {
   const now = new Date().toISOString();
 
-  getDatabase()
+  const result = getDatabase()
     .prepare(`
       UPDATE categories
       SET
@@ -75,37 +77,59 @@ function update(userId, id, data) {
       id
     );
 
+  if (result.changes) {
+    AuditLog.record(userId, "category", id, "updated", { name: data.name, entry_type: data.entry_type || "EXPENSE" });
+  }
+
   return getById(userId, id);
 }
 
 function softDelete(userId, id) {
   const now = new Date().toISOString();
+  const existing = getAnyById(userId, id);
 
-  return getDatabase()
+  const result = getDatabase()
     .prepare(`
       UPDATE categories
       SET deleted_at = ?, is_active = 0, updated_at = ?
       WHERE user_id = ? AND id = ? AND deleted_at IS NULL
     `)
     .run(now, now, userId, id);
+
+  if (result.changes) {
+    AuditLog.record(userId, "category", id, "deleted", { name: existing?.name, entry_type: existing?.entry_type });
+  }
+
+  return result;
 }
 
 function restore(userId, id) {
   const now = new Date().toISOString();
+  const existing = getAnyById(userId, id);
 
-  return getDatabase()
+  const result = getDatabase()
     .prepare(`
       UPDATE categories
       SET deleted_at = NULL, is_active = 1, updated_at = ?
       WHERE user_id = ? AND id = ? AND deleted_at IS NOT NULL
     `)
     .run(now, userId, id);
+
+  if (result.changes) {
+    AuditLog.record(userId, "category", id, "restored", { name: existing?.name, entry_type: existing?.entry_type });
+  }
+
+  return result;
 }
 
 function getById(userId, id) {
   return getDatabase()
     .prepare("SELECT * FROM categories WHERE user_id = ? AND id = ? AND deleted_at IS NULL")
     .get(userId, id);
+}
+
+function getAnyById(userId, id) {
+  return getDatabase().prepare("SELECT * FROM categories WHERE user_id = ? AND id = ?").get(userId, id);
 }
 
 module.exports = {

@@ -1,4 +1,5 @@
 const { getDatabase } = require("../database/connection");
+const AuditLog = require("./AuditLog");
 const { newId } = require("../services/id");
 const { toCents } = require("../services/moneyService");
 
@@ -53,13 +54,14 @@ function create(userId, data) {
       now
     );
 
+  AuditLog.record(userId, "financial_account", id, "created", { name: data.name, type: data.type || "CHECKING" });
   return getById(userId, id);
 }
 
 function update(userId, id, data) {
   const now = new Date().toISOString();
 
-  getDatabase()
+  const result = getDatabase()
     .prepare(`
       UPDATE financial_accounts
       SET
@@ -86,37 +88,59 @@ function update(userId, id, data) {
       id
     );
 
+  if (result.changes) {
+    AuditLog.record(userId, "financial_account", id, "updated", { name: data.name, type: data.type || "CHECKING" });
+  }
+
   return getById(userId, id);
 }
 
 function softDelete(userId, id) {
   const now = new Date().toISOString();
+  const existing = getAnyById(userId, id);
 
-  return getDatabase()
+  const result = getDatabase()
     .prepare(`
       UPDATE financial_accounts
       SET deleted_at = ?, is_active = 0, updated_at = ?
       WHERE user_id = ? AND id = ? AND deleted_at IS NULL
     `)
     .run(now, now, userId, id);
+
+  if (result.changes) {
+    AuditLog.record(userId, "financial_account", id, "deleted", { name: existing?.name });
+  }
+
+  return result;
 }
 
 function restore(userId, id) {
   const now = new Date().toISOString();
+  const existing = getAnyById(userId, id);
 
-  return getDatabase()
+  const result = getDatabase()
     .prepare(`
       UPDATE financial_accounts
       SET deleted_at = NULL, is_active = 1, updated_at = ?
       WHERE user_id = ? AND id = ? AND deleted_at IS NOT NULL
     `)
     .run(now, userId, id);
+
+  if (result.changes) {
+    AuditLog.record(userId, "financial_account", id, "restored", { name: existing?.name });
+  }
+
+  return result;
 }
 
 function getById(userId, id) {
   return getDatabase()
     .prepare("SELECT * FROM financial_accounts WHERE user_id = ? AND id = ? AND deleted_at IS NULL")
     .get(userId, id);
+}
+
+function getAnyById(userId, id) {
+  return getDatabase().prepare("SELECT * FROM financial_accounts WHERE user_id = ? AND id = ?").get(userId, id);
 }
 
 module.exports = {
