@@ -61,7 +61,8 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
       .filter(Boolean)
       .join(" ");
 
-  return `<div class="table-wrap">
+  const tableClass = compact ? "table-wrap" : "table-wrap entries-desktop-table";
+  const tableMarkup = `<div class="${tableClass}">
     <table>
       <thead>
         <tr>
@@ -118,6 +119,62 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
           .join("")}
       </tbody>
     </table>
+  </div>`;
+
+  if (compact) {
+    return tableMarkup;
+  }
+
+  return `${tableMarkup}${entriesMobileList(entries, { user, valueClass })}`;
+}
+
+function entriesMobileList(entries, { user, valueClass }) {
+  return `<div class="entries-mobile-list" aria-label="Lançamentos">
+    ${entries
+      .map((entry) => {
+        const account = entry.actual_account_name || entry.expected_account_name || "-";
+        const typeLabel = entry.entry_type === "INCOME" ? "Receita" : "Despesa";
+        const recurrence = entry.recurrence_rule_id ? "Recorrente" : "";
+        const party = entry.party_name || "";
+        const details = [escapeHtml(entry.due_date), escapeHtml(entry.category_name || "Sem categoria")].join(" · ");
+        const meta = [escapeHtml(account), recurrence, party ? escapeHtml(party) : ""].filter(Boolean).join(" · ");
+
+        return `<article class="entry-mobile-card">
+          <div class="entry-mobile-card-main">
+            <a class="entry-mobile-title strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
+            <strong class="entry-mobile-value ${valueClass(entry)}">${formatMoney(entry.expected_amount_cents)}</strong>
+          </div>
+          <div class="entry-mobile-card-status">
+            <span>${typeLabel}</span>
+            <span class="status status-${entry.status.toLowerCase()}">${escapeHtml(statusLabel(entry.status))}</span>
+          </div>
+          <div class="entry-mobile-card-meta">
+            <span>${details}</span>
+            <span>${meta || "-"}</span>
+          </div>
+          <div class="entry-mobile-card-actions">
+            ${recordActionLink({
+              href: `/entries/${entry.id}/edit`,
+              icon: "edit",
+              label: "Editar lançamento",
+            })}
+            ${recordActionForm({
+              action: `/entries/${entry.id}/duplicate`,
+              icon: "duplicate",
+              label: "Duplicar lançamento",
+              user,
+            })}
+            ${recordActionForm({
+              action: `/entries/${entry.id}/cancel`,
+              icon: "cancel",
+              label: "Cancelar lançamento",
+              tone: "danger",
+              user,
+            })}
+          </div>
+        </article>`;
+      })
+      .join("")}
   </div>`;
 }
 

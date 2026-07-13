@@ -1122,6 +1122,10 @@ textarea {
   overflow-x: auto;
 }
 
+.entries-mobile-list {
+  display: none;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
@@ -2076,6 +2080,87 @@ textarea {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
+  }
+
+  .entries-desktop-table {
+    display: none;
+  }
+
+  .entries-mobile-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .entry-mobile-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .entry-mobile-card-main {
+    align-items: start;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-width: 0;
+  }
+
+  .entry-mobile-title {
+    font-size: 16px;
+    line-height: 1.2;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .entry-mobile-value {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    max-width: 9rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
+  .entry-mobile-card-status {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .entry-mobile-card-status > span:first-child {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .entry-mobile-card-meta {
+    color: var(--muted);
+    display: grid;
+    font-size: 13px;
+    gap: 3px;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  .entry-mobile-card-meta span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .entry-mobile-card-actions {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    margin-top: -1px;
+    min-width: 0;
   }
 
   .form-grid.form-compact,
