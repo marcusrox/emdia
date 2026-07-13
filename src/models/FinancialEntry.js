@@ -5,7 +5,12 @@ const Category = require("./Category");
 const Party = require("./Party");
 const Settlement = require("./Settlement");
 const { normalizeCompetence, todayIso } = require("../services/dateService");
-const { validateEntryPayload, validateSettlementPayload, validationError } = require("../services/formValidation");
+const {
+  validateEntryPayload,
+  validateMonthDeletionPayload,
+  validateSettlementPayload,
+  validationError,
+} = require("../services/formValidation");
 const { newId } = require("../services/id");
 const { deriveStatus } = require("../services/statusService");
 
@@ -187,6 +192,49 @@ function cancel(user, id) {
   AuditLog.record(user.id, "financial_entry", id, "cancelled");
 }
 
+function deleteMonth(user, data) {
+  const validation = validateMonthDeletionPayload(data);
+  if (!validation.ok) {
+    throw validationError(validation, "Confirme a exclusão dos lançamentos do mês.");
+  }
+
+  const db = getDatabase();
+  const now = new Date().toISOString();
+  const competence = validation.normalized.competenceMonth;
+  const countRow = db
+    .prepare(
+      `SELECT COUNT(*) AS count
+       FROM financial_entries
+       WHERE user_id = ? AND competence_month = ? AND deleted_at IS NULL`
+    )
+    .get(user.id, competence);
+  const deletedCount = Number(countRow?.count || 0);
+
+  db.exec("BEGIN");
+  try {
+    db.prepare(
+      `UPDATE financial_entries
+       SET deleted_at = ?, updated_at = ?
+       WHERE user_id = ? AND competence_month = ? AND deleted_at IS NULL`
+    ).run(now, now, user.id, competence);
+
+    AuditLog.record(user.id, "financial_entries", `${user.id}:${competence}`, "month_deleted", {
+      competence_month: competence,
+      deleted_count: deletedCount,
+    });
+
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return {
+    competence,
+    deletedCount,
+  };
+}
+
 function duplicate(user, id) {
   const entry = getById(user.id, id);
   if (!entry) return null;
@@ -323,6 +371,7 @@ module.exports = {
   cancel,
   create,
   dashboard,
+  deleteMonth,
   duplicate,
   getById,
   list,

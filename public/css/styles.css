@@ -1118,6 +1118,79 @@ tbody tr:hover {
   border-color: #0b6f67;
 }
 
+.danger-zone {
+  background: transparent;
+  margin: -6px 0 18px;
+}
+
+.danger-zone summary {
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  list-style: none;
+  padding: 4px 0;
+}
+
+.danger-zone summary::-webkit-details-marker {
+  display: none;
+}
+
+.danger-zone summary::before {
+  content: "▸";
+  margin-right: 6px;
+}
+
+.danger-zone[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.danger-zone-body {
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #7f1d1d;
+  display: grid;
+  gap: 14px;
+  margin-top: 6px;
+  max-width: 760px;
+  padding: 14px;
+}
+
+.danger-zone-body p {
+  margin: 6px 0 0;
+}
+
+.month-delete-form {
+  display: grid;
+  gap: 10px;
+}
+
+.danger-confirmation {
+  background: #fff;
+  border-color: #fecaca;
+  color: #7f1d1d;
+}
+
+.danger-confirmation small {
+  color: #991b1b;
+}
+
+.danger-button {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: 0 8px 18px rgba(185, 28, 28, 0.16);
+  justify-self: start;
+}
+
+.danger-button:hover,
+.danger-button:focus-visible {
+  background: #991b1b;
+  border-color: #991b1b;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.22);
+}
+
 .form-grid {
   display: grid;
   gap: 16px;

@@ -121,13 +121,57 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
   </div>`;
 }
 
-function entriesListView({ user, competence, entries, filters, categories, accounts }) {
+function deleteMonthPanel({ user, competence, errors = {}, values = {}, open = false }) {
+  const confirmationValue = values.confirmation ?? "";
+  const acknowledged = values.acknowledge_impact === "on";
+
+  return `<details class="danger-zone" data-persistent-details${open ? " open" : ""}>
+    <summary>Ações avançadas da competência</summary>
+    <div class="danger-zone-body">
+      <div>
+        <strong>Excluir lançamentos de ${escapeHtml(competence)}</strong>
+        <p>Use somente em situação excepcional. Todos os lançamentos desta competência deixarão de aparecer na listagem, dashboard e relatórios. Baixas vinculadas também ficarão inacessíveis pelo lançamento. Outras competências não serão afetadas e a ação não poderá ser desfeita pela interface.</p>
+      </div>
+      <form method="post" action="/entries/month/delete" class="month-delete-form" data-validate-form>
+        ${csrfInput(user)}
+        <input type="hidden" name="competence_month" value="${escapeHtml(competence)}">
+        <label class="choice-card danger-confirmation">
+          <input type="checkbox" name="acknowledge_impact"${acknowledged ? " checked" : ""}${fieldErrorAttributes(errors, "acknowledge_impact")}>
+          <span>
+            <strong>Entendo que esta exclusão é crítica.</strong>
+            <small>Os lançamentos da competência ${escapeHtml(competence)} não poderão ser restaurados pela interface.</small>
+          </span>
+        </label>
+        ${fieldError(errors, "acknowledge_impact")}
+        <label>Digite ${escapeHtml(competence)} para confirmar
+          <input name="confirmation" value="${escapeHtml(confirmationValue)}" autocomplete="off"${fieldErrorAttributes(errors, "confirmation")}>
+          ${fieldError(errors, "confirmation")}
+        </label>
+        <button type="submit" class="danger-button">${buttonContent("Excluir lançamentos deste mês", "trash-2")}</button>
+      </form>
+    </div>
+  </details>`;
+}
+
+function entriesListView({
+  user,
+  competence,
+  entries,
+  filters,
+  categories,
+  accounts,
+  notifications = [],
+  deleteMonthErrors = {},
+  deleteMonthValues = {},
+  deleteMonthOpen = false,
+}) {
   const current = currentCompetence(user.timezone);
 
   return layout({
     title: "Lançamentos",
     user,
     active: "/entries",
+    notifications,
     body: `
       ${monthSwitcher("/entries", competence, current)}
       <section class="toolbar">
@@ -174,6 +218,13 @@ function entriesListView({ user, competence, entries, filters, categories, accou
         })}
       </section>
       ${entriesTable(entries, { user })}
+      ${deleteMonthPanel({
+        user,
+        competence,
+        errors: deleteMonthErrors,
+        values: deleteMonthValues,
+        open: deleteMonthOpen,
+      })}
     `,
   });
 }

@@ -291,6 +291,31 @@ function validateSettlementPayload(user, data, dependencies) {
   };
 }
 
+function validateMonthDeletionPayload(data) {
+  const result = createValidationResult(data);
+  const competenceMonth = validateCompetenceMonth(result, "competence_month", "Informe uma competência válida.");
+  const confirmation = String(result.values.confirmation || "").trim();
+  const acknowledged = String(result.values.acknowledge_impact || "") === "on";
+
+  if (!acknowledged) {
+    addError(result, "acknowledge_impact", "Confirme que você entende o impacto da exclusão.");
+  }
+
+  if (!confirmation) {
+    addError(result, "confirmation", "Digite a competência para confirmar.");
+  } else if (competenceMonth && confirmation !== competenceMonth) {
+    addError(result, "confirmation", `Digite exatamente ${competenceMonth} para confirmar.`);
+  }
+
+  return {
+    ...result,
+    ok: !hasErrors(result),
+    normalized: {
+      competenceMonth,
+    },
+  };
+}
+
 function validateOptionalReference(result, field, user, getter, message) {
   const id = String(result.values[field] || "").trim();
   if (!id) return null;
@@ -317,6 +342,7 @@ module.exports = {
   parseMoney,
   validationError,
   validateEntryPayload,
+  validateMonthDeletionPayload,
   validateMoney,
   validateRecurrencePayload,
   validateSettlementPayload,

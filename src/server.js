@@ -90,6 +90,7 @@ function createServer() {
         filters,
         categories: Category.list(user.id),
         accounts: Account.active(user.id),
+        notifications: entriesNotifications(req),
       })
     );
   });
@@ -145,6 +146,48 @@ function createServer() {
 
       logBusinessError(req, "business.financial_entry.save_failed", "Falha ao salvar lançamento.", error, {
         entity: "financial_entry",
+        competenceMonth: req.body.competence_month,
+      });
+      throw error;
+    }
+  });
+
+  app.post("/entries/month/delete", requireCsrf, (req, res) => {
+    try {
+      const result = Entry.deleteMonth(req.user, req.body);
+      return redirect(res, `/entries?competence=${result.competence}&deleted_count=${result.deletedCount}`);
+    } catch (error) {
+      if (isValidationError(error)) {
+        const competence = normalizeCompetence(req.body.competence_month, req.user.timezone);
+        const filters = {
+          competence,
+          q: "",
+          entry_type: "",
+          status: "",
+          category_id: "",
+          account_id: "",
+        };
+
+        return sendHtml(
+          res,
+          entriesListView({
+            user: req.user,
+            competence,
+            entries: Entry.list(req.user, filters),
+            filters,
+            categories: Category.list(req.user.id),
+            accounts: Account.active(req.user.id),
+            deleteMonthErrors: error.errors,
+            deleteMonthValues: error.values,
+            deleteMonthOpen: true,
+            notifications: [{ type: "error", message: "A exclusão não foi executada. Revise a confirmação." }],
+          }),
+          400
+        );
+      }
+
+      logBusinessError(req, "business.financial_entries.month_delete_failed", "Falha ao excluir lançamentos do mês.", error, {
+        entity: "financial_entries",
         competenceMonth: req.body.competence_month,
       });
       throw error;
@@ -605,6 +648,23 @@ function queryValue(req, name) {
   const value = req.query[name];
   if (Array.isArray(value)) return String(value[0] || "");
   return String(value || "");
+}
+
+function entriesNotifications(req) {
+  const deletedCount = queryValue(req, "deleted_count");
+  if (!deletedCount) return [];
+
+  const count = Math.max(Number(deletedCount) || 0, 0);
+  if (count === 0) {
+    return [{ type: "info", message: "Nenhum lançamento foi encontrado para excluir nesta competência." }];
+  }
+
+  return [
+    {
+      type: "success",
+      message: `${count} ${count === 1 ? "lançamento removido" : "lançamentos removidos"} da competência selecionada.`,
+    },
+  ];
 }
 
 function recurrenceForm(user, { recurrence = null, action, errors = {} }) {
