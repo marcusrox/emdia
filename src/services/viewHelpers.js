@@ -94,6 +94,19 @@ function lucideIcon(name) {
   return LUCIDE_ICON_CACHE.get(name);
 }
 
+function buttonContent(label, iconName = "") {
+  const icon = iconName ? lucideIcon(iconName) : "";
+
+  return `${icon}<span>${escapeHtml(label)}</span>`;
+}
+
+function buttonLink({ href, label, icon = "", tone = "secondary", className = "" }) {
+  const toneClass = tone === "primary" ? "primary-button" : "ghost-button";
+  const classes = [toneClass, className].filter(Boolean).join(" ");
+
+  return `<a class="${classes}" href="${escapeHtml(href)}">${buttonContent(label, icon)}</a>`;
+}
+
 function normalizeNotifications(notifications = []) {
   return notifications
     .filter(Boolean)
@@ -136,6 +149,8 @@ module.exports = {
   FONT_SCALE_OPTIONS,
   LIST_DENSITY_OPTIONS,
   accountTypeLabel,
+  buttonContent,
+  buttonLink,
   categoryOptionLabel,
   csrfInput,
   entryTypeLabel,

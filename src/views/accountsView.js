@@ -2,6 +2,8 @@ const { formatMoney } = require("../services/moneyService");
 const {
   ACCOUNT_TYPE_OPTIONS,
   accountTypeLabel,
+  buttonContent,
+  buttonLink,
   csrfInput,
   escapeHtml,
   lucideIcon,
@@ -16,6 +18,9 @@ const ACTION_ICONS = {
   delete: lucideIcon("trash-2"),
   restore: lucideIcon("rotate-ccw"),
 };
+
+const DELETE_ACCOUNT_CONFIRM_MESSAGE =
+  "Excluir esta conta? Esta é uma exclusão lógica: a conta sairá da lista principal, mas continuará existindo no sistema. Voce poderá reverter depois em Contas arquivadas, usando a ação de restaurar.";
 
 function recordActionLink({ href, icon, label, tone = "" }) {
   return `<a class="record-action-button ${tone}" href="${escapeHtml(href)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</a>`;
@@ -51,8 +56,8 @@ function accountsView({ user, accounts, account = null, action = "/accounts" }) 
           <label>Instituição<input name="institution_name" value="${escapeHtml(account?.institution_name || "")}"></label>
           <label>Saldo inicial<input name="initial_balance" inputmode="decimal" value="${escapeHtml(moneyInput(account?.initial_balance_cents))}"></label>
           <div class="form-actions wide">
-            <a class="ghost-button" href="${isEdit ? "/accounts" : "/dashboard"}">Voltar</a>
-            <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
+            ${buttonLink({ href: isEdit ? "/accounts" : "/dashboard", label: "Voltar", icon: "arrow-left" })}
+            <button type="submit">${buttonContent(isEdit ? "Atualizar" : "Salvar", isEdit ? "check" : "save")}</button>
           </div>
         </form>
         <article class="panel list-panel">
@@ -75,7 +80,7 @@ function deletedAccountsView({ user, accounts }) {
     body: `
       <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas arquivadas</h1></section>
       <div class="page-actions">
-        <a class="ghost-button" href="/accounts">Voltar para contas ativas</a>
+        ${buttonLink({ href: "/accounts", label: "Voltar para contas ativas", icon: "arrow-left" })}
       </div>
       <article class="panel">${deletedAccountsTable(accounts, user)}</article>
     `,
@@ -102,7 +107,7 @@ function accountsTable(accounts, user) {
             label: "Excluir conta",
             tone: "danger",
             user,
-            confirmMessage: "Excluir esta conta?",
+            confirmMessage: DELETE_ACCOUNT_CONFIRM_MESSAGE,
           })}
         </div>
       </td>

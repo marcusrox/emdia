@@ -1,4 +1,4 @@
-const { escapeHtml, renderNotifications } = require("../services/viewHelpers");
+const { buttonContent, escapeHtml, renderNotifications } = require("../services/viewHelpers");
 
 function loginView({ email = "", error = "" } = {}) {
   return `<!doctype html>
@@ -35,7 +35,7 @@ function loginView({ email = "", error = "" } = {}) {
         <label>Senha
           <input type="password" name="password" autocomplete="current-password" required>
         </label>
-        <button type="submit">Entrar</button>
+        <button type="submit">${buttonContent("Entrar", "log-in")}</button>
       </form>
     </section>
   </main>

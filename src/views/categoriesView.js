@@ -1,5 +1,7 @@
 const {
   ENTRY_TYPE_OPTIONS,
+  buttonContent,
+  buttonLink,
   csrfInput,
   entryTypeLabel,
   escapeHtml,
@@ -14,6 +16,9 @@ const ACTION_ICONS = {
   delete: lucideIcon("trash-2"),
   restore: lucideIcon("rotate-ccw"),
 };
+
+const DELETE_CATEGORY_CONFIRM_MESSAGE =
+  "Excluir esta categoria? Esta é uma exclusão lógica: a categoria sairá da lista principal, mas continuará existindo no sistema. Voce poderá reverter depois em Categorias arquivadas, usando a ação de restaurar.";
 
 function recordActionLink({ href, icon, label, tone = "" }) {
   return `<a class="record-action-button ${tone}" href="${escapeHtml(href)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</a>`;
@@ -61,8 +66,8 @@ function categoriesView({ user, categories, category = null, action = "/categori
           </label>
           <label>Cor<input type="color" name="color" value="${escapeHtml(category?.color || "#0f766e")}"></label>
           <div class="form-actions wide">
-            <a class="ghost-button" href="${isEdit ? "/categories" : "/dashboard"}">Voltar</a>
-            <button type="submit">${isEdit ? "Atualizar" : "Salvar"}</button>
+            ${buttonLink({ href: isEdit ? "/categories" : "/dashboard", label: "Voltar", icon: "arrow-left" })}
+            <button type="submit">${buttonContent(isEdit ? "Atualizar" : "Salvar", isEdit ? "check" : "save")}</button>
           </div>
         </form>
         <article class="panel list-panel">
@@ -87,7 +92,7 @@ function categoriesView({ user, categories, category = null, action = "/categori
                   label: "Excluir categoria",
                   tone: "danger",
                   user,
-                  confirmMessage: "Excluir esta categoria?",
+                  confirmMessage: DELETE_CATEGORY_CONFIRM_MESSAGE,
                 })}
               </div>
             </td>
@@ -106,7 +111,7 @@ function deletedCategoriesView({ user, categories }) {
     body: `
       <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Categorias arquivadas</h1></section>
       <div class="page-actions">
-        <a class="ghost-button" href="/categories">Voltar para categorias ativas</a>
+        ${buttonLink({ href: "/categories", label: "Voltar para categorias ativas", icon: "arrow-left" })}
       </div>
       <article class="panel">${deletedCategoriesTable(categories, user)}</article>
     `,

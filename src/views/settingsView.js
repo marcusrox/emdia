@@ -1,6 +1,8 @@
 const {
   FONT_SCALE_OPTIONS,
   LIST_DENSITY_OPTIONS,
+  buttonContent,
+  buttonLink,
   csrfInput,
   normalizeFontScale,
   normalizeListDensity,
@@ -48,8 +50,8 @@ function settingsView({ user, saved = false }) {
           ).join("")}
         </fieldset>
         <div class="form-actions">
-          <a class="ghost-button" href="/dashboard">Voltar</a>
-          <button type="submit">Salvar configurações</button>
+          ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
+          <button type="submit">${buttonContent("Salvar configurações", "save")}</button>
         </div>
       </form>
     `,

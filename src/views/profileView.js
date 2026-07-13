@@ -1,4 +1,4 @@
-const { csrfInput, escapeHtml } = require("../services/viewHelpers");
+const { buttonContent, buttonLink, csrfInput, escapeHtml } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function profileView({ user, profile = user, saved = false, errors = [] }) {
@@ -34,8 +34,8 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
           <input type="password" name="confirm_password" autocomplete="new-password">
         </label>
         <div class="form-actions wide">
-          <a class="ghost-button" href="/dashboard">Voltar</a>
-          <button type="submit">Salvar</button>
+          ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
+          <button type="submit">${buttonContent("Salvar", "save")}</button>
         </div>
       </form>
     `,

@@ -1,5 +1,13 @@
 const { addMonths, currentCompetence, monthLabel } = require("../services/dateService");
-const { csrfInput, escapeHtml, normalizeFontScale, normalizeListDensity, renderNotifications } = require("../services/viewHelpers");
+const {
+  buttonContent,
+  buttonLink,
+  csrfInput,
+  escapeHtml,
+  normalizeFontScale,
+  normalizeListDensity,
+  renderNotifications,
+} = require("../services/viewHelpers");
 const { RELEASE_LABEL } = require("../config/release");
 
 function layout({ title, user, active, body, notifications = [] }) {
@@ -52,7 +60,7 @@ function layout({ title, user, active, body, notifications = [] }) {
           <a href="/settings">Configurações</a>
           <form method="post" action="/logout">
             ${csrfInput(user)}
-            <button type="submit">Sair</button>
+            <button type="submit">${buttonContent("Sair", "log-out")}</button>
           </form>
         </div>
       </details>
@@ -79,7 +87,7 @@ function layout({ title, user, active, body, notifications = [] }) {
         <a href="/settings">Configurações</a>
         <form method="post" action="/logout">
           ${csrfInput(user)}
-          <button type="submit">Sair</button>
+          <button type="submit">${buttonContent("Sair", "log-out")}</button>
         </form>
       </div>
     </details>
@@ -106,10 +114,10 @@ function monthSwitcher(pathname, competence, current = currentCompetence()) {
       <a class="icon-button" title="Mês anterior" href="${pathname}?competence=${addMonths(competence, -1)}">‹</a>
       <form action="${pathname}" method="get" class="month-form">
         <input type="month" name="competence" value="${escapeHtml(competence)}" aria-label="Competência">
-        <button type="submit">Aplicar</button>
+        <button type="submit">${buttonContent("Aplicar", "filter")}</button>
       </form>
       <a class="icon-button" title="Próximo mês" href="${pathname}?competence=${addMonths(competence, 1)}">›</a>
-      <a class="ghost-button" href="${pathname}?competence=${current}">Mês atual</a>
+      ${buttonLink({ href: `${pathname}?competence=${current}`, label: "Mês atual", icon: "calendar-days" })}
     </div>
   </section>`;
 }

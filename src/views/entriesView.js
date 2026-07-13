@@ -1,6 +1,8 @@
 const { formatMoney } = require("../services/moneyService");
 const { statusLabel } = require("../services/statusService");
 const {
+  buttonContent,
+  buttonLink,
   categoryOptionLabel,
   csrfInput,
   entryTypeLabel,
@@ -231,8 +233,8 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
           <textarea name="notes">${escapeHtml(entry?.notes || "")}</textarea>
         </label>
         <div class="form-actions wide">
-          <a class="ghost-button" href="/entries?competence=${selectedCompetence}">Voltar</a>
-          <button type="submit">Salvar</button>
+          ${buttonLink({ href: `/entries?competence=${selectedCompetence}`, label: "Voltar", icon: "arrow-left" })}
+          <button type="submit">${buttonContent("Salvar", "save")}</button>
         </div>
       </form>
     `,
@@ -259,8 +261,8 @@ function entryDetailView({ user, entry, settlements, accounts }) {
           <p><span>Conta</span><strong>${escapeHtml(entry.actual_account_name || entry.expected_account_name || "-")}</strong></p>
           <p><span>Favorecido/Pagador</span><strong>${escapeHtml(entry.party_name || "-")}</strong></p>
           <div class="form-actions">
-            <a class="ghost-button" href="/entries?competence=${entry.competence_month}">Voltar</a>
-            <a class="primary-button" href="/entries/${entry.id}/edit">Editar</a>
+            ${buttonLink({ href: `/entries?competence=${entry.competence_month}`, label: "Voltar", icon: "arrow-left" })}
+            ${buttonLink({ href: `/entries/${entry.id}/edit`, label: "Editar", icon: "pencil", tone: "primary" })}
           </div>
         </article>
         <article class="panel">
@@ -287,7 +289,7 @@ function entryDetailView({ user, entry, settlements, accounts }) {
             <label>Desconto
               <input name="discount" inputmode="decimal" value="0,00">
             </label>
-            <button type="submit">Baixar</button>
+            <button type="submit">${buttonContent("Baixar", "check-circle")}</button>
           </form>
           <div class="section-title compact"><h2>Baixas</h2></div>
           <ul class="settlement-list">
