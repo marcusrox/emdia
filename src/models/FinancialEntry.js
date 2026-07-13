@@ -1,11 +1,12 @@
 const { getDatabase } = require("../database/connection");
 const Account = require("./FinancialAccount");
 const AuditLog = require("./AuditLog");
+const Category = require("./Category");
 const Party = require("./Party");
 const Settlement = require("./Settlement");
 const { normalizeCompetence, todayIso } = require("../services/dateService");
+const { validateEntryPayload, validateSettlementPayload, validationError } = require("../services/formValidation");
 const { newId } = require("../services/id");
-const { toCents } = require("../services/moneyService");
 const { deriveStatus } = require("../services/statusService");
 
 function list(user, filters = {}) {
@@ -82,16 +83,15 @@ function getById(userId, id) {
 }
 
 function create(user, data) {
+  const validation = normalizeEntryData(user, data);
   const now = new Date().toISOString();
   const id = newId("ent");
-  const party = Party.findOrCreate(user.id, data.party_name, data.entry_type === "INCOME" ? "PAYER" : "PAYEE");
-  const expected = toCents(data.expected_amount);
-  const realized = toCents(data.realized_amount);
+  const party = Party.findOrCreate(user.id, data.party_name, validation.entry_type === "INCOME" ? "PAYER" : "PAYEE");
   const draft = {
-    entry_type: data.entry_type || "EXPENSE",
-    expected_amount_cents: expected,
-    realized_amount_cents: realized,
-    due_date: data.due_date || todayIso(user.timezone),
+    entry_type: validation.entry_type,
+    expected_amount_cents: validation.expected_amount_cents,
+    realized_amount_cents: validation.realized_amount_cents,
+    due_date: validation.due_date || todayIso(user.timezone),
     status: data.status || "PENDING",
   };
 
@@ -110,25 +110,25 @@ function create(user, data) {
       id,
       user.id,
       draft.entry_type,
-      data.description,
-      data.category_id || null,
+      validation.description,
+      validation.category_id,
       party ? party.id : null,
-      data.expected_account_id || null,
-      data.actual_account_id || null,
-      expected,
-      realized,
-      data.issue_date || null,
-      normalizeCompetence(data.competence_month, user.timezone),
+      validation.expected_account_id,
+      validation.actual_account_id,
+      validation.expected_amount_cents,
+      validation.realized_amount_cents,
+      validation.issue_date,
+      validation.competence_month,
       draft.due_date,
       data.settled_at || null,
       draft.status,
       data.origin || "MANUAL",
-      data.notes || null,
+      validation.notes,
       now,
       now
     );
 
-  AuditLog.record(user.id, "financial_entry", id, "created", { description: data.description });
+  AuditLog.record(user.id, "financial_entry", id, "created", { description: validation.description });
   return getById(user.id, id);
 }
 
@@ -136,13 +136,14 @@ function update(user, id, data) {
   const existing = getById(user.id, id);
   if (!existing) return null;
 
-  const party = Party.findOrCreate(user.id, data.party_name, data.entry_type === "INCOME" ? "PAYER" : "PAYEE");
+  const validation = normalizeEntryData(user, data);
+  const party = Party.findOrCreate(user.id, data.party_name, validation.entry_type === "INCOME" ? "PAYER" : "PAYEE");
   const updated = {
     ...existing,
-    entry_type: data.entry_type || existing.entry_type,
-    expected_amount_cents: toCents(data.expected_amount),
-    realized_amount_cents: toCents(data.realized_amount),
-    due_date: data.due_date || existing.due_date,
+    entry_type: validation.entry_type,
+    expected_amount_cents: validation.expected_amount_cents,
+    realized_amount_cents: validation.realized_amount_cents,
+    due_date: validation.due_date || existing.due_date,
     status: data.status || existing.status,
   };
   updated.status = deriveStatus(updated, user.timezone);
@@ -158,24 +159,24 @@ function update(user, id, data) {
     `)
     .run(
       updated.entry_type,
-      data.description,
-      data.category_id || null,
+      validation.description,
+      validation.category_id,
       party ? party.id : null,
-      data.expected_account_id || null,
-      data.actual_account_id || null,
+      validation.expected_account_id,
+      validation.actual_account_id,
       updated.expected_amount_cents,
       updated.realized_amount_cents,
-      data.issue_date || null,
-      normalizeCompetence(data.competence_month, user.timezone),
+      validation.issue_date,
+      validation.competence_month,
       updated.due_date,
       updated.status,
-      data.notes || null,
+      validation.notes,
       new Date().toISOString(),
       user.id,
       id
     );
 
-  AuditLog.record(user.id, "financial_entry", id, "updated", { description: data.description });
+  AuditLog.record(user.id, "financial_entry", id, "updated", { description: validation.description });
   return getById(user.id, id);
 }
 
@@ -208,16 +209,24 @@ function settle(user, id, data) {
   const entry = getById(user.id, id);
   if (!entry) return null;
 
-  const accountId = data.financial_account_id || entry.actual_account_id || entry.expected_account_id;
-  const account = Account.getById(user.id, accountId);
-  if (!account) {
-    throw new Error("Conta financeira inválida para baixa.");
+  const validation = validateSettlementPayload(user, data, {
+    getAccount: Account.getById,
+  });
+  if (!validation.ok) {
+    throw validationError(validation);
   }
 
   const settlement = Settlement.create(user.id, id, {
     ...data,
-    financial_account_id: account.id,
+    financial_account_id: validation.normalized.account.id,
     settlement_type: entry.entry_type === "INCOME" ? "RECEIPT" : "PAYMENT",
+    principal_cents: validation.normalized.principalCents,
+    interest_cents: validation.normalized.interestCents,
+    penalty_cents: validation.normalized.penaltyCents,
+    discount_cents: validation.normalized.discountCents,
+    other_adjustment_cents: validation.normalized.otherAdjustmentCents,
+    total_cents: validation.normalized.totalCents,
+    settled_at: validation.normalized.settledAt,
   });
 
   const realized = entry.realized_amount_cents + settlement.total_cents;
@@ -236,9 +245,9 @@ function settle(user, id, data) {
       WHERE user_id = ? AND id = ?
     `)
     .run(
-      account.id,
+      validation.normalized.account.id,
       realized,
-      data.settled_at || todayIso(user.timezone),
+      validation.normalized.settledAt || todayIso(user.timezone),
       updated.status,
       new Date().toISOString(),
       user.id,
@@ -251,6 +260,31 @@ function settle(user, id, data) {
   });
 
   return getById(user.id, id);
+}
+
+function normalizeEntryData(user, data) {
+  const validation = validateEntryPayload(user, data, {
+    getAccount: Account.getById,
+    getCategory: Category.getById,
+  });
+
+  if (!validation.ok) {
+    throw validationError(validation);
+  }
+
+  return {
+    actual_account_id: validation.normalized.actualAccount?.id || null,
+    category_id: validation.normalized.category?.id || null,
+    competence_month: normalizeCompetence(validation.normalized.competenceMonth, user.timezone),
+    description: String(data.description || "").trim(),
+    due_date: validation.normalized.dueDate,
+    entry_type: validation.normalized.entryType,
+    expected_account_id: validation.normalized.expectedAccount?.id || null,
+    expected_amount_cents: validation.normalized.expectedAmountCents,
+    issue_date: validation.normalized.issueDate,
+    notes: data.notes || null,
+    realized_amount_cents: validation.normalized.realizedAmountCents,
+  };
 }
 
 function dashboard(user, competence) {

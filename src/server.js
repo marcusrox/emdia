@@ -105,17 +105,7 @@ function createServer() {
       realized_amount_cents: 0,
     };
 
-    return sendHtml(
-      res,
-      entryFormView({
-        user,
-        entry,
-        competence,
-        categories: Category.list(user.id),
-        accounts: Account.active(user.id),
-        action: "/entries",
-      })
-    );
+    return sendHtml(res, entryForm(user, { entry, competence, action: "/entries" }));
   });
 
   app.get("/entries/:id", (req, res) => {
@@ -123,16 +113,7 @@ function createServer() {
     const entry = Entry.getById(user.id, req.params.id);
     if (!entry) return sendHtml(res, notFoundView(user), 404);
 
-    return sendHtml(
-      res,
-      entryDetailView({
-        user,
-        entry,
-        settlements: Settlement.listByEntry(entry.id),
-        accounts: Account.active(user.id),
-        auditEvents: AuditLog.listEntityHistory(user.id, "financial_entry", entry.id),
-      })
-    );
+    return sendHtml(res, entryDetail(user, entry));
   });
 
   app.get("/entries/:id/edit", (req, res) => {
@@ -140,17 +121,7 @@ function createServer() {
     const entry = Entry.getById(user.id, req.params.id);
     if (!entry) return sendHtml(res, notFoundView(user), 404);
 
-    return sendHtml(
-      res,
-      entryFormView({
-        user,
-        entry,
-        competence: entry.competence_month,
-        categories: Category.list(user.id),
-        accounts: Account.active(user.id),
-        action: `/entries/${entry.id}`,
-      })
-    );
+    return sendHtml(res, entryForm(user, { entry, competence: entry.competence_month, action: `/entries/${entry.id}` }));
   });
 
   app.post("/entries", requireCsrf, (req, res) => {
@@ -158,6 +129,20 @@ function createServer() {
       const entry = Entry.create(req.user, req.body);
       return redirect(res, `/entries?competence=${entry.competence_month}`);
     } catch (error) {
+      if (isValidationError(error)) {
+        const competence = normalizeCompetence(req.body.competence_month, req.user.timezone);
+        return sendHtml(
+          res,
+          entryForm(req.user, {
+            action: "/entries",
+            competence,
+            entry: error.values,
+            errors: error.errors,
+          }),
+          400
+        );
+      }
+
       logBusinessError(req, "business.financial_entry.save_failed", "Falha ao salvar lançamento.", error, {
         entity: "financial_entry",
         competenceMonth: req.body.competence_month,
@@ -180,6 +165,21 @@ function createServer() {
       }
       return redirect(res, `/entries?competence=${competence}`);
     } catch (error) {
+      if (isValidationError(error)) {
+        const existing = Entry.getById(req.user.id, req.params.id);
+        const competence = normalizeCompetence(req.body.competence_month || existing?.competence_month, req.user.timezone);
+        return sendHtml(
+          res,
+          entryForm(req.user, {
+            action: `/entries/${req.params.id}`,
+            competence,
+            entry: { ...(existing || {}), ...error.values, id: req.params.id },
+            errors: error.errors,
+          }),
+          400
+        );
+      }
+
       logBusinessError(req, "business.financial_entry.save_failed", "Falha ao atualizar lançamento.", error, {
         entity: "financial_entry",
         entityId: req.params.id,
@@ -217,6 +217,20 @@ function createServer() {
       }
       return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
     } catch (error) {
+      if (isValidationError(error)) {
+        const entry = Entry.getById(req.user.id, req.params.id);
+        if (!entry) return sendHtml(res, notFoundView(req.user), 404);
+
+        return sendHtml(
+          res,
+          entryDetail(req.user, entry, {
+            settlementErrors: error.errors,
+            settlementValues: error.values,
+          }),
+          400
+        );
+      }
+
       logBusinessError(req, "business.settlement.save_failed", "Falha ao registrar baixa.", error, {
         entity: "financial_entry",
         entityId: req.params.id,
@@ -230,41 +244,57 @@ function createServer() {
   });
 
   app.get("/recurrences/new", (req, res) => {
-    return sendHtml(
-      res,
-      recurrenceFormView({
-        user: req.user,
-        categories: Category.list(req.user.id),
-        accounts: Account.active(req.user.id),
-        action: "/recurrences",
-      })
-    );
+    return sendHtml(res, recurrenceForm(req.user, { action: "/recurrences" }));
   });
 
   app.get("/recurrences/:id/edit", (req, res) => {
     const recurrence = Recurrence.getById(req.user.id, req.params.id);
     if (!recurrence) return sendHtml(res, notFoundView(req.user), 404);
 
-    return sendHtml(
-      res,
-      recurrenceFormView({
-        user: req.user,
-        recurrence,
-        categories: Category.list(req.user.id),
-        accounts: Account.active(req.user.id),
-        action: `/recurrences/${recurrence.id}`,
-      })
-    );
+    return sendHtml(res, recurrenceForm(req.user, { recurrence, action: `/recurrences/${recurrence.id}` }));
   });
 
   app.post("/recurrences", requireCsrf, (req, res) => {
-    Recurrence.create(req.user, req.body);
-    return redirect(res, "/recurrences");
+    try {
+      Recurrence.create(req.user, req.body);
+      return redirect(res, "/recurrences");
+    } catch (error) {
+      if (isValidationError(error)) {
+        return sendHtml(
+          res,
+          recurrenceForm(req.user, {
+            action: "/recurrences",
+            recurrence: error.values,
+            errors: error.errors,
+          }),
+          400
+        );
+      }
+
+      throw error;
+    }
   });
 
   app.post("/recurrences/:id", requireCsrf, (req, res) => {
-    Recurrence.update(req.user, req.params.id, req.body);
-    return redirect(res, "/recurrences");
+    try {
+      Recurrence.update(req.user, req.params.id, req.body);
+      return redirect(res, "/recurrences");
+    } catch (error) {
+      if (isValidationError(error)) {
+        const existing = Recurrence.getById(req.user.id, req.params.id);
+        return sendHtml(
+          res,
+          recurrenceForm(req.user, {
+            action: `/recurrences/${req.params.id}`,
+            recurrence: { ...(existing || {}), ...error.values, id: req.params.id },
+            errors: error.errors,
+          }),
+          400
+        );
+      }
+
+      throw error;
+    }
   });
 
   app.post("/recurrences/:id/pause", requireCsrf, (req, res) => {
@@ -575,6 +605,45 @@ function queryValue(req, name) {
   const value = req.query[name];
   if (Array.isArray(value)) return String(value[0] || "");
   return String(value || "");
+}
+
+function recurrenceForm(user, { recurrence = null, action, errors = {} }) {
+  return recurrenceFormView({
+    user,
+    recurrence,
+    categories: Category.list(user.id),
+    accounts: Account.active(user.id),
+    action,
+    errors,
+  });
+}
+
+function entryForm(user, { entry = null, competence, action, errors = {} }) {
+  return entryFormView({
+    user,
+    entry,
+    competence,
+    categories: Category.list(user.id),
+    accounts: Account.active(user.id),
+    action,
+    errors,
+  });
+}
+
+function entryDetail(user, entry, { settlementErrors = {}, settlementValues = null } = {}) {
+  return entryDetailView({
+    user,
+    entry,
+    settlements: Settlement.listByEntry(entry.id),
+    accounts: Account.active(user.id),
+    auditEvents: AuditLog.listEntityHistory(user.id, "financial_entry", entry.id),
+    settlementErrors,
+    settlementValues,
+  });
+}
+
+function isValidationError(error) {
+  return error?.name === "ValidationError" && error.errors;
 }
 
 function sendHtml(res, html, statusCode = 200) {

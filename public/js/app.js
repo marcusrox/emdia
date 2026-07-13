@@ -25,6 +25,65 @@
     }
   }
 
+  function validateForms(event) {
+    var form = event.target;
+
+    if (!form.matches("[data-validate-form]")) {
+      return;
+    }
+
+    clearFieldErrors(form);
+
+    var firstInvalid = null;
+    form.querySelectorAll("[data-validate-money]").forEach(function (field) {
+      if (isValidMoney(field.value, field.required)) {
+        return;
+      }
+
+      showFieldError(field, field.getAttribute("data-error-message") || "Informe um valor válido, como 100,00.");
+      firstInvalid = firstInvalid || field;
+    });
+
+    if (firstInvalid) {
+      event.preventDefault();
+      firstInvalid.focus();
+    }
+  }
+
+  function clearFieldErrors(form) {
+    form.querySelectorAll(".field-error").forEach(function (error) {
+      error.remove();
+    });
+
+    form.querySelectorAll("[aria-invalid='true']").forEach(function (field) {
+      field.removeAttribute("aria-invalid");
+      field.removeAttribute("aria-describedby");
+    });
+  }
+
+  function showFieldError(field, message) {
+    var error = document.createElement("small");
+    var errorId = field.name + "-client-error";
+
+    error.className = "field-error";
+    error.id = errorId;
+    error.textContent = message;
+    field.setAttribute("aria-invalid", "true");
+    field.setAttribute("aria-describedby", errorId);
+    field.insertAdjacentElement("afterend", error);
+  }
+
+  function isValidMoney(value, required) {
+    var raw = String(value || "").trim();
+
+    if (!raw) {
+      return !required;
+    }
+
+    var cleaned = raw.replace(/\s/g, "").replace(/^R\$/i, "");
+    return /^\d+(,\d{1,2})?$/.test(cleaned) || /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(cleaned);
+  }
+
   function storageGet(key) {
     try {
       return window.localStorage.getItem(key);
@@ -65,5 +124,6 @@
 
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
+  document.addEventListener("submit", validateForms);
   restoreSettingsSections();
 })();

@@ -3,6 +3,7 @@ const AuditLog = require("./AuditLog");
 const Category = require("./Category");
 const Party = require("./Party");
 const { dueDateFromCompetence, normalizeCompetence } = require("../services/dateService");
+const { validateRecurrencePayload, validationError } = require("../services/formValidation");
 const { newId } = require("../services/id");
 const { toCents } = require("../services/moneyService");
 const { deriveStatus } = require("../services/statusService");
@@ -248,28 +249,16 @@ function setStatus(user, id, status, action) {
 }
 
 function normalizeData(user, data) {
-  const category = Category.getById(user.id, data.category_id);
-  if (!category) {
-    throw new Error("Categoria inválida para recorrência.");
-  }
-
-  if (!["INCOME", "EXPENSE"].includes(category.entry_type)) {
-    throw new Error("A categoria da recorrência precisa ser de receita ou despesa.");
+  const validation = validateRecurrencePayload(user, data, {
+    getCategory: Category.getById,
+    normalizeCompetence,
+  });
+  if (!validation.ok) {
+    throw validationError(validation);
   }
 
   const dueDay = Math.trunc(Number(data.due_day));
-  if (dueDay < 1 || dueDay > 31) {
-    throw new Error("O dia de vencimento deve ficar entre 1 e 31.");
-  }
-
-  const startCompetence = normalizeCompetence(data.start_competence_month, user.timezone);
-  const endCompetence = String(data.end_competence_month || "").trim();
-  const normalizedEnd = endCompetence ? normalizeCompetence(endCompetence, user.timezone) : null;
-
-  if (normalizedEnd && normalizedEnd < startCompetence) {
-    throw new Error("A competência final não pode ser anterior à inicial.");
-  }
-
+  const category = validation.normalized.category;
   const party = Party.findOrCreate(user.id, data.party_name, category.entry_type === "INCOME" ? "PAYER" : "PAYEE");
   const status = STATUS_VALUES.has(data.status) ? data.status : "ACTIVE";
 
@@ -278,10 +267,10 @@ function normalizeData(user, data) {
     category_id: category.id,
     financial_account_id: data.financial_account_id || null,
     party_id: party ? party.id : null,
-    expected_amount_cents: toCents(data.expected_amount),
+    expected_amount_cents: validation.normalized.expectedAmountCents ?? toCents(data.expected_amount),
     due_day: dueDay,
-    start_competence_month: startCompetence,
-    end_competence_month: normalizedEnd,
+    start_competence_month: validation.normalized.startCompetence,
+    end_competence_month: validation.normalized.endCompetence,
     status,
     notes: data.notes || null,
   };

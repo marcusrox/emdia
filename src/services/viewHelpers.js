@@ -21,6 +21,19 @@ function moneyInput(cents) {
   return ((Number(cents) || 0) / 100).toFixed(2).replace(".", ",");
 }
 
+function fieldError(errors, field) {
+  const message = errors?.[field];
+  if (!message) return "";
+
+  return `<small class="field-error" id="${escapeHtml(field)}-error">${escapeHtml(message)}</small>`;
+}
+
+function fieldErrorAttributes(errors, field) {
+  if (!errors?.[field]) return "";
+
+  return ` aria-invalid="true" aria-describedby="${escapeHtml(field)}-error"`;
+}
+
 const ACCOUNT_TYPE_OPTIONS = [
   ["CHECKING", "Conta corrente"],
   ["SAVINGS", "Poupança"],
@@ -155,6 +168,8 @@ module.exports = {
   csrfInput,
   entryTypeLabel,
   escapeHtml,
+  fieldError,
+  fieldErrorAttributes,
   lucideIcon,
   moneyInput,
   normalizeFontScale,

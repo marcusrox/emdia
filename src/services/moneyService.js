@@ -1,17 +1,17 @@
+const { parseMoney } = require("./formValidation");
+
 function toCents(input) {
   if (typeof input === "number") {
     return Math.round(input * 100);
   }
 
-  const raw = String(input || "").trim();
-  if (!raw) return 0;
+  const parsed = parseMoney(input, { required: false });
 
-  const normalized = raw
-    .replace(/[^\d,.-]/g, "")
-    .replace(/\./g, "")
-    .replace(",", ".");
+  if (!parsed.ok) {
+    throw new Error(parsed.message);
+  }
 
-  return Math.round(Number(normalized || 0) * 100);
+  return parsed.cents;
 }
 
 function formatMoney(cents) {

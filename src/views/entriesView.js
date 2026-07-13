@@ -7,6 +7,8 @@ const {
   csrfInput,
   entryTypeLabel,
   escapeHtml,
+  fieldError,
+  fieldErrorAttributes,
   lucideIcon,
   moneyInput,
   option,
@@ -176,10 +178,13 @@ function entriesListView({ user, competence, entries, filters, categories, accou
   });
 }
 
-function entryFormView({ user, entry, competence, categories, accounts, action }) {
+function entryFormView({ user, entry, competence, categories, accounts, action, errors = {} }) {
   const isEdit = Boolean(entry?.id);
-  const selectedCompetence = entry ? entry.competence_month : competence;
-  const type = entry ? entry.entry_type : "EXPENSE";
+  const fieldValue = (field, fallback = "") => entry?.[field] ?? fallback;
+  const selectedCompetence = fieldValue("competence_month", competence);
+  const type = fieldValue("entry_type", "EXPENSE");
+  const expectedAmount = entry?.expected_amount ?? moneyInput(entry?.expected_amount_cents);
+  const realizedAmount = entry?.realized_amount ?? moneyInput(entry?.realized_amount_cents);
 
   return layout({
     title: isEdit ? "Editar lançamento" : "Novo lançamento",
@@ -190,56 +195,68 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
         <span class="eyebrow">${isEdit ? "Editar" : "Novo"}</span>
         <h1>${isEdit ? escapeHtml(entry.description) : "Lançamento financeiro"}</h1>
       </section>
-      <form method="post" action="${action}" class="form-grid form-compact panel">
+      <form method="post" action="${action}" class="form-grid form-compact panel" data-validate-form>
         ${csrfInput(user)}
-                <label class="field-span-2">Descrição
-          <input name="description" value="${escapeHtml(entry?.description || "")}" required>
+        <label class="field-span-2">Descrição
+          <input name="description" value="${escapeHtml(fieldValue("description"))}" required${fieldErrorAttributes(errors, "description")}>
+          ${fieldError(errors, "description")}
         </label>
         <label>Tipo
-          <select name="entry_type">
+          <select name="entry_type"${fieldErrorAttributes(errors, "entry_type")}>
             ${option("EXPENSE", entryTypeLabel("EXPENSE"), type)}
             ${option("INCOME", entryTypeLabel("INCOME"), type)}
           </select>
+          ${fieldError(errors, "entry_type")}
         </label>
         <label>Competência
-          <input type="month" name="competence_month" value="${escapeHtml(selectedCompetence)}" required>
+          <input type="month" name="competence_month" value="${escapeHtml(selectedCompetence)}" required${fieldErrorAttributes(errors, "competence_month")}>
+          ${fieldError(errors, "competence_month")}
         </label>
 
         <label>Valor previsto
-          <input name="expected_amount" inputmode="decimal" value="${escapeHtml(moneyInput(entry?.expected_amount_cents))}" required>
+          <input name="expected_amount" inputmode="decimal" value="${escapeHtml(expectedAmount)}" required data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(errors, "expected_amount")}>
+          ${fieldError(errors, "expected_amount")}
         </label>
         <label>Valor realizado
-          <input name="realized_amount" inputmode="decimal" value="${escapeHtml(moneyInput(entry?.realized_amount_cents))}">
+          <input name="realized_amount" inputmode="decimal" value="${escapeHtml(realizedAmount)}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(errors, "realized_amount")}>
+          ${fieldError(errors, "realized_amount")}
         </label>
         <label>Vencimento
-          <input type="date" name="due_date" value="${escapeHtml(entry?.due_date || "")}" required>
+          <input type="date" name="due_date" value="${escapeHtml(fieldValue("due_date"))}" required${fieldErrorAttributes(errors, "due_date")}>
+          ${fieldError(errors, "due_date")}
         </label>
         <label>Emissão
-          <input type="date" name="issue_date" value="${escapeHtml(entry?.issue_date || "")}">
+          <input type="date" name="issue_date" value="${escapeHtml(fieldValue("issue_date"))}"${fieldErrorAttributes(errors, "issue_date")}>
+          ${fieldError(errors, "issue_date")}
         </label>
         <label>Categoria
-          <select name="category_id">
-            ${option("", "Sem categoria", entry?.category_id)}
-            ${categories.map((category) => option(category.id, categoryOptionLabel(category), entry?.category_id)).join("")}
+          <select name="category_id"${fieldErrorAttributes(errors, "category_id")}>
+            ${option("", "Sem categoria", fieldValue("category_id"))}
+            ${categories.map((category) => option(category.id, categoryOptionLabel(category), fieldValue("category_id"))).join("")}
           </select>
+          ${fieldError(errors, "category_id")}
         </label>
         <label>Conta prevista
-          <select name="expected_account_id">
-            ${option("", "Sem conta", entry?.expected_account_id)}
-            ${accounts.map((account) => option(account.id, account.name, entry?.expected_account_id)).join("")}
+          <select name="expected_account_id"${fieldErrorAttributes(errors, "expected_account_id")}>
+            ${option("", "Sem conta", fieldValue("expected_account_id"))}
+            ${accounts.map((account) => option(account.id, account.name, fieldValue("expected_account_id"))).join("")}
           </select>
+          ${fieldError(errors, "expected_account_id")}
         </label>
         <label>Conta efetiva
-          <select name="actual_account_id">
-            ${option("", "Usar na baixa", entry?.actual_account_id)}
-            ${accounts.map((account) => option(account.id, account.name, entry?.actual_account_id)).join("")}
+          <select name="actual_account_id"${fieldErrorAttributes(errors, "actual_account_id")}>
+            ${option("", "Usar na baixa", fieldValue("actual_account_id"))}
+            ${accounts.map((account) => option(account.id, account.name, fieldValue("actual_account_id"))).join("")}
           </select>
+          ${fieldError(errors, "actual_account_id")}
         </label>
         <label>Favorecido/Pagador
-          <input name="party_name" value="${escapeHtml(entry?.party_name || "")}">
+          <input name="party_name" value="${escapeHtml(fieldValue("party_name"))}"${fieldErrorAttributes(errors, "party_name")}>
+          ${fieldError(errors, "party_name")}
         </label>
         <label class="field-span-2">Observações
-          <textarea name="notes">${escapeHtml(entry?.notes || "")}</textarea>
+          <textarea name="notes"${fieldErrorAttributes(errors, "notes")}>${escapeHtml(fieldValue("notes"))}</textarea>
+          ${fieldError(errors, "notes")}
         </label>
         <div class="form-actions wide">
           ${buttonLink({ href: `/entries?competence=${selectedCompetence}`, label: "Voltar", icon: "arrow-left" })}
@@ -250,7 +267,11 @@ function entryFormView({ user, entry, competence, categories, accounts, action }
   });
 }
 
-function entryDetailView({ user, entry, settlements, accounts, auditEvents = [] }) {
+function entryDetailView({ user, entry, settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null }) {
+  const settlementValue = (field, fallback = "") => settlementValues?.[field] ?? fallback;
+  const principalValue = settlementValue("principal", moneyInput(entry.expected_amount_cents - entry.realized_amount_cents));
+  const settledAtValue = settlementValue("settled_at", new Date().toISOString().slice(0, 10));
+
   return layout({
     title: entry.description,
     user,
@@ -281,27 +302,33 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [] 
         </article>
         <article class="panel">
           <div class="section-title"><h2>Registrar baixa</h2></div>
-          <form method="post" action="/entries/${entry.id}/settlements" class="settlement-form">
+          <form method="post" action="/entries/${entry.id}/settlements" class="settlement-form" data-validate-form>
             ${csrfInput(user)}
             <label>Conta
-              <select name="financial_account_id" required>
-                ${accounts.map((account) => option(account.id, account.name, entry.actual_account_id || entry.expected_account_id)).join("")}
+              <select name="financial_account_id" required${fieldErrorAttributes(settlementErrors, "financial_account_id")}>
+                ${accounts.map((account) => option(account.id, account.name, settlementValue("financial_account_id", entry.actual_account_id || entry.expected_account_id))).join("")}
               </select>
+              ${fieldError(settlementErrors, "financial_account_id")}
             </label>
             <label>Valor principal
-              <input name="principal" inputmode="decimal" value="${escapeHtml(moneyInput(entry.expected_amount_cents - entry.realized_amount_cents))}" required>
+              <input name="principal" inputmode="decimal" value="${escapeHtml(principalValue)}" required data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "principal")}>
+              ${fieldError(settlementErrors, "principal")}
             </label>
             <label>Data
-              <input type="date" name="settled_at" value="${new Date().toISOString().slice(0, 10)}" required>
+              <input type="date" name="settled_at" value="${escapeHtml(settledAtValue)}" required${fieldErrorAttributes(settlementErrors, "settled_at")}>
+              ${fieldError(settlementErrors, "settled_at")}
             </label>
             <label>Juros
-              <input name="interest" inputmode="decimal" value="0,00">
+              <input name="interest" inputmode="decimal" value="${escapeHtml(settlementValue("interest", "0,00"))}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "interest")}>
+              ${fieldError(settlementErrors, "interest")}
             </label>
             <label>Multa
-              <input name="penalty" inputmode="decimal" value="0,00">
+              <input name="penalty" inputmode="decimal" value="${escapeHtml(settlementValue("penalty", "0,00"))}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "penalty")}>
+              ${fieldError(settlementErrors, "penalty")}
             </label>
             <label>Desconto
-              <input name="discount" inputmode="decimal" value="0,00">
+              <input name="discount" inputmode="decimal" value="${escapeHtml(settlementValue("discount", "0,00"))}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "discount")}>
+              ${fieldError(settlementErrors, "discount")}
             </label>
             <button type="submit">${buttonContent("Baixar", "check-circle")}</button>
           </form>

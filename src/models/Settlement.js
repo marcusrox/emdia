@@ -15,12 +15,12 @@ function listByEntry(entryId) {
 }
 
 function create(userId, entryId, data) {
-  const principal = toCents(data.principal);
-  const interest = toCents(data.interest);
-  const penalty = toCents(data.penalty);
-  const discount = toCents(data.discount);
-  const other = toCents(data.other_adjustment);
-  const total = principal + interest + penalty + other - discount;
+  const principal = data.principal_cents ?? toCents(data.principal);
+  const interest = data.interest_cents ?? toCents(data.interest);
+  const penalty = data.penalty_cents ?? toCents(data.penalty);
+  const discount = data.discount_cents ?? toCents(data.discount);
+  const other = data.other_adjustment_cents ?? toCents(data.other_adjustment);
+  const total = data.total_cents ?? principal + interest + penalty + other - discount;
   const now = new Date().toISOString();
   const id = newId("set");
 
