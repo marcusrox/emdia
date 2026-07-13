@@ -3,28 +3,28 @@
 ## Contexto
 
 As listagens de `/entries`, `/accounts` e `/categories` ocupam bastante espaco
-vertical, especialmente em telas menores ou quando ha muitos registros. O
-projeto ja possui uma configuracao de tamanho de fonte (`font_scale`), mas essa
-preferencia resolve outro problema: legibilidade.
+vertical, especialmente em telas menores ou quando há muitos registros. O
+projeto já possui uma configuração de tamanho de fonte (`font_scale`), mas essa
+preferência resolve outro problema: legibilidade.
 
-A necessidade aqui e diferente: permitir visualizar mais linhas e informacoes na
+A necessidade aqui e diferente: permitir visualizar mais linhas e informações na
 tela sem necessariamente reduzir o tamanho da fonte.
 
 ## Objetivo
 
-Adicionar em Configuracoes uma preferencia de densidade das listagens com tres
-niveis, permitindo que o usuario escolha entre uma visualizacao mais espacada ou
-mais compacta para tabelas e acoes por linha.
+Adicionar em Configurações uma preferência de densidade das listagens com três
+niveis, permitindo que o usuário escolha entre uma visualização mais espacada ou
+mais compacta para tabelas e ações por linha.
 
-## Decisao proposta
+## Decisão proposta
 
-Criar uma nova preferencia de usuario chamada `list_density`, com tres valores:
+Criar uma nova preferência de usuário chamada `list_density`, com três valores:
 
 - `comfortable`: confortavel;
-- `standard`: padrao;
+- `standard`: padrão;
 - `compact`: compacta.
 
-Aplicar a preferencia como classe no `<body>`, de forma semelhante a
+Aplicar a preferência como classe no `<body>`, de forma semelhante a
 `font_scale`:
 
 ```html
@@ -33,44 +33,44 @@ Aplicar a preferencia como classe no `<body>`, de forma semelhante a
 
 ## Escopo
 
-- Adicionar coluna `list_density` em `users`, com valor padrao `standard`.
-- Adicionar normalizacao da preferencia no model/service de usuario.
-- Exibir a preferencia em `/settings`.
-- Salvar a preferencia via `POST /settings`.
+- Adicionar coluna `list_density` em `users`, com valor padrão `standard`.
+- Adicionar normalizacao da preferência no model/service de usuário.
+- Exibir a preferência em `/settings`.
+- Salvar a preferência via `POST /settings`.
 - Aplicar a classe de densidade no `<body>` em `src/views/layout.js`.
-- Ajustar CSS para os tres niveis de densidade.
+- Ajustar CSS para os três niveis de densidade.
 - Afetar inicialmente listagens/tabelas de:
   - `/entries`;
   - `/accounts`;
   - `/categories`.
-- Ajustar altura e espacamento dos botoes de acao por linha.
+- Ajustar altura e espacamento dos botões de ação por linha.
 - Preservar tamanho de fonte definido por `font_scale`.
-- Atualizar o controle de release ao concluir a implementacao.
+- Atualizar o controle de release ao concluir a implementação.
 
 ## Fora do escopo
 
 - Reduzir tamanho das fontes.
-- Compactar formularios de cadastro/edicao.
+- Compactar formulários de cadastro/edição.
 - Alterar dados exibidos nas colunas.
 - Ocultar colunas em modo compacto.
-- Criar configuracao por tela.
-- Aplicar densidade em dashboard, cards ou formularios.
+- Criar configuração por tela.
+- Aplicar densidade em dashboard, cards ou formulários.
 - Implementar esta task neste momento.
 
 ## Comportamento esperado
 
 - Em `comfortable`, as tabelas ficam mais espacadas, com leitura mais arejada.
-- Em `standard`, as tabelas mantem o comportamento visual atual ou muito proximo
+- Em `standard`, as tabelas mantem o comportamento visual atual ou muito próximo
   do atual.
 - Em `compact`, as tabelas reduzem padding vertical, espacamento interno e
-  tamanho dos controles de acao, permitindo visualizar mais registros por tela.
-- A configuracao escolhida persiste para o usuario.
-- A classe de densidade e aplicada em todas as paginas renderizadas pelo layout.
-- A preferencia de tamanho de fonte continua independente da densidade.
+  tamanho dos controles de ação, permitindo visualizar mais registros por tela.
+- A configuração escolhida persiste para o usuário.
+- A classe de densidade e aplicada em todas as páginas renderizadas pelo layout.
+- A preferência de tamanho de fonte continua independente da densidade.
 
 ## Sugestao de interface
 
-Na tela `/settings`, incluir uma secao ou campo:
+Na tela `/settings`, incluir uma seção ou campo:
 
 ```text
 Densidade das listagens
@@ -80,15 +80,15 @@ Densidade das listagens
 ( ) Compacta
 ```
 
-Descricoes sugeridas:
+Descrições sugeridas:
 
 - Confortavel: mais espaco entre linhas para leitura tranquila.
-- Padrao: equilibrio atual entre leitura e quantidade de informacao.
+- Padrão: equilibrio atual entre leitura e quantidade de informação.
 - Compacta: reduz espacos para mostrar mais registros na tela.
 
 ## Ajustes CSS sugeridos
 
-Exemplos de areas afetadas:
+Exemplos de áreas afetadas:
 
 - `table th`;
 - `table td`;
@@ -97,7 +97,7 @@ Exemplos de areas afetadas:
 - `.record-actions`;
 - `.record-action-button`;
 - `.table-wrap`;
-- `.panel-heading`, se necessario.
+- `.panel-heading`, se necessário.
 
 Exemplo conceitual:
 
@@ -113,21 +113,21 @@ Exemplo conceitual:
 }
 ```
 
-## Criterios de aceite
+## Critérios de aceite
 
-- `/settings` permite escolher entre `Confortavel`, `Padrao` e `Compacta`.
-- A escolha e salva no usuario autenticado.
-- O valor padrao para usuarios existentes e `standard`.
+- `/settings` permite escolher entre `Confortavel`, `Padrão` e `Compacta`.
+- A escolha e salva no usuário autenticado.
+- O valor padrão para usuários existentes e `standard`.
 - O `<body>` recebe a classe `list-density-{valor}`.
 - `/entries`, `/accounts` e `/categories` refletem visualmente a densidade
   escolhida.
 - O modo compacto mostra mais linhas na tela sem reduzir a fonte base.
-- O modo confortavel nao quebra layout mobile nem tabelas com rolagem
+- O modo confortavel não quebra layout mobile nem tabelas com rolagem
   horizontal.
-- A configuracao de fonte continua funcionando de forma independente.
-- `npm run check` passa apos a implementacao.
+- A configuração de fonte continua funcionando de forma independente.
+- `npm run check` passa após a implementação.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
@@ -140,38 +140,38 @@ Fluxos manuais:
 - conferir `/entries`, `/accounts` e `/categories`;
 - escolher `Compacta` e salvar;
 - conferir que as mesmas listagens ocupam menos altura;
-- alterar tambem o tamanho da fonte e confirmar que as configuracoes nao entram
+- alterar também o tamanho da fonte e confirmar que as configurações não entram
   em conflito;
 - validar em viewport desktop e mobile.
 
-## Observacao de implementacao
+## Observação de implementação
 
-Seguir o padrao existente de `font_scale`:
+Seguir o padrão existente de `font_scale`:
 
 - normalizacao em `src/models/User.js`;
-- formulario em `src/views/settingsView.js`;
+- formulário em `src/views/settingsView.js`;
 - classe no body em `src/views/layout.js`;
-- persistencia via `POST /settings` em `src/server.js`;
+- persistência via `POST /settings` em `src/server.js`;
 - coluna adicionada por `ensureColumn` em `src/database/schema.js`.
 
 Evitar refatoracao ampla de CSS. A primeira entrega deve ajustar apenas tokens
-de espacamento e altura nas tabelas/listagens ja existentes.
+de espacamento e altura nas tabelas/listagens já existentes.
 
-Ao concluir a implementacao, atualizar o controle de release em
-`src/config/release.js`, incrementando o numero sequencial em 1.
+Ao concluir a implementação, atualizar o controle de release em
+`src/config/release.js`, incrementando o número sequencial em 1.
 
-## Implementacao
+## Implementação
 
-- Foi adicionada a coluna `list_density` em `users`, com valor padrao
+- Foi adicionada a coluna `list_density` em `users`, com valor padrão
   `standard`.
 - Foi adicionada normalizacao central em `src/models/User.js`.
-- A consulta de sessao passou a carregar `list_density`.
-- A tela `/settings` passou a exibir tres opcoes de densidade:
-  `Confortavel`, `Padrao` e `Compacta`.
-- O POST de `/settings` passou a salvar as preferencias de interface em conjunto.
+- A consulta de sessão passou a carregar `list_density`.
+- A tela `/settings` passou a exibir três opções de densidade:
+  `Confortavel`, `Padrão` e `Compacta`.
+- O POST de `/settings` passou a salvar as preferências de interface em conjunto.
 - O layout passou a aplicar a classe global `list-density-{valor}` no `<body>`.
-- O CSS passou a usar variaveis de densidade para tabelas, status e acoes por
-  linha, criando um padrao reutilizavel para futuras listagens.
+- O CSS passou a usar variaveis de densidade para tabelas, status e ações por
+  linha, criando um padrão reutilizável para futuras listagens.
 - O modo compacto reduz espacamento vertical sem reduzir a fonte base.
 - O controle de release foi atualizado para registrar a entrega da task.
 
@@ -181,8 +181,8 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -190,5 +190,5 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

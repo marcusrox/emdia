@@ -1,99 +1,99 @@
-# TASK-008 - Topo mobile compacto com menus em icones
+# TASK-008 - Topo mobile compacto com menus em ícones
 
 ## Contexto
 
 O sistema passou a ter um menu sanduiche no celular, mas ele ainda ocupa uma
-linha propria no topo. Alem disso, o menu do usuario exibe o nome do usuario,
+linha própria no topo. Além disso, o menu do usuário exibe o nome do usuário,
 consumindo espaco horizontal e vertical em telas pequenas.
 
-Como o EmDia sera usado com frequencia no celular, o topo mobile precisa ser
-mais compacto. A navegacao principal e o menu do usuario devem ficar no topo,
-alinhados a esquerda e proximos ao logo, usando icones para economizar espaco.
+Como o EmDia será usado com frequência no celular, o topo mobile precisa ser
+mais compacto. A navegação principal e o menu do usuário devem ficar no topo,
+alinhados a esquerda e próximos ao logo, usando ícones para economizar espaco.
 
 ## Objetivo
 
 Ajustar o topo em telas mobile para que o menu sanduiche fique na mesma linha do
-logo do sistema, alinhado a esquerda, e para que o menu do usuario tambem fique
-no topo como um icone de usuario, sem exibir o nome do usuario.
+logo do sistema, alinhado a esquerda, e para que o menu do usuário também fique
+no topo como um ícone de usuário, sem exibir o nome do usuário.
 
 ## Escopo
 
-- Reorganizar o topo mobile para usar uma unica linha compacta.
+- Reorganizar o topo mobile para usar uma única linha compacta.
 - Posicionar o menu sanduiche no topo, alinhado a esquerda, ao lado do logo do
   sistema.
-- Posicionar o menu do usuario tambem no topo, proximo ao menu sanduiche e ao
+- Posicionar o menu do usuário também no topo, próximo ao menu sanduiche e ao
   logo.
-- Substituir, no mobile, o nome do usuario por um icone de usuario.
-- Manter o menu do usuario com as opcoes Configuracoes e Sair.
+- Substituir, no mobile, o nome do usuário por um ícone de usuário.
+- Manter o menu do usuário com as opções Configurações e Sair.
 - Preservar o menu principal mobile com os links atuais:
   - Dashboard;
-  - Lancamentos;
-  - Novo lancamento;
+  - Lançamentos;
+  - Novo lançamento;
   - Contas;
   - Categorias.
-- Manter o comportamento desktop atual, salvo ajuste minimo necessario para
+- Manter o comportamento desktop atual, salvo ajuste mínimo necessário para
   compartilhar markup ou classes.
-- Evitar JavaScript; preferir `<details>` e CSS como no padrao atual.
+- Evitar JavaScript; preferir `<details>` e CSS como no padrão atual.
 
 ## Fora do escopo
 
-- Alterar rotas, regras de negocio ou permissoes.
-- Remover opcoes de navegacao.
+- Alterar rotas, regras de negocio ou permissões.
+- Remover opções de navegação.
 - Criar uma sidebar mobile completa.
-- Introduzir biblioteca de icones ou framework CSS.
+- Introduzir biblioteca de ícones ou framework CSS.
 - Redesenhar o topo desktop de forma ampla.
-- Alterar o comportamento do rodape, release ou formularios.
+- Alterar o comportamento do rodapé, release ou formulários.
 
 ## Comportamento esperado no mobile
 
 - O topo deve ocupar menos altura que o estado atual.
 - O menu sanduiche deve aparecer na primeira linha do topo.
-- O logo/marca do EmDia deve continuar visivel.
-- O menu do usuario deve aparecer como icone de usuario, sem texto com o nome.
-- Ao tocar no icone de usuario, devem aparecer Configuracoes e Sair.
+- O logo/marca do EmDia deve continuar visível.
+- O menu do usuário deve aparecer como ícone de usuário, sem texto com o nome.
+- Ao tocar no ícone de usuário, devem aparecer Configurações e Sair.
 - Ao tocar no menu sanduiche, devem aparecer os links principais em coluna.
-- Nao deve haver rolagem horizontal causada pelo topo.
+- Não deve haver rolagem horizontal causada pelo topo.
 - Os alvos de toque devem continuar confortaveis para uso no celular.
 
 ## Comportamento esperado no desktop
 
-- A navegacao horizontal desktop deve continuar disponivel.
-- O menu do usuario pode continuar exibindo o nome do usuario no desktop.
-- O layout desktop nao deve perder densidade nem quebrar alinhamento.
+- A navegação horizontal desktop deve continuar disponível.
+- O menu do usuário pode continuar exibindo o nome do usuário no desktop.
+- O layout desktop não deve perder densidade nem quebrar alinhamento.
 
 ## Diretrizes visuais
 
-- Usar simbolos simples em CSS ou HTML para os icones, sem dependencia externa.
-- O icone de usuario deve ser reconhecivel e discreto.
-- O menu sanduiche deve continuar claro como acionador de navegacao.
+- Usar simbolos simples em CSS ou HTML para os ícones, sem dependência externa.
+- O ícone de usuário deve ser reconhecivel e discreto.
+- O menu sanduiche deve continuar claro como acionador de navegação.
 - Evitar textos longos no topo mobile.
 - Preservar a identidade visual do EmDia e a paleta atual.
-- Garantir que menu aberto nao sobreponha incoerentemente os demais elementos.
+- Garantir que menu aberto não sobreponha incoerentemente os demais elementos.
 
-## Pontos provaveis de implementacao
+## Pontos prováveis de implementação
 
-- `src/views/layout.js`: ajustar markup do topo, menus mobile e menu do usuario.
-- `public/css/styles.css`: ajustar layout responsivo, icones, alinhamento e
+- `src/views/layout.js`: ajustar markup do topo, menus mobile e menu do usuário.
+- `public/css/styles.css`: ajustar layout responsivo, ícones, alinhamento e
   comportamento dos paineis abertos.
 
-## Criterios de aceite
+## Critérios de aceite
 
 - Em viewport mobile, o menu sanduiche fica no topo ao lado do logo.
-- Em viewport mobile, o menu do usuario aparece como icone, sem exibir o nome.
-- Configuracoes e Sair continuam acessiveis pelo menu do usuario.
+- Em viewport mobile, o menu do usuário aparece como ícone, sem exibir o nome.
+- Configurações e Sair continuam acessiveis pelo menu do usuário.
 - Links principais continuam acessiveis pelo menu sanduiche.
-- O topo mobile nao gera overflow horizontal em larguras comuns de celular.
-- Desktop continua exibindo a navegacao horizontal e o menu do usuario conforme
+- O topo mobile não gera overflow horizontal em larguras comuns de celular.
+- Desktop continua exibindo a navegação horizontal e o menu do usuário conforme
   esperado.
-- `npm run check` passa apos a implementacao.
+- `npm run check` passa após a implementação.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
 ```
 
-Quando for necessario validar HTTP, usar a regra do `AGENTS.md`:
+Quando for necessário validar HTTP, usar a regra do `AGENTS.md`:
 
 ```powershell
 $env:PORT = "3100"
@@ -105,29 +105,29 @@ Fluxos manuais:
 - testar em larguras 360px, 390px e 430px;
 - acessar `/dashboard`;
 - abrir e fechar o menu sanduiche;
-- abrir e fechar o menu do usuario;
-- acessar Configuracoes pelo icone do usuario;
-- sair pelo menu do usuario, se apropriado;
+- abrir e fechar o menu do usuário;
+- acessar Configurações pelo ícone do usuário;
+- sair pelo menu do usuário, se apropriado;
 - conferir `/entries/new`, `/accounts`, `/categories` e `/settings`;
-- testar desktop para garantir que a navegacao horizontal foi preservada.
+- testar desktop para garantir que a navegação horizontal foi preservada.
 
-## Observacao de implementacao
+## Observação de implementação
 
-Esta task registra o escopo solicitado, mas a implementacao ainda nao deve ser
+Esta task registra o escopo solicitado, mas a implementação ainda não deve ser
 feita neste momento.
 
-## Implementacao
+## Implementação
 
-- Topo mobile reorganizado em uma unica linha com menu sanduiche, logo e menu do
-  usuario.
-- Menu sanduiche mobile passou a ser apenas icone, ao lado do logo.
-- Menu do usuario mobile passou a ser um icone de usuario, sem exibir o nome.
-- Icone de usuario mobile foi reduzido, alinhado a direita e ficou sem fundo
+- Topo mobile reorganizado em uma única linha com menu sanduiche, logo e menu do
+  usuário.
+- Menu sanduiche mobile passou a ser apenas ícone, ao lado do logo.
+- Menu do usuário mobile passou a ser um ícone de usuário, sem exibir o nome.
+- Ícone de usuário mobile foi reduzido, alinhado a direita e ficou sem fundo
   circular.
 - Menus mobile passaram a compartilhar o mesmo grupo de `<details>`, evitando
-  sobreposicao quando um menu e aberto enquanto o outro ja estava aberto.
-- Menu do usuario desktop continua exibindo o nome do usuario.
-- Navegacao horizontal desktop foi preservada.
+  sobreposicao quando um menu e aberto enquanto o outro já estava aberto.
+- Menu do usuário desktop continua exibindo o nome do usuário.
+- Navegação horizontal desktop foi preservada.
 - Menus mobile seguem usando `<details>` e CSS, sem JavaScript.
 - Controle de release atualizado para `Release 11/07/2026 11:35 - 003`.
 
@@ -137,8 +137,8 @@ feita neste momento.
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -146,5 +146,5 @@ feita neste momento.
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

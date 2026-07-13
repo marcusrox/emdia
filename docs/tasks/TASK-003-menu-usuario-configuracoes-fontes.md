@@ -1,127 +1,127 @@
-# TASK-003 - Menu do usuario e configuracao de tamanho de fonte
+# TASK-003 - Menu do usuário e configuração de tamanho de fonte
 
 ## Contexto
 
 No topo da interface, ao lado direito, o sistema exibe atualmente o nome do
-usuario autenticado e o botao Sair como elementos separados.
+usuário autenticado e o botão Sair como elementos separados.
 
-Esse espaco deve evoluir para um menu associado ao nome do usuario. A primeira
-necessidade desse menu e dar acesso a uma nova tela de Configuracoes, onde cada
-usuario possa ajustar o tamanho das fontes da interface do sistema.
+Esse espaco deve evoluir para um menu associado ao nome do usuário. A primeira
+necessidade desse menu e dar acesso a uma nova tela de Configurações, onde cada
+usuário possa ajustar o tamanho das fontes da interface do sistema.
 
-O ajuste de fonte deve ajudar usuarios que trabalham em monitores menores ou que
-preferem fontes menores para visualizar mais informacoes na tela, sem alterar a
-experiencia dos demais usuarios.
+O ajuste de fonte deve ajudar usuários que trabalham em monitores menores ou que
+preferem fontes menores para visualizar mais informações na tela, sem alterar a
+experiência dos demais usuários.
 
 ## Objetivo
 
-Transformar o nome do usuario autenticado, exibido no topo direito da interface,
-em um menu com as opcoes Configuracoes e Sair, e criar uma tela inicial de
-Configuracoes com controle de tamanho de fonte da interface por usuario.
+Transformar o nome do usuário autenticado, exibido no topo direito da interface,
+em um menu com as opções Configurações e Sair, e criar uma tela inicial de
+Configurações com controle de tamanho de fonte da interface por usuário.
 
 ## Escopo
 
-- Substituir a exibicao simples do nome do usuario no topo por um menu acionado
-  pelo proprio nome do usuario.
-- Incluir no menu as opcoes:
-  - Configuracoes;
+- Substituir a exibição simples do nome do usuário no topo por um menu acionado
+  pelo próprio nome do usuário.
+- Incluir no menu as opções:
+  - Configurações;
   - Sair.
-- Preservar o comportamento atual de logout pela opcao Sair.
-- Criar uma nova rota/tela de Configuracoes.
-- Criar inicialmente apenas a configuracao de tamanho de fonte da interface.
-- Persistir a preferencia de tamanho de fonte por usuario autenticado.
-- Aplicar a preferencia do usuario nas telas do sistema apos login.
-- Manter um valor padrao seguro quando o usuario ainda nao tiver configuracao
+- Preservar o comportamento atual de logout pela opção Sair.
+- Criar uma nova rota/tela de Configurações.
+- Criar inicialmente apenas a configuração de tamanho de fonte da interface.
+- Persistir a preferência de tamanho de fonte por usuário autenticado.
+- Aplicar a preferência do usuário nas telas do sistema após login.
+- Manter um valor padrão seguro quando o usuário ainda não tiver configuração
   salva.
-- Manter mensagens, rotulos e a interface em portugues.
+- Manter mensagens, rótulos e a interface em português.
 
 ## Fora do escopo
 
-- Criar outras configuracoes de usuario alem do tamanho de fonte.
-- Criar pagina de perfil completa.
-- Alterar dados cadastrais do usuario, senha, email ou permissoes.
+- Criar outras configurações de usuário além do tamanho de fonte.
+- Criar página de perfil completa.
+- Alterar dados cadastrais do usuário, senha, email ou permissões.
 - Implementar temas, modo escuro ou customizacao de cores.
-- Criar preferencias globais que afetem todos os usuarios.
-- Refatorar a estrutura geral de navegacao alem do menu do usuario no topo.
+- Criar preferências globais que afetem todos os usuários.
+- Refatorar a estrutura geral de navegação além do menu do usuário no topo.
 
 ## Comportamento esperado
 
-### Menu do usuario
+### Menu do usuário
 
-- O topo direito deve exibir o nome do usuario autenticado como acionador de um
+- O topo direito deve exibir o nome do usuário autenticado como acionador de um
   menu.
-- Ao abrir o menu, devem aparecer as opcoes Configuracoes e Sair.
-- A opcao Configuracoes deve levar para a nova tela de configuracoes.
-- A opcao Sair deve executar o logout atual.
-- O menu deve funcionar com mouse e teclado sempre que possivel dentro dos
-  padroes simples do MVP.
+- Ao abrir o menu, devem aparecer as opções Configurações e Sair.
+- A opção Configurações deve levar para a nova tela de configurações.
+- A opção Sair deve executar o logout atual.
+- O menu deve funcionar com mouse e teclado sempre que possível dentro dos
+  padrões simples do MVP.
 
-### Tela de Configuracoes
+### Tela de Configurações
 
-- A tela deve exibir um formulario simples para selecionar o tamanho das fontes
+- A tela deve exibir um formulário simples para selecionar o tamanho das fontes
   da interface.
-- A configuracao deve ser claramente descrita para o usuario como uma
-  preferencia pessoal.
-- O usuario deve conseguir salvar a preferencia.
-- Apos salvar, o sistema deve confirmar a atualizacao com uma mensagem em
-  portugues.
-- A preferencia salva deve ser aplicada nas telas seguintes do sistema.
+- A configuração deve ser claramente descrita para o usuário como uma
+  preferência pessoal.
+- O usuário deve conseguir salvar a preferência.
+- Após salvar, o sistema deve confirmar a atualização com uma mensagem em
+  português.
+- A preferência salva deve ser aplicada nas telas seguintes do sistema.
 
-## Opcoes sugeridas de tamanho
+## Opções sugeridas de tamanho
 
-As opcoes exatas podem ser ajustadas durante a implementacao, mas a task deve
+As opções exatas podem ser ajustadas durante a implementação, mas a task deve
 considerar uma escala simples e segura, por exemplo:
 
-| Valor | Rotulo sugerido | Uso esperado |
+| Valor | Rótulo sugerido | Uso esperado |
 | --- | --- | --- |
-| `small` | Pequena | Mais informacoes visiveis em telas menores |
-| `medium` | Padrao | Tamanho atual ou equivalente ao padrao do sistema |
-| `large` | Grande | Melhor leitura para usuarios que preferem fonte maior |
+| `small` | Pequena | Mais informações visíveis em telas menores |
+| `medium` | Padrão | Tamanho atual ou equivalente ao padrão do sistema |
+| `large` | Grande | Melhor leitura para usuários que preferem fonte maior |
 
-Alternativamente, a implementacao pode usar percentuais internos, desde que a
-interface apresente rotulos claros em portugues e mantenha um valor padrao.
+Alternativamente, a implementação pode usar percentuais internos, desde que a
+interface apresente rótulos claros em português e mantenha um valor padrão.
 
-## Requisitos tecnicos
+## Requisitos técnicos
 
-- Usar CommonJS e os padroes atuais do projeto.
-- Manter formularios que alteram dados usando POST.
-- Persistir a preferencia por usuario, sem afetar outros usuarios.
+- Usar CommonJS e os padrões atuais do projeto.
+- Manter formulários que alteram dados usando POST.
+- Persistir a preferência por usuário, sem afetar outros usuários.
 - Preservar compatibilidade com bancos locais existentes.
-- Caso seja necessario alterar o schema, fazer a mudanca em
-  `src/database/schema.js` de forma compativel com bancos ja criados.
-- Evitar dependencias externas para o menu ou para a aplicacao da escala de
+- Caso seja necessário alterar o schema, fazer a mudanca em
+  `src/database/schema.js` de forma compatível com bancos já criados.
+- Evitar dependências externas para o menu ou para a aplicação da escala de
   fontes.
-- Escapar dados de usuario ao renderizar HTML com `escapeHtml`.
-- Manter a regra de competencia mensal atual intacta nas telas operacionais.
+- Escapar dados de usuário ao renderizar HTML com `escapeHtml`.
+- Manter a regra de competência mensal atual intacta nas telas operacionais.
 - Evitar refatoracoes amplas em `src/server.js` e `src/services/viewEngine.js`
   quando ajustes pontuais forem suficientes.
 
-## Pontos provaveis de implementacao
+## Pontos prováveis de implementação
 
-- `src/server.js`: rotas de configuracoes e integracao do menu com as rotas
+- `src/server.js`: rotas de configurações e integração do menu com as rotas
   existentes.
-- `src/services/viewEngine.js`: renderizacao do topo, menu do usuario, tela de
-  configuracoes e aplicacao de classe/atributo de escala de fonte.
+- `src/services/viewEngine.js`: renderização do topo, menu do usuário, tela de
+  configurações e aplicação de classe/atributo de escala de fonte.
 - `src/models/User.js` ou novo model/service apropriado: leitura e gravacao da
-  preferencia por usuario.
-- `src/database/schema.js`: possivel coluna ou tabela de preferencias de
-  usuario, se a estrutura atual nao comportar a configuracao.
+  preferência por usuário.
+- `src/database/schema.js`: possível coluna ou tabela de preferências de
+  usuário, se a estrutura atual não comportar a configuração.
 - `public/css/styles.css`: regras de escala de fonte da interface.
 
-## Criterios de aceite
+## Critérios de aceite
 
-- O nome do usuario no topo abre um menu com Configuracoes e Sair.
-- A opcao Sair continua encerrando a sessao como antes.
-- A opcao Configuracoes abre a nova tela de configuracoes.
+- O nome do usuário no topo abre um menu com Configurações e Sair.
+- A opção Sair continua encerrando a sessão como antes.
+- A opção Configurações abre a nova tela de configurações.
 - A tela permite escolher e salvar o tamanho da fonte da interface.
-- A preferencia e salva por usuario autenticado.
-- A preferencia e aplicada apos salvar e em acessos posteriores do mesmo
-  usuario.
-- Usuarios sem configuracao salva continuam usando o tamanho padrao.
-- A mudanca nao remove nem quebra a navegacao mensal das telas operacionais.
-- `npm run check` passa apos a implementacao.
+- A preferência e salva por usuário autenticado.
+- A preferência e aplicada após salvar e em acessos posteriores do mesmo
+  usuário.
+- Usuários sem configuração salva continuam usando o tamanho padrão.
+- A mudanca não remove nem quebra a navegação mensal das telas operacionais.
+- `npm run check` passa após a implementação.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
@@ -131,26 +131,26 @@ npm start
 Fluxos manuais:
 
 - fazer login;
-- abrir o menu pelo nome do usuario no topo direito;
-- acessar Configuracoes;
+- abrir o menu pelo nome do usuário no topo direito;
+- acessar Configurações;
 - alterar o tamanho da fonte e salvar;
-- navegar por dashboard, lancamentos e contas verificando se a escala foi
+- navegar por dashboard, lançamentos e contas verificando se a escala foi
   aplicada;
-- sair pelo menu do usuario;
-- fazer novo login e confirmar que a preferencia foi mantida;
-- testar outro usuario, se disponivel, para confirmar que a preferencia e
+- sair pelo menu do usuário;
+- fazer novo login e confirmar que a preferência foi mantida;
+- testar outro usuário, se disponível, para confirmar que a preferência e
   individual.
 
-## Observacao de implementacao
+## Observação de implementação
 
-Esta task registra o escopo solicitado, mas a implementacao ainda nao deve ser
+Esta task registra o escopo solicitado, mas a implementação ainda não deve ser
 feita neste momento.
 
-## Implementacao
+## Implementação
 
-- Nome do usuario no topo convertido em menu com as opcoes Configuracoes e Sair.
-- Nova tela `/settings` criada para preferencias individuais do usuario.
-- Preferencia de tamanho de fonte persistida em `users.font_scale`.
+- Nome do usuário no topo convertido em menu com as opções Configurações e Sair.
+- Nova tela `/settings` criada para preferências individuais do usuário.
+- Preferência de tamanho de fonte persistida em `users.font_scale`.
 - Escalas `small`, `medium` e `large` aplicadas no `body` por classe CSS.
 - Logout preservado como POST com token CSRF dentro do menu.
 
@@ -160,8 +160,8 @@ feita neste momento.
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -169,5 +169,5 @@ feita neste momento.
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

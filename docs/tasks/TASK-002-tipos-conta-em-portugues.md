@@ -1,4 +1,4 @@
-# TASK-002 - Tipos de conta em portugues
+# TASK-002 - Tipos de conta em português
 
 ## Contexto
 
@@ -12,41 +12,41 @@ ingles:
 - `CREDIT_CARD`
 - `OTHER`
 
-Esses valores sao adequados como codigos internos de persistencia, mas nao
-devem ser exibidos diretamente para o usuario final. A interface do EmDia deve
-manter mensagens e rotulos em portugues.
+Esses valores sao adequados como códigos internos de persistência, mas não
+devem ser exibidos diretamente para o usuário final. A interface do EmDia deve
+manter mensagens e rótulos em português.
 
 ## Objetivo
 
-Exibir os tipos de conta em portugues em todas as telas e pontos de interface
-do sistema, preservando os valores internos atuais no banco e no codigo de
+Exibir os tipos de conta em português em todas as telas e pontos de interface
+do sistema, preservando os valores internos atuais no banco e no código de
 negocio.
 
 ## Escopo
 
-- Criar ou reaproveitar um helper de rotulo para tipos de conta financeira.
-- Alterar o select de tipo na tela de Contas para mostrar rotulos em portugues.
-- Alterar a tabela da tela de Contas para mostrar o tipo em portugues.
+- Criar ou reaproveitar um helper de rótulo para tipos de conta financeira.
+- Alterar o select de tipo na tela de Contas para mostrar rótulos em português.
+- Alterar a tabela da tela de Contas para mostrar o tipo em português.
 - Fazer uma varredura geral por exibicoes de `FinancialAccount.type` ou dos
-  codigos `CHECKING`, `SAVINGS`, `CASH`, `DIGITAL_WALLET`, `CREDIT_CARD` e
+  códigos `CHECKING`, `SAVINGS`, `CASH`, `DIGITAL_WALLET`, `CREDIT_CARD` e
   `OTHER`.
-- Garantir que novas contas continuem sendo salvas com os codigos internos
+- Garantir que novas contas continuem sendo salvas com os códigos internos
   atuais.
-- Preservar compatibilidade com bancos locais ja existentes.
+- Preservar compatibilidade com bancos locais já existentes.
 
 ## Fora do escopo
 
-- Migrar dados ja gravados para valores em portugues.
+- Migrar dados já gravados para valores em português.
 - Alterar o schema do banco.
 - Renomear enums internos ou contratos de model.
 - Traduzir outros tipos do sistema, como `entry_type`, `party_type` ou
   `settlement_type`, salvo se aparecerem diretamente no mesmo fluxo de Contas e
-  forem necessarios para consistencia visual.
-- Criar CRUD completo de edicao ou remocao de contas.
+  forem necessários para consistência visual.
+- Criar CRUD completo de edição ou remocao de contas.
 
-## Rotulos esperados
+## Rótulos esperados
 
-| Valor interno | Rotulo em portugues |
+| Valor interno | Rótulo em português |
 | --- | --- |
 | `CHECKING` | Conta corrente |
 | `SAVINGS` | Poupanca |
@@ -59,31 +59,31 @@ negocio.
 
 - `src/services/viewEngine.js`: select de tipo na tela de Contas.
 - `src/services/viewEngine.js`: tabela da tela de Contas.
-- `src/models/FinancialAccount.js`: valor padrao interno `CHECKING`.
+- `src/models/FinancialAccount.js`: valor padrão interno `CHECKING`.
 - `src/database/seed.js`: contas iniciais com `CHECKING` e `CASH`.
-- `PRD_sistema_financas_pessoais.md`: referencia aos codigos internos de tipo
+- `PRD_sistema_financas_pessoais.md`: referência aos códigos internos de tipo
   de conta.
 
-## Requisitos tecnicos
+## Requisitos técnicos
 
-- Usar CommonJS e os padroes atuais do projeto.
-- Manter os valores persistidos em ingles como codigos internos.
+- Usar CommonJS e os padrões atuais do projeto.
+- Manter os valores persistidos em ingles como códigos internos.
 - Centralizar a traducao para evitar repeticao de ternarios ou mapas soltos em
-  multiplas views.
+  múltiplas views.
 - Usar `escapeHtml` ao renderizar qualquer valor derivado de dados persistidos.
 - Caso seja encontrado um tipo desconhecido, exibir um fallback seguro, sem
   quebrar a tela.
 
-## Criterios de aceite
+## Critérios de aceite
 
-- O select da tela de Contas exibe todos os tipos em portugues.
-- A tabela da tela de Contas exibe o tipo em portugues para contas existentes.
-- Ao criar uma conta, o valor salvo continua sendo o codigo interno esperado.
-- A varredura nao deixa exibicoes conhecidas dos codigos internos na interface
+- O select da tela de Contas exibe todos os tipos em português.
+- A tabela da tela de Contas exibe o tipo em português para contas existentes.
+- Ao criar uma conta, o valor salvo continua sendo o código interno esperado.
+- A varredura não deixa exibicoes conhecidas dos códigos internos na interface
   de Contas.
-- `npm run check` passa apos a implementacao.
+- `npm run check` passa após a implementação.
 
-## Implementacao
+## Implementação
 
 - Rótulos de tipos de conta centralizados em `src/services/viewEngine.js`.
 - Select da tela de Contas passa a exibir rótulos em português preservando os
@@ -92,7 +92,7 @@ negocio.
   rótulo em português.
 - Fallback seguro mantido para tipos desconhecidos.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
@@ -102,10 +102,10 @@ npm start
 Fluxos manuais:
 
 - acessar `/accounts`;
-- conferir os rotulos do campo Tipo;
+- conferir os rótulos do campo Tipo;
 - criar uma conta de cada tipo principal, quando fizer sentido;
 - conferir a tabela de Contas;
-- confirmar que valores ja existentes tambem aparecem traduzidos.
+- confirmar que valores já existentes também aparecem traduzidos.
 
 ---
 
@@ -113,8 +113,8 @@ Fluxos manuais:
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -122,5 +122,5 @@ Fluxos manuais:
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

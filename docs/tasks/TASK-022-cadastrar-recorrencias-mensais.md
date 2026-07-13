@@ -1,80 +1,80 @@
-# TASK-022 - Cadastrar recorrencias mensais
+# TASK-022 - Cadastrar recorrências mensais
 
 ## Contexto
 
 O PRD preve o cadastro de contas a pagar e receber recorrentes, como salario,
 internet, agua, energia, aluguel e outras despesas ou receitas fixas. Hoje o
-MVP trabalha com lancamentos mensais, baixas e competencia, mas ainda nao possui
-uma regra que gere automaticamente esses lancamentos a cada mes.
+MVP trabalha com lançamentos mensais, baixas e competência, mas ainda não possui
+uma regra que gere automaticamente esses lançamentos a cada mês.
 
-A recorrencia deve ser tratada como uma regra de geracao, nao como uma conta em
-si. O lancamento gerado para cada competencia continua sendo a conta real do
-mes, com vencimento, valor previsto, baixas, status e historico proprios.
+A recorrência deve ser tratada como uma regra de geracao, não como uma conta em
+si. O lançamento gerado para cada competência continua sendo a conta real do
+mês, com vencimento, valor previsto, baixas, status e histórico próprios.
 
 ## Objetivo
 
-Permitir que o usuario cadastre regras mensais recorrentes e que o sistema gere
-automaticamente os lancamentos correspondentes para a competencia acessada,
-mantendo a experiencia simples, previsivel e alinhada a navegacao mensal do
+Permitir que o usuário cadastre regras mensais recorrentes e que o sistema gere
+automaticamente os lançamentos correspondentes para a competência acessada,
+mantendo a experiência simples, previsivel e alinhada a navegação mensal do
 EmDia.
 
-## Decisoes de produto
+## Decisões de produto
 
-- A recorrencia representa uma regra mensal.
-- O lancamento representa a ocorrencia real daquela competencia.
-- O usuario deve continuar usando a tela de lancamentos normalmente para pagar,
+- A recorrência representa uma regra mensal.
+- O lançamento representa a ocorrencia real daquela competência.
+- O usuário deve continuar usando a tela de lançamentos normalmente para pagar,
   receber, editar, cancelar ou consultar cada ocorrencia.
-- A tela de recorrencias deve ser simples e falar em termos cotidianos, como
-  "criar todo mes uma despesa chamada Internet no dia 10".
-- Recorrencias encerradas ou pausadas nao devem apagar lancamentos ja gerados.
-- Editar uma recorrencia deve afetar apenas geracoes futuras, salvo acao
-  explicita em desenvolvimento posterior.
+- A tela de recorrências deve ser simples e falar em termos cotidianos, como
+  "criar todo mês uma despesa chamada Internet no dia 10".
+- Recorrências encerradas ou pausadas não devem apagar lançamentos já gerados.
+- Editar uma recorrência deve afetar apenas geracoes futuras, salvo ação
+  explícita em desenvolvimento posterior.
 
-## Decisao sobre tipo de lancamento
+## Decisão sobre tipo de lançamento
 
-A recorrencia nao deve armazenar `entry_type` como campo proprio.
+A recorrência não deve armazenar `entry_type` como campo próprio.
 
 O tipo deve ser inferido pela categoria selecionada:
 
-- categorias de receita geram lancamentos de receita;
-- categorias de despesa geram lancamentos de despesa.
+- categorias de receita geram lançamentos de receita;
+- categorias de despesa geram lançamentos de despesa.
 
-Ao gerar um lancamento recorrente, o sistema deve copiar o `entry_type` atual da
+Ao gerar um lançamento recorrente, o sistema deve copiar o `entry_type` atual da
 categoria para `financial_entries.entry_type`. A partir desse momento, o
-lancamento gerado passa a ser um snapshot financeiro daquela competencia.
+lançamento gerado passa a ser um snapshot financeiro daquela competência.
 
 Isso permite alterar ou corrigir categorias no futuro sem mudar
-retroativamente lancamentos ja realizados ou baixados.
+retroativamente lançamentos já realizados ou baixados.
 
 ## Escopo
 
-- Criar persistencia para regras de recorrencia mensal.
+- Criar persistência para regras de recorrência mensal.
 - Criar model/service para cadastrar, listar, editar, pausar e encerrar
-  recorrencias.
-- Criar tela de listagem de recorrencias.
-- Criar formulario de nova recorrencia.
-- Criar formulario de edicao de recorrencia.
-- Gerar lancamentos recorrentes para uma competencia quando ela for acessada em
+  recorrências.
+- Criar tela de listagem de recorrências.
+- Criar formulário de nova recorrência.
+- Criar formulário de edição de recorrência.
+- Gerar lançamentos recorrentes para uma competência quando ela for acessada em
   telas operacionais.
-- Evitar duplicidade de lancamentos para a mesma recorrencia e competencia.
-- Marcar lancamentos gerados com a recorrencia de origem.
-- Exibir indicacao visual de que um lancamento veio de recorrencia.
-- Permitir abrir a recorrencia de origem a partir do detalhe do lancamento,
+- Evitar duplicidade de lançamentos para a mesma recorrência e competência.
+- Marcar lançamentos gerados com a recorrência de origem.
+- Exibir indicacao visual de que um lançamento veio de recorrência.
+- Permitir abrir a recorrência de origem a partir do detalhe do lançamento,
   quando aplicavel.
 - Preservar o fluxo atual de baixas em `settlements`.
-- Atualizar o controle de release ao concluir a implementacao.
+- Atualizar o controle de release ao concluir a implementação.
 
 ## Fora do escopo
 
-- Recorrencias semanais, quinzenais ou anuais.
+- Recorrências semanais, quinzenais ou anuais.
 - Parcelamentos complexos.
-- Valores variaveis por mes.
-- Aplicar alteracoes de uma recorrencia em lancamentos ja gerados.
-- Criar excecoes por competencia, como "pular este mes", salvo cancelamento do
-  lancamento especifico.
+- Valores variaveis por mês.
+- Aplicar alterações de uma recorrência em lançamentos já gerados.
+- Criar exceções por competência, como "pular este mês", salvo cancelamento do
+  lançamento especifico.
 - Agendador externo, cron ou processo em background.
 - Notificacoes, WhatsApp, OCR ou anexos.
-- Relatorios avancados de recorrencia.
+- Relatórios avancados de recorrência.
 - Implementar esta task neste momento.
 
 ## Modelo de dados sugerido
@@ -102,91 +102,91 @@ Valores sugeridos para `status`:
 - `PAUSED`;
 - `ENDED`.
 
-Adicionar em `financial_entries` uma referencia opcional:
+Adicionar em `financial_entries` uma referência opcional:
 
 - `recurrence_id`.
 
-Garantir que uma recorrencia nao gere mais de um lancamento para a mesma
-competencia. A solucao pode usar indice unico ou validacao transacional no model,
+Garantir que uma recorrência não gere mais de um lançamento para a mesma
+competência. A solucao pode usar indice único ou validação transacional no model,
 desde que seja segura contra duplicidade.
 
 ## Regra de geracao
 
-Ao abrir uma competencia em telas operacionais, o sistema deve:
+Ao abrir uma competência em telas operacionais, o sistema deve:
 
-1. normalizar a competencia solicitada;
-2. localizar recorrencias ativas aplicaveis ao mes;
-3. ignorar recorrencias com inicio posterior a competencia;
-4. ignorar recorrencias com fim anterior a competencia;
-5. verificar se ja existe lancamento daquela recorrencia para a competencia;
-6. se nao existir, criar o lancamento;
+1. normalizar a competência solicitada;
+2. localizar recorrências ativas aplicaveis ao mês;
+3. ignorar recorrências com inicio posterior a competência;
+4. ignorar recorrências com fim anterior a competência;
+5. verificar se já existe lançamento daquela recorrência para a competência;
+6. se não existir, criar o lançamento;
 7. copiar o tipo da categoria para `financial_entries.entry_type`;
-8. copiar valor, categoria, conta, pagador/favorecido e observacoes aplicaveis;
+8. copiar valor, categoria, conta, pagador/favorecido e observações aplicaveis;
 9. calcular vencimento a partir do dia configurado;
 10. derivar status inicial com `deriveStatus`;
 11. registrar auditoria da geracao.
 
-A geracao inicial deve priorizar a competencia acessada. Uma janela futura, como
-proximos 60 dias, pode ser avaliada depois, mas nao e necessaria para a primeira
+A geracao inicial deve priorizar a competência acessada. Uma janela futura, como
+próximos 60 dias, pode ser avaliada depois, mas não e necessária para a primeira
 versao.
 
 ## Vencimento
 
-A recorrencia deve armazenar o dia do vencimento como numero de 1 a 31.
+A recorrência deve armazenar o dia do vencimento como número de 1 a 31.
 
-Para meses que nao possuem o dia configurado:
+Para meses que não possuem o dia configurado:
 
-- vencimento no dia 29, 30 ou 31 deve cair no ultimo dia do mes;
-- exemplo: recorrencia no dia 31 em fevereiro usa 28 ou 29 de fevereiro,
+- vencimento no dia 29, 30 ou 31 deve cair no último dia do mês;
+- exemplo: recorrência no dia 31 em fevereiro usa 28 ou 29 de fevereiro,
   conforme o ano.
 
-Essa regra deve ficar clara no formulario, com texto curto de ajuda.
+Essa regra deve ficar clara no formulário, com texto curto de ajuda.
 
-## Experiencia esperada
+## Experiência esperada
 
-Adicionar uma entrada de navegacao chamada `Recorrencias`.
+Adicionar uma entrada de navegação chamada `Recorrências`.
 
 Na listagem, exibir pelo menos:
 
-- descricao;
+- descrição;
 - categoria com indicacao de receita ou despesa;
 - valor;
 - dia de vencimento;
-- periodo de vigencia;
+- período de vigencia;
 - status;
-- acoes.
+- ações.
 
-No formulario, o usuario informa:
+No formulário, o usuário informa:
 
-- descricao;
+- descrição;
 - categoria;
 - valor;
 - dia de vencimento;
-- competencia inicial;
-- competencia final opcional;
+- competência inicial;
+- competência final opcional;
 - conta financeira opcional;
 - pagador/favorecido opcional;
-- observacoes opcionais.
+- observações opcionais.
 
-O tipo da recorrencia deve aparecer apenas como informacao derivada da
-categoria, nao como campo editavel separado.
+O tipo da recorrência deve aparecer apenas como informação derivada da
+categoria, não como campo editavel separado.
 
 Exemplos de microcopy:
 
-- "A categoria define se esta recorrencia e receita ou despesa."
-- "Quando o mes nao tiver esse dia, o vencimento sera o ultimo dia do mes."
-- "Alteracoes nesta regra afetam apenas proximas geracoes."
+- "A categoria define se esta recorrência e receita ou despesa."
+- "Quando o mês não tiver esse dia, o vencimento será o último dia do mês."
+- "Alterações nesta regra afetam apenas próximas geracoes."
 
-## Lancamentos gerados
+## Lançamentos gerados
 
-Lancamentos gerados por recorrencia devem continuar funcionando como lancamentos
+Lançamentos gerados por recorrência devem continuar funcionando como lançamentos
 normais:
 
 - podem ser baixados;
 - podem receber baixa parcial;
 - podem ser editados individualmente;
 - podem ser cancelados individualmente;
-- aparecem no dashboard e na listagem da competencia;
+- aparecem no dashboard e na listagem da competência;
 - respeitam filtros mensais;
 - preservam o `entry_type` copiado no momento da geracao.
 
@@ -194,49 +194,49 @@ Na listagem e no detalhe, exibir um marcador discreto como `Recorrente`.
 
 No detalhe, quando houver `recurrence_id`, exibir a origem:
 
-- `Recorrencia: Internet`;
-- link para abrir a recorrencia.
+- `Recorrência: Internet`;
+- link para abrir a recorrência.
 
-Editar um lancamento gerado nao deve alterar automaticamente a recorrencia.
+Editar um lançamento gerado não deve alterar automaticamente a recorrência.
 
 ## Auditoria
 
 Registrar eventos relevantes em `audit_logs`, quando o recurso existir no fluxo:
 
-- criacao de recorrencia;
-- edicao de recorrencia;
-- pausa de recorrencia;
-- encerramento de recorrencia;
-- geracao automatica de lancamento recorrente.
+- criação de recorrência;
+- edição de recorrência;
+- pausa de recorrência;
+- encerramento de recorrência;
+- geracao automática de lançamento recorrente.
 
-As mensagens devem ser claras para manutencao local e suporte futuro.
+As mensagens devem ser claras para manutenção local e suporte futuro.
 
-## Criterios de aceite
+## Critérios de aceite
 
-- O usuario consegue cadastrar uma recorrencia mensal ativa.
-- A recorrencia usa categoria como fonte do tipo, sem campo proprio
+- O usuário consegue cadastrar uma recorrência mensal ativa.
+- A recorrência usa categoria como fonte do tipo, sem campo próprio
   `entry_type`.
-- Ao acessar uma competencia aplicavel, o lancamento recorrente e gerado.
-- O lancamento gerado recebe `entry_type` copiado da categoria no momento da
+- Ao acessar uma competência aplicavel, o lançamento recorrente e gerado.
+- O lançamento gerado recebe `entry_type` copiado da categoria no momento da
   geracao.
-- Alterar categoria ou recorrencia depois nao muda retroativamente lancamentos
-  ja gerados.
-- A mesma recorrencia nao gera lancamento duplicado na mesma competencia.
-- Recorrencia pausada nao gera novos lancamentos.
-- Recorrencia encerrada nao gera novos lancamentos apos seu periodo.
-- Dia 31 em meses menores usa o ultimo dia do mes.
-- Lancamentos recorrentes aparecem no dashboard e na listagem mensal.
-- Lancamentos recorrentes podem ser baixados usando o fluxo atual de
+- Alterar categoria ou recorrência depois não muda retroativamente lançamentos
+  já gerados.
+- A mesma recorrência não gera lançamento duplicado na mesma competência.
+- Recorrência pausada não gera novos lançamentos.
+- Recorrência encerrada não gera novos lançamentos após seu período.
+- Dia 31 em meses menores usa o último dia do mês.
+- Lançamentos recorrentes aparecem no dashboard e na listagem mensal.
+- Lançamentos recorrentes podem ser baixados usando o fluxo atual de
   `settlements`.
-- A tela de lancamentos mostra indicacao de origem recorrente.
-- O detalhe do lancamento permite acessar a recorrencia de origem.
-- Mensagens de usuario permanecem em portugues.
-- Dados dinamicos renderizados em HTML sao escapados.
+- A tela de lançamentos mostra indicacao de origem recorrente.
+- O detalhe do lançamento permite acessar a recorrência de origem.
+- Mensagens de usuário permanecem em português.
+- Dados dinâmicos renderizados em HTML sao escapados.
 - SQL usa placeholders `?`.
 - Valores monetarios permanecem em centavos inteiros.
-- `npm run check` passa apos a implementacao.
+- `npm run check` passa após a implementação.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
@@ -244,58 +244,58 @@ npm run check
 
 Fluxos manuais:
 
-- criar categoria de receita e uma recorrencia de salario;
-- criar categoria de despesa e uma recorrencia de internet;
-- abrir `/dashboard` na competencia corrente;
-- abrir `/entries` na competencia corrente;
-- confirmar que os lancamentos foram gerados uma unica vez;
-- recarregar as telas e confirmar que nao houve duplicidade;
-- trocar para o proximo mes e confirmar nova geracao;
-- pausar uma recorrencia e confirmar que ela nao gera novos lancamentos;
-- encerrar uma recorrencia e confirmar que lancamentos antigos permanecem;
-- criar recorrencia no dia 31 e validar vencimento em mes com menos dias;
-- baixar um lancamento recorrente e confirmar status/settlements;
-- editar um lancamento recorrente e confirmar que a regra original nao mudou.
+- criar categoria de receita e uma recorrência de salario;
+- criar categoria de despesa e uma recorrência de internet;
+- abrir `/dashboard` na competência corrente;
+- abrir `/entries` na competência corrente;
+- confirmar que os lançamentos foram gerados uma única vez;
+- recarregar as telas e confirmar que não houve duplicidade;
+- trocar para o próximo mês e confirmar nova geracao;
+- pausar uma recorrência e confirmar que ela não gera novos lançamentos;
+- encerrar uma recorrência e confirmar que lançamentos antigos permanecem;
+- criar recorrência no dia 31 e validar vencimento em mês com menos dias;
+- baixar um lançamento recorrente e confirmar status/settlements;
+- editar um lançamento recorrente e confirmar que a regra original não mudou.
 
-Se forem alteradas telas, validar tambem em viewport desktop e mobile.
+Se forem alteradas telas, validar também em viewport desktop e mobile.
 
-## Observacoes de implementacao
+## Observações de implementação
 
-Manter a implementacao pequena e alinhada a arquitetura atual:
+Manter a implementação pequena e alinhada a arquitetura atual:
 
 - CommonJS;
 - Express;
 - SQLite com `node:sqlite`;
 - models/services para regras financeiras;
-- renderizacao server-side em `viewEngine`;
-- icones via `lucideIcon`, quando forem necessarios.
+- renderização server-side em `viewEngine`;
+- ícones via `lucideIcon`, quando forem necessários.
 
 Evitar cron ou automacao em background nesta primeira versao. A geracao por
-competencia acessada e mais simples de explicar, testar e manter.
+competência acessada e mais simples de explicar, testar e manter.
 
-Ao concluir a implementacao, atualizar o controle de release em
-`src/config/release.js`, incrementando o numero sequencial em 1.
+Ao concluir a implementação, atualizar o controle de release em
+`src/config/release.js`, incrementando o número sequencial em 1.
 
-## Implementacao
+## Implementação
 
 - Foi criada a tabela `recurrences` para regras mensais recorrentes.
 - Foi reaproveitado o campo existente `financial_entries.recurrence_rule_id`
-  como referencia da recorrencia de origem do lancamento.
-- Foi criado indice unico parcial para impedir que a mesma recorrencia gere mais
-  de um lancamento na mesma competencia.
-- Foi criado o model `Recurrence`, com cadastro, edicao, ativacao, pausa,
-  encerramento e geracao por competencia.
-- A recorrencia nao armazena `entry_type`; o tipo e inferido da categoria e
-  copiado para o lancamento no momento da geracao.
-- A geracao considera recorrencias ativas, competencia inicial/final e evita
+  como referência da recorrência de origem do lançamento.
+- Foi criado indice único parcial para impedir que a mesma recorrência gere mais
+  de um lançamento na mesma competência.
+- Foi criado o model `Recurrence`, com cadastro, edição, ativacao, pausa,
+  encerramento e geracao por competência.
+- A recorrência não armazena `entry_type`; o tipo e inferido da categoria e
+  copiado para o lançamento no momento da geracao.
+- A geracao considera recorrências ativas, competência inicial/final e evita
   duplicidades.
-- O vencimento usa `dueDateFromCompetence`, preservando a regra de usar o ultimo
-  dia do mes quando o dia configurado nao existir.
-- Dashboard e listagem de lancamentos passaram a gerar ocorrencias recorrentes
-  antes da consulta da competencia.
-- Foi adicionada a navegacao `Recorrencias`.
-- Foram adicionadas telas de listagem, nova recorrencia e edicao de recorrencia.
-- Lancamentos gerados por recorrencia exibem indicacao `Recorrente` e link para
+- O vencimento usa `dueDateFromCompetence`, preservando a regra de usar o último
+  dia do mês quando o dia configurado não existir.
+- Dashboard e listagem de lançamentos passaram a gerar ocorrencias recorrentes
+  antes da consulta da competência.
+- Foi adicionada a navegação `Recorrências`.
+- Foram adicionadas telas de listagem, nova recorrência e edição de recorrência.
+- Lançamentos gerados por recorrência exibem indicacao `Recorrente` e link para
   a regra de origem no detalhe.
 - O controle de release foi atualizado para registrar a entrega.
 
@@ -305,8 +305,8 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12 22:38
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -314,5 +314,5 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12 22:45
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

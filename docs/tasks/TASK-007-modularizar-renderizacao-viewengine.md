@@ -1,57 +1,57 @@
-# TASK-007 - Modularizar renderizacao do viewEngine
+# TASK-007 - Modularizar renderização do viewEngine
 
 ## Contexto
 
 O arquivo `src/services/viewEngine.js` concentra hoje muitas responsabilidades:
 
-- layout base da aplicacao;
-- topo e navegacao;
+- layout base da aplicação;
+- topo e navegação;
 - helpers de HTML e labels;
-- formularios;
+- formulários;
 - tabelas;
 - telas completas;
-- leitura de arquivos estaticos;
+- leitura de arquivos estáticos;
 - montagem manual de HTML com template strings.
 
 Essa concentracao foi aceitavel para o MVP inicial, pois manteve a stack simples
-e sem dependencias externas. Com a evolucao do EmDia, o arquivo esta ficando
-grande e menos escalavel, dificultando manutencao, revisao e aplicacao do
-principio de responsabilidade unica.
+e sem dependências externas. Com a evolução do EmDia, o arquivo esta ficando
+grande e menos escalável, dificultando manutenção, revisão e aplicação do
+principio de responsabilidade única.
 
 Antes de introduzir uma engine de templates, a primeira etapa recomendada e
-modularizar a renderizacao atual em arquivos menores, mantendo CommonJS e as
-strings HTML ja usadas pelo projeto.
+modularizar a renderização atual em arquivos menores, mantendo CommonJS e as
+strings HTML já usadas pelo projeto.
 
 ## Objetivo
 
-Dividir `src/services/viewEngine.js` em modulos menores e mais coesos, sem
+Dividir `src/services/viewEngine.js` em módulos menores e mais coesos, sem
 alterar o comportamento visual ou funcional das telas.
 
 ## Escopo
 
-- Extrair helpers reutilizaveis de apresentacao para modulo proprio.
-- Separar o layout base e componentes compartilhados em modulo proprio.
-- Separar renderizacao por area/tela em arquivos menores.
-- Preservar as funcoes publicas atualmente consumidas por `src/server.js`.
+- Extrair helpers reutilizáveis de apresentacao para módulo próprio.
+- Separar o layout base e componentes compartilhados em módulo próprio.
+- Separar renderização por área/tela em arquivos menores.
+- Preservar as funções públicas atualmente consumidas por `src/server.js`.
 - Manter CommonJS e servidor HTTP nativo.
-- Nao introduzir engine de templates nesta etapa.
-- Nao alterar rotas, models, schema ou regras de negocio.
-- Garantir que HTML continue escapando dados de usuario corretamente.
+- Não introduzir engine de templates nesta etapa.
+- Não alterar rotas, models, schema ou regras de negocio.
+- Garantir que HTML continue escapando dados de usuário corretamente.
 
 ## Fora do escopo
 
 - Migrar para EJS, Nunjucks, Handlebars, Eta ou outra engine de templates.
 - Migrar para Express ou framework web.
-- Alterar layout visual, CSS ou componentes alem do necessario para a separacao
+- Alterar layout visual, CSS ou componentes além do necessário para a separacao
   de arquivos.
-- Refatorar regras financeiras, models ou services nao relacionados a
-  renderizacao.
+- Refatorar regras financeiras, models ou services não relacionados a
+  renderização.
 - Renomear rotas ou contratos usados pelo servidor.
 
 ## Estrutura sugerida
 
-A estrutura final pode ser ajustada durante a implementacao, mas a modularizacao
-deve seguir uma organizacao parecida com:
+A estrutura final pode ser ajustada durante a implementação, mas a modularizacao
+deve seguir uma organização parecida com:
 
 ```text
 src/
@@ -83,45 +83,45 @@ src/
       settings.js
 ```
 
-## Diretrizes de implementacao
+## Diretrizes de implementação
 
-- `viewEngine.js` deve virar uma fachada pequena, exportando as mesmas funcoes
+- `viewEngine.js` deve virar uma fachada pequena, exportando as mesmas funções
   usadas hoje por `server.js`.
 - Helpers como `escapeHtml`, `option`, labels de tipos, `csrfInput` e formatacoes
   simples devem ficar centralizados.
 - `layout` deve ficar separado das telas especificas.
-- Tabelas e formularios complexos podem ficar junto da tela correspondente nesta
+- Tabelas e formulários complexos podem ficar junto da tela correspondente nesta
   etapa, evitando modularizacao excessiva.
 - Cada arquivo novo deve ter responsabilidade clara.
-- Preservar textos em portugues.
-- Evitar mudancas visuais nesta task; qualquer ajuste visual deve ter task
-  propria.
+- Preservar textos em português.
+- Evitar mudanças visuais nesta task; qualquer ajuste visual deve ter task
+  própria.
 
-## Criterios de aceite
+## Critérios de aceite
 
 - `src/services/viewEngine.js` deixa de concentrar todas as telas e helpers.
-- `src/server.js` continua importando as mesmas funcoes ou exige mudanca minima
+- `src/server.js` continua importando as mesmas funções ou exige mudanca mínima
   e localizada.
 - Todas as telas atuais continuam renderizando:
   - `/dashboard`;
   - `/entries`;
   - `/entries/new`;
-  - detalhe/edicao de lancamento;
+  - detalhe/edição de lançamento;
   - `/accounts`;
   - `/categories`;
   - `/settings`;
   - login;
   - 404.
 - Nenhum comportamento financeiro e alterado.
-- `npm run check` passa apos a implementacao.
+- `npm run check` passa após a implementação.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
 ```
 
-Quando for necessario validar HTTP, usar a regra do `AGENTS.md`:
+Quando for necessário validar HTTP, usar a regra do `AGENTS.md`:
 
 ```powershell
 $env:PORT = "3100"
@@ -135,33 +135,33 @@ Fluxos manuais:
 - acessar `/dashboard`;
 - acessar `/entries`;
 - acessar `/entries/new`;
-- abrir um lancamento existente, se houver;
+- abrir um lançamento existente, se houver;
 - acessar `/accounts`;
 - acessar `/categories`;
 - acessar `/settings`;
-- confirmar que a preferencia de tamanho de fonte continua aplicada.
+- confirmar que a preferência de tamanho de fonte continua aplicada.
 
-## Observacao sobre templates
+## Observação sobre templates
 
-Esta task nao adota engine de templates. Ela prepara o codigo para uma possivel
+Esta task não adota engine de templates. Ela prepara o código para uma possível
 migracao futura, reduzindo o tamanho e a responsabilidade de
 `src/services/viewEngine.js` sem aumentar a complexidade da stack atual.
 
-## Observacao de implementacao
+## Observação de implementação
 
-Esta task registra o escopo solicitado, mas a implementacao ainda nao deve ser
+Esta task registra o escopo solicitado, mas a implementação ainda não deve ser
 feita neste momento.
 
-## Implementacao
+## Implementação
 
 - `src/services/viewEngine.js` foi reduzido para uma fachada de exportacao das
   views usadas por `src/server.js`.
-- Helpers de renderizacao foram extraidos para `src/services/viewHelpers.js`.
+- Helpers de renderização foram extraidos para `src/services/viewHelpers.js`.
 - Layout, barra mensal e cards foram extraidos para `src/views/layout.js`.
-- Login, dashboard, lancamentos, contas, categorias, configuracoes e 404 foram
+- Login, dashboard, lançamentos, contas, categorias, configurações e 404 foram
   separados em arquivos de view especificos em `src/views/`.
-- `npm run check` foi atualizado para validar sintaticamente os novos modulos de
-  renderizacao.
+- `npm run check` foi atualizado para validar sintaticamente os novos módulos de
+  renderização.
 - Nenhuma rota, regra financeira ou engine de templates foi alterada.
 
 ---
@@ -170,8 +170,8 @@ feita neste momento.
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -179,5 +179,5 @@ feita neste momento.
 
 - Data: 2026-07-11
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

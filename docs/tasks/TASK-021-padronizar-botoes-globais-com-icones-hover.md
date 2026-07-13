@@ -1,40 +1,40 @@
-# TASK-021 - Padronizar botoes globais com icones e hover
+# TASK-021 - Padronizar botões globais com ícones e hover
 
 ## Contexto
 
-Os botoes principais do sistema, como `Salvar`, `Voltar`, `Aplicar`, `Mes
-atual`, botoes de perfil e configuracoes, ainda usam um visual simples e pouco
-expressivo. Eles funcionam, mas nao comunicam tao bem hierarquia, intencao e
+Os botões principais do sistema, como `Salvar`, `Voltar`, `Aplicar`, `Mês
+atual`, botões de perfil e configurações, ainda usam um visual simples e pouco
+expressivo. Eles funcionam, mas não comunicam tao bem hierarquia, intencao e
 estado interativo.
 
-O sistema ja usa `lucide-static` como fonte padrao de icones e possui botoes de
-acao em tabelas com tratamento visual mais consistente. A necessidade agora e
-criar um padrao global para botoes de formularios, filtros e acoes principais,
-servindo tambem como referencia para desenvolvimentos futuros.
+O sistema já usa `lucide-static` como fonte padrão de ícones e possui botões de
+ação em tabelas com tratamento visual mais consistente. A necessidade agora e
+criar um padrão global para botões de formulários, filtros e ações principais,
+servindo também como referência para desenvolvimentos futuros.
 
 ## Objetivo
 
-Criar e aplicar um padrao reutilizavel de botoes globais com icones, hierarquia
+Criar e aplicar um padrão reutilizável de botões globais com ícones, hierarquia
 visual clara e estados de hover/focus/active consistentes em todo o sistema.
 
-## Decisao proposta
+## Decisão proposta
 
-Definir classes e/ou helpers para botoes de uso geral, diferenciando pelo menos:
+Definir classes e/ou helpers para botões de uso geral, diferenciando pelo menos:
 
-- botao primario: acoes principais, como `Salvar`, `Atualizar` e `Aplicar`;
-- botao secundario: navegacao ou retorno, como `Voltar`, `Cancelar` e
-  `Mes atual`;
-- botao de perigo: acoes destrutivas ou de arquivamento, quando aplicavel;
-- botao somente icone: manter ou alinhar com o padrao ja existente quando
+- botão primário: ações principais, como `Salvar`, `Atualizar` e `Aplicar`;
+- botão secundário: navegação ou retorno, como `Voltar`, `Cancelar` e
+  `Mês atual`;
+- botão de perigo: ações destrutivas ou de arquivamento, quando aplicavel;
+- botão somente ícone: manter ou alinhar com o padrão já existente quando
   estiver fora de tabelas.
 
-Os botoes devem usar icones do `lucide-static` por meio do helper `lucideIcon`,
+Os botões devem usar ícones do `lucide-static` por meio do helper `lucideIcon`,
 evitando SVGs avulsos nas views.
 
 ## Escopo
 
-- Criar um padrao CSS reutilizavel para botoes globais.
-- Adicionar icones aos botoes principais das telas atuais, priorizando:
+- Criar um padrão CSS reutilizável para botões globais.
+- Adicionar ícones aos botões principais das telas atuais, priorizando:
   - `/accounts`;
   - `/categories`;
   - `/entries`;
@@ -45,60 +45,60 @@ evitando SVGs avulsos nas views.
   - focus-visible;
   - active.
 - Manter altura, espacamento, borda, peso de fonte e alinhamento consistentes.
-- Garantir que os botoes continuem legiveis com diferentes escalas de fonte.
-- Preservar os botoes pequenos de acoes em tabela, salvo ajustes necessarios
+- Garantir que os botões continuem legíveis com diferentes escalas de fonte.
+- Preservar os botões pequenos de ações em tabela, salvo ajustes necessários
   para compatibilidade visual.
-- Documentar, dentro da propria task, o padrao esperado para uso futuro.
-- Atualizar o controle de release ao concluir a implementacao.
+- Documentar, dentro da própria task, o padrão esperado para uso futuro.
+- Atualizar o controle de release ao concluir a implementação.
 
 ## Fora do escopo
 
 - Criar uma biblioteca de componentes separada.
 - Migrar o projeto para framework frontend.
-- Trocar todos os links do sistema por botoes.
-- Refatorar amplamente a renderizacao das views.
+- Trocar todos os links do sistema por botões.
+- Refatorar amplamente a renderização das views.
 - Alterar regras de negocio, rotas ou models.
 - Implementar esta task neste momento.
 
 ## Comportamento esperado
 
-- Botoes principais exibem icone e texto alinhados.
-- A hierarquia visual entre acao primaria e secundaria fica clara.
+- Botões principais exibem ícone e texto alinhados.
+- A hierarquia visual entre ação primária e secundária fica clara.
 - O hover comunica interatividade sem ser chamativo demais.
 - O estado active da a impressao de clique/resposta.
 - O focus-visible e perceptivel para uso por teclado.
-- O visual fica consistente entre formularios de contas, categorias, perfil,
-  configuracoes e filtros de lancamentos.
-- Novos botoes futuros podem seguir o mesmo padrao sem reinventar CSS.
+- O visual fica consistente entre formulários de contas, categorias, perfil,
+  configurações e filtros de lançamentos.
+- Novos botões futuros podem seguir o mesmo padrão sem reinventar CSS.
 
-## Padrao visual sugerido
+## Padrão visual sugerido
 
-Exemplos de mapeamento de icones:
+Exemplos de mapeamento de ícones:
 
 - `Salvar`: `save` ou `check`;
 - `Atualizar`: `check`;
 - `Voltar`: `arrow-left`;
 - `Cancelar`: `x` ou `arrow-left`, conforme contexto;
 - `Aplicar`: `filter` ou `check`;
-- `Mes atual`: `calendar-days` ou `calendar-clock`;
+- `Mês atual`: `calendar-days` ou `calendar-clock`;
 - `Entrar`: `log-in`;
-- `Sair`: `log-out`, se houver botao textual fora do menu.
+- `Sair`: `log-out`, se houver botão textual fora do menu.
 
 Diretrizes visuais:
 
-- botoes com `display: inline-flex`;
+- botões com `display: inline-flex`;
 - `align-items: center`;
-- `gap` entre icone e texto;
-- altura minima consistente, respeitando formularios compactos;
-- borda arredondada de ate `8px`, mantendo o padrao atual;
+- `gap` entre ícone e texto;
+- altura mínima consistente, respeitando formulários compactos;
+- borda arredondada de até `8px`, mantendo o padrão atual;
 - hover com leve mudanca de cor, borda e sombra discreta;
-- active com `transform: translateY(0)` ou reducao da sombra;
+- active com `transform: translateY(0)` ou redução da sombra;
 - focus-visible com contorno claro e acessivel;
-- icones com tamanho entre `16px` e `18px`, ajustados conforme o botao.
+- ícones com tamanho entre `16px` e `18px`, ajustados conforme o botão.
 
 ## Classes sugeridas
 
-Possivel estrutura CSS:
+Possível estrutura CSS:
 
 ```css
 .app-button {
@@ -127,26 +127,26 @@ Possivel estrutura CSS:
 }
 ```
 
-Os nomes finais podem ser ajustados ao padrao do CSS existente. Se o projeto
+Os nomes finais podem ser ajustados ao padrão do CSS existente. Se o projeto
 preferir evoluir as classes atuais `button`, `.primary-button`,
-`.ghost-button` e `.icon-button`, isso tambem e aceitavel, desde que o resultado
-seja reutilizavel e claro para desenvolvimento futuro.
+`.ghost-button` e `.icon-button`, isso também e aceitavel, desde que o resultado
+seja reutilizável e claro para desenvolvimento futuro.
 
-## Criterios de aceite
+## Critérios de aceite
 
-- Existe um padrao reutilizavel para botoes globais no CSS.
-- Botoes principais de contas e categorias exibem icones e hover consistente.
-- Botoes `Aplicar` e `Mes atual` em lancamentos seguem o mesmo padrao.
-- Botoes de perfil e configuracoes seguem o mesmo padrao quando aplicavel.
-- Os icones sao obtidos por `lucideIcon`.
-- Os botoes continuam funcionando em formularios POST e links existentes.
-- O layout nao sofre quebras em desktop ou mobile.
-- Textos dos botoes nao ficam sobrepostos ou cortados.
+- Existe um padrão reutilizável para botões globais no CSS.
+- Botões principais de contas e categorias exibem ícones e hover consistente.
+- Botões `Aplicar` e `Mês atual` em lançamentos seguem o mesmo padrão.
+- Botões de perfil e configurações seguem o mesmo padrão quando aplicavel.
+- Os ícones sao obtidos por `lucideIcon`.
+- Os botões continuam funcionando em formulários POST e links existentes.
+- O layout não sofre quebras em desktop ou mobile.
+- Textos dos botões não ficam sobrepostos ou cortados.
 - Estados `hover`, `focus-visible` e `active` sao perceptiveis.
-- O padrao fica documentado na task para orientar telas futuras.
-- `npm run check` passa apos a implementacao.
+- O padrão fica documentado na task para orientar telas futuras.
+- `npm run check` passa após a implementação.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
@@ -156,43 +156,43 @@ Fluxos manuais:
 
 - acessar `/accounts` e conferir `Voltar` e `Salvar` ou `Atualizar`;
 - acessar `/categories` e conferir `Voltar` e `Salvar` ou `Atualizar`;
-- acessar `/entries` e conferir `Aplicar`, `Mes atual` e botoes de formulario,
+- acessar `/entries` e conferir `Aplicar`, `Mês atual` e botões de formulário,
   se houver;
 - acessar `/profile`;
 - acessar `/settings`;
 - testar hover, clique e foco por teclado;
 - validar em viewport desktop;
 - validar em viewport mobile;
-- testar com escalas de fonte pequena, padrao e grande;
-- testar com densidades de listagem, garantindo que botoes de tabela nao foram
+- testar com escalas de fonte pequena, padrão e grande;
+- testar com densidades de listagem, garantindo que botões de tabela não foram
   prejudicados.
 
-## Observacao de implementacao
+## Observação de implementação
 
-Priorizar mudancas pequenas e reutilizaveis. Se necessario, criar helpers locais
-ou globais para renderizar icone + texto de forma consistente, mas evitar uma
+Priorizar mudanças pequenas e reutilizáveis. Se necessário, criar helpers locais
+ou globais para renderizar ícone + texto de forma consistente, mas evitar uma
 refatoracao ampla da view engine.
 
-Nao alterar os botoes pequenos de acoes em tabela sem necessidade. Eles ja tem
-um padrao proprio e podem continuar separados dos botoes globais.
+Não alterar os botões pequenos de ações em tabela sem necessidade. Eles já tem
+um padrão próprio e podem continuar separados dos botões globais.
 
-Ao concluir a implementacao, atualizar o controle de release em
-`src/config/release.js`, incrementando o numero sequencial em 1.
+Ao concluir a implementação, atualizar o controle de release em
+`src/config/release.js`, incrementando o número sequencial em 1.
 
-## Implementacao
+## Implementação
 
 - Foram adicionados os helpers `buttonContent` e `buttonLink` em
-  `src/services/viewHelpers.js` para padronizar botao/link com icone e texto.
+  `src/services/viewHelpers.js` para padronizar botão/link com ícone e texto.
 - O CSS base de `button`, `.primary-button` e `.ghost-button` foi evoluido com
-  alinhamento de icone, gap, transicoes, hover, active e focus-visible.
-- Os seletores de hover/focus foram ajustados para nao interferir nos botoes
+  alinhamento de ícone, gap, transicoes, hover, active e focus-visible.
+- Os seletores de hover/focus foram ajustados para não interferir nos botões
   especializados de tabela, toolbar e fechamento de notificacao.
-- As telas de contas e categorias passaram a usar icones nos botoes de voltar,
+- As telas de contas e categorias passaram a usar ícones nos botões de voltar,
   salvar e atualizar.
-- A barra mensal passou a exibir icones em `Aplicar` e `Mes atual`.
-- As telas de lancamentos, perfil, configuracoes e login passaram a usar o
-  mesmo padrao nos botoes textuais principais.
-- O botao textual de sair no menu do usuario passou a usar icone pelo mesmo
+- A barra mensal passou a exibir ícones em `Aplicar` e `Mês atual`.
+- As telas de lançamentos, perfil, configurações e login passaram a usar o
+  mesmo padrão nos botões textuais principais.
+- O botão textual de sair no menu do usuário passou a usar ícone pelo mesmo
   helper.
 - O controle de release foi atualizado para registrar a entrega.
 
@@ -202,8 +202,8 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12 22:13
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -211,5 +211,5 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12 22:18
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização

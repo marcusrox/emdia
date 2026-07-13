@@ -1,109 +1,109 @@
-# TASK-013 - Padronizar acoes de listagens com icones
+# TASK-013 - Padronizar ações de listagens com ícones
 
 ## Contexto
 
-A tela de Lancamentos (`/entries`) apresenta uma coluna `Acoes` em cada linha da
-tabela. Hoje, as acoes aparecem como textos (`Editar`, `Duplicar`, `Cancelar`)
-misturando links e botoes de formulario.
+A tela de Lançamentos (`/entries`) apresenta uma coluna `Ações` em cada linha da
+tabela. Hoje, as ações aparecem como textos (`Editar`, `Duplicar`, `Cancelar`)
+misturando links e botões de formulário.
 
-O usuario solicitou que essas acoes passem a ser representadas por icones e que
-esse seja o padrao para listagens de registros com acoes no EmDia.
+O usuário solicitou que essas ações passem a ser representadas por ícones e que
+esse seja o padrão para listagens de registros com ações no EmDia.
 
 ## Objetivo
 
-Padronizar a apresentacao de acoes por registro em listagens usando botoes ou
-links iconograficos, compactos, acessiveis e reutilizaveis.
+Padronizar a apresentacao de ações por registro em listagens usando botões ou
+links iconograficos, compactos, acessiveis e reutilizáveis.
 
 ## Padronizacao proposta
 
-- Criar um padrao visual para celulas de acoes em tabelas/listagens.
-- Adotar `lucide-static` como fonte padrao de icones do EmDia.
-- Centralizar o carregamento dos SVGs Lucide em helper reutilizavel, evitando
+- Criar um padrão visual para celulas de ações em tabelas/listagens.
+- Adotar `lucide-static` como fonte padrão de ícones do EmDia.
+- Centralizar o carregamento dos SVGs Lucide em helper reutilizável, evitando
   SVGs avulsos diretamente nas views.
-- Usar icones para acoes por registro, com `title` e `aria-label` em portugues.
-- Manter o texto da coluna como `Acoes`, mas renderizar os itens internos como
-  botoes/links de icone.
+- Usar ícones para ações por registro, com `title` e `aria-label` em português.
+- Manter o texto da coluna como `Ações`, mas renderizar os itens internos como
+  botões/links de ícone.
 - Usar tamanho fixo para os controles, evitando mudanca de largura da tabela.
-- Manter diferenca visual por intencao:
-  - editar: acao primaria/neutra;
-  - duplicar: acao secundaria/neutra;
-  - cancelar: acao destrutiva ou de alerta, sem exagero visual.
-- Preservar semantica HTML:
+- Manter diferença visual por intencao:
+  - editar: ação primária/neutra;
+  - duplicar: ação secundária/neutra;
+  - cancelar: ação destrutiva ou de alerta, sem exagero visual.
+- Preservar semântica HTML:
   - `Editar` continua como link `GET`;
-  - `Duplicar` continua como formulario `POST`;
-  - `Cancelar` continua como formulario `POST`.
-- Preservar CSRF nos formularios de acoes.
-- Evitar texto visivel dentro dos controles quando houver icone e rotulo
+  - `Duplicar` continua como formulário `POST`;
+  - `Cancelar` continua como formulário `POST`.
+- Preservar CSRF nos formulários de ações.
+- Evitar texto visível dentro dos controles quando houver ícone e rótulo
   acessivel.
 
 ## Escopo
 
-- Atualizar a coluna de acoes da tabela de `/entries`.
-- Substituir os textos `Editar`, `Duplicar` e `Cancelar` por icones.
-- Adicionar classes CSS reutilizaveis para acoes de listagem.
-- Garantir que links e botoes tenham dimensoes, alinhamento e foco consistentes.
-- Garantir que os icones funcionem em desktop e mobile.
-- Documentar o padrao para futuras listagens de registros.
-- Manter mensagens e textos acessiveis em portugues.
-- Atualizar o controle de release ao concluir a implementacao.
+- Atualizar a coluna de ações da tabela de `/entries`.
+- Substituir os textos `Editar`, `Duplicar` e `Cancelar` por ícones.
+- Adicionar classes CSS reutilizáveis para ações de listagem.
+- Garantir que links e botões tenham dimensoes, alinhamento e foco consistentes.
+- Garantir que os ícones funcionem em desktop e mobile.
+- Documentar o padrão para futuras listagens de registros.
+- Manter mensagens e textos acessiveis em português.
+- Atualizar o controle de release ao concluir a implementação.
 
 ## Fora do escopo
 
-- Alterar regras de negocio de Lancamentos.
-- Alterar rotas, models, schema, seed ou persistencia.
-- Alterar comportamento de edicao, duplicacao ou cancelamento.
-- Criar novas acoes por registro.
+- Alterar regras de negocio de Lançamentos.
+- Alterar rotas, models, schema, seed ou persistência.
+- Alterar comportamento de edição, duplicacao ou cancelamento.
+- Criar novas ações por registro.
 - Implementar CRUD completo de Contas ou Categorias.
-- Migrar outras areas do sistema para icones nesta etapa.
-- Redesenhar a tabela inteira de Lancamentos.
+- Migrar outras áreas do sistema para ícones nesta etapa.
+- Redesenhar a tabela inteira de Lançamentos.
 - Implementar esta task neste momento.
 
 ## Varredura realizada
 
-Usos de acoes por registro encontrados:
+Usos de ações por registro encontrados:
 
-- `src/views/entriesView.js`: `entriesTable` renderiza a coluna `Acoes` com:
+- `src/views/entriesView.js`: `entriesTable` renderiza a coluna `Ações` com:
   - link textual `Editar`;
-  - formulario `POST` textual `Duplicar`;
-  - formulario `POST` textual `Cancelar`.
+  - formulário `POST` textual `Duplicar`;
+  - formulário `POST` textual `Cancelar`.
 - `public/css/styles.css`: existe uma classe global `.actions`, hoje usada para
-  alinhar links e formularios dessa coluna.
+  alinhar links e formulários dessa coluna.
 
-Listagens relacionadas sem acoes por registro no estado atual:
+Listagens relacionadas sem ações por registro no estado atual:
 
-- `src/views/accountsView.js`: a tabela de Contas lista dados, mas nao possui
-  coluna de acoes por linha.
-- `src/views/categoriesView.js`: a tabela de Categorias lista dados, mas nao
-  possui coluna de acoes por linha.
+- `src/views/accountsView.js`: a tabela de Contas lista dados, mas não possui
+  coluna de ações por linha.
+- `src/views/categoriesView.js`: a tabela de Categorias lista dados, mas não
+  possui coluna de ações por linha.
 
 ## Comportamento esperado
 
-- Em `/entries`, cada linha passa a exibir tres controles compactos com icones:
+- Em `/entries`, cada linha passa a exibir três controles compactos com ícones:
   editar, duplicar e cancelar.
-- O usuario consegue identificar a acao ao passar o mouse ou navegar com leitor
+- O usuário consegue identificar a ação ao passar o mouse ou navegar com leitor
   de tela por meio de `title` e `aria-label`.
-- Os botoes de duplicar e cancelar continuam submetendo por `POST` com CSRF.
+- Os botões de duplicar e cancelar continuam submetendo por `POST` com CSRF.
 - O link de editar continua navegando para `/entries/:id/edit`.
-- A coluna de acoes fica mais compacta e alinhada.
-- O foco de teclado fica visivel em cada controle.
+- A coluna de ações fica mais compacta e alinhada.
+- O foco de teclado fica visível em cada controle.
 - Em telas pequenas, os controles permanecem clicaveis sem quebrar a tabela.
 
-## Criterios de aceite
+## Critérios de aceite
 
-- A coluna `Acoes` de `/entries` nao exibe mais os textos `Editar`,
+- A coluna `Ações` de `/entries` não exibe mais os textos `Editar`,
   `Duplicar` e `Cancelar` dentro dos controles.
-- Cada acao possui icone visivel e rotulo acessivel.
-- `Editar` continua abrindo a tela de edicao do lancamento.
-- `Duplicar` continua duplicando o lancamento via `POST`.
-- `Cancelar` continua cancelando o lancamento via `POST`.
-- Os formularios de `Duplicar` e `Cancelar` preservam CSRF.
-- O visual das acoes fica padronizado por classes reutilizaveis.
-- O estilo nao interfere nos botoes de formulario (`form-actions`) nem nos
-  controles da barra de competencia (`month-actions`).
-- `npm run check` passa apos a implementacao.
-- Validacao visual manual confirma o comportamento em desktop e mobile.
+- Cada ação possui ícone visível e rótulo acessivel.
+- `Editar` continua abrindo a tela de edição do lançamento.
+- `Duplicar` continua duplicando o lançamento via `POST`.
+- `Cancelar` continua cancelando o lançamento via `POST`.
+- Os formulários de `Duplicar` e `Cancelar` preservam CSRF.
+- O visual das ações fica padronizado por classes reutilizáveis.
+- O estilo não interfere nos botões de formulário (`form-actions`) nem nos
+  controles da barra de competência (`month-actions`).
+- `npm run check` passa após a implementação.
+- Validação visual manual confirma o comportamento em desktop e mobile.
 
-## Validacao sugerida
+## Validação sugerida
 
 ```powershell
 npm run check
@@ -112,42 +112,42 @@ npm run check
 Fluxos manuais:
 
 - acessar `/entries`;
-- confirmar que a coluna `Acoes` usa icones em todas as linhas;
-- passar o mouse sobre cada icone e conferir o rotulo da acao;
-- navegar por teclado ate os controles e conferir foco visivel;
-- clicar em editar e confirmar abertura da tela de edicao;
-- duplicar um lancamento e confirmar que a acao continua funcionando;
-- cancelar um lancamento elegivel e confirmar que a acao continua funcionando;
+- confirmar que a coluna `Ações` usa ícones em todas as linhas;
+- passar o mouse sobre cada ícone e conferir o rótulo da ação;
+- navegar por teclado até os controles e conferir foco visível;
+- clicar em editar e confirmar abertura da tela de edição;
+- duplicar um lançamento e confirmar que a ação continua funcionando;
+- cancelar um lançamento elegivel e confirmar que a ação continua funcionando;
 - validar a tabela em viewport mobile.
 
-## Observacao de implementacao
+## Observação de implementação
 
-O projeto deve adotar o pacote `lucide-static` como fonte leve de icones para
+O projeto deve adotar o pacote `lucide-static` como fonte leve de ícones para
 permitir reutilizacao futura em outras telas sem depender de CDN. A
-implementacao deve centralizar o carregamento dos SVGs, manter rotulos
+implementação deve centralizar o carregamento dos SVGs, manter rótulos
 acessiveis completos e usar classes especificas como `record-actions`,
-`record-action-button` e tons por acao, evitando ampliar o significado atual de
-`.actions` alem do necessario.
+`record-action-button` e tons por ação, evitando ampliar o significado atual de
+`.actions` além do necessário.
 
-Ao concluir a implementacao, atualizar o controle de release em
-`src/config/release.js`, incrementando o numero sequencial em 1.
+Ao concluir a implementação, atualizar o controle de release em
+`src/config/release.js`, incrementando o número sequencial em 1.
 
-## Implementacao
+## Implementação
 
-- A coluna `Acoes` de `/entries` passou a renderizar controles iconograficos.
-- Foi adicionado o pacote `lucide-static` como dependencia npm leve de icones.
+- A coluna `Ações` de `/entries` passou a renderizar controles iconograficos.
+- Foi adicionado o pacote `lucide-static` como dependência npm leve de ícones.
 - Foi criado o helper `lucideIcon` em `src/services/viewHelpers.js` para
   carregar SVGs do pacote com cache em memoria.
-- Os icones de editar, duplicar e cancelar passaram a usar SVGs do Lucide.
-- A documentacao do projeto foi atualizada para definir Lucide como padrao de
+- Os ícones de editar, duplicar e cancelar passaram a usar SVGs do Lucide.
+- A documentacao do projeto foi atualizada para definir Lucide como padrão de
   iconografia da interface.
-- `Editar` continua como link `GET` para a tela de edicao.
-- `Duplicar` e `Cancelar` continuam como formularios `POST` com CSRF.
-- Foram criadas classes reutilizaveis `record-actions`,
+- `Editar` continua como link `GET` para a tela de edição.
+- `Duplicar` e `Cancelar` continuam como formulários `POST` com CSRF.
+- Foram criadas classes reutilizáveis `record-actions`,
   `record-action-form` e `record-action-button`.
 - O tom `danger` foi aplicado ao cancelamento.
 - `package.json` e `package-lock.json` foram atualizados com a nova
-  dependencia.
+  dependência.
 - O controle de release foi atualizado para registrar a entrega da task.
 
 ---
@@ -156,8 +156,8 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: criacao
+- Versao: não informado
+- Ação: criação
 
 ---
 
@@ -165,8 +165,8 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização
 
 ---
 
@@ -174,8 +174,8 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização
 
 ---
 
@@ -183,5 +183,5 @@ Ao concluir a implementacao, atualizar o controle de release em
 
 - Data: 2026-07-12
 - Modelo: GPT-5 Codex
-- Versao: nao informado
-- Acao: atualizacao
+- Versao: não informado
+- Ação: atualização
