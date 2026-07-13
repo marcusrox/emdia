@@ -115,9 +115,8 @@ function monthSwitcher(pathname, competence, current = currentCompetence()) {
     </div>
     <div class="month-actions">
       <a class="icon-button" title="Mês anterior" href="${pathname}?competence=${addMonths(competence, -1)}">‹</a>
-      <form action="${pathname}" method="get" class="month-form">
+      <form action="${pathname}" method="get" class="month-form" data-auto-submit-on-change>
         <input type="month" name="competence" value="${escapeHtml(competence)}" aria-label="Competência">
-        <button type="submit">${buttonContent("Aplicar", "filter")}</button>
       </form>
       <a class="icon-button" title="Próximo mês" href="${pathname}?competence=${addMonths(competence, 1)}">›</a>
       ${buttonLink({ href: `${pathname}?competence=${current}`, label: "Mês atual", icon: "calendar-days" })}

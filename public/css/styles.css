@@ -1292,6 +1292,14 @@ tbody tr:hover {
   gap: 8px;
 }
 
+.entries-filter-details {
+  display: contents;
+}
+
+.entries-filter-summary {
+  display: none;
+}
+
 .audit-filters {
   align-items: end;
   gap: 12px;
@@ -1976,6 +1984,98 @@ textarea {
 
   .entry-fact-wide {
     grid-column: 1 / -1;
+  }
+
+  .entries-toolbar {
+    align-items: start;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .entries-filter-details {
+    display: grid;
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .entries-filter-summary {
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--primary);
+    cursor: pointer;
+    display: flex;
+    font-weight: 800;
+    gap: 8px;
+    justify-content: center;
+    list-style: none;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  .entries-filter-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .entries-filter-summary svg {
+    fill: none;
+    height: 18px;
+    stroke: currentColor;
+    width: 18px;
+  }
+
+  .entries-filter-summary::after {
+    border-bottom: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    content: "";
+    height: 7px;
+    margin-top: -3px;
+    opacity: 0.75;
+    transform: rotate(45deg);
+    width: 7px;
+  }
+
+  .entries-filter-details[open] .entries-filter-summary::after {
+    margin-top: 3px;
+    transform: rotate(225deg);
+  }
+
+  .entries-toolbar .filters {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) repeat(2, 44px);
+    margin-top: 10px;
+  }
+
+  .entries-filter-details:not([open]) .filters {
+    display: none;
+  }
+
+  .entries-toolbar .filters input:not([type="hidden"]),
+  .entries-toolbar .filters select {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .entries-toolbar .toolbar-actions {
+    display: grid;
+    gap: 8px;
+    grid-column: 2 / span 2;
+    grid-template-columns: repeat(2, 44px);
+  }
+
+  .entries-toolbar .toolbar-icon-button {
+    aspect-ratio: 1;
+    min-height: 44px;
+    width: 44px;
+  }
+
+  .entries-toolbar > .toolbar-icon-button {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
 
   .form-grid.form-compact,

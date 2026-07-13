@@ -174,42 +174,45 @@ function entriesListView({
     notifications,
     body: `
       ${monthSwitcher("/entries", competence, current)}
-      <section class="toolbar">
-        <form method="get" action="/entries" class="filters">
-          <input type="hidden" name="competence" value="${escapeHtml(competence)}">
-          <input name="q" value="${escapeHtml(filters.q || "")}" placeholder="Buscar descrição ou favorecido">
-          <select name="entry_type">
-            ${option("", "Todos os tipos", filters.entry_type)}
-            ${option("EXPENSE", entryTypeLabel("EXPENSE"), filters.entry_type)}
-            ${option("INCOME", entryTypeLabel("INCOME"), filters.entry_type)}
-          </select>
-          <select name="status">
-            ${option("", "Todos os status", filters.status)}
-            ${["PENDING", "OVERDUE", "PARTIALLY_PAID", "PAID", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"]
-              .map((status) => option(status, statusLabel(status), filters.status))
-              .join("")}
-          </select>
-          <select name="category_id">
-            ${option("", "Todas as categorias", filters.category_id)}
-            ${categories.map((category) => option(category.id, categoryOptionLabel(category), filters.category_id)).join("")}
-          </select>
-          <select name="account_id">
-            ${option("", "Todas as contas", filters.account_id)}
-            ${accounts.map((account) => option(account.id, account.name, filters.account_id)).join("")}
-          </select>
-          <div class="toolbar-actions">
-            ${toolbarIconButton({
-              icon: "filter",
-              label: "Filtrar lançamentos",
-              tone: "primary",
-            })}
-            ${toolbarIconLink({
-              href: `/entries?competence=${competence}`,
-              icon: "clear",
-              label: "Limpar filtros",
-            })}
-          </div>
-        </form>
+      <section class="toolbar entries-toolbar">
+        <details class="entries-filter-details" data-persistent-details open>
+          <summary class="entries-filter-summary">${buttonContent("Filtros", "sliders-horizontal")}</summary>
+          <form method="get" action="/entries" class="filters">
+            <input type="hidden" name="competence" value="${escapeHtml(competence)}">
+            <input name="q" value="${escapeHtml(filters.q || "")}" placeholder="Buscar descrição ou favorecido">
+            <select name="entry_type">
+              ${option("", "Todos os tipos", filters.entry_type)}
+              ${option("EXPENSE", entryTypeLabel("EXPENSE"), filters.entry_type)}
+              ${option("INCOME", entryTypeLabel("INCOME"), filters.entry_type)}
+            </select>
+            <select name="status">
+              ${option("", "Todos os status", filters.status)}
+              ${["PENDING", "OVERDUE", "PARTIALLY_PAID", "PAID", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"]
+                .map((status) => option(status, statusLabel(status), filters.status))
+                .join("")}
+            </select>
+            <select name="category_id">
+              ${option("", "Todas as categorias", filters.category_id)}
+              ${categories.map((category) => option(category.id, categoryOptionLabel(category), filters.category_id)).join("")}
+            </select>
+            <select name="account_id">
+              ${option("", "Todas as contas", filters.account_id)}
+              ${accounts.map((account) => option(account.id, account.name, filters.account_id)).join("")}
+            </select>
+            <div class="toolbar-actions">
+              ${toolbarIconButton({
+                icon: "filter",
+                label: "Filtrar lançamentos",
+                tone: "primary",
+              })}
+              ${toolbarIconLink({
+                href: `/entries?competence=${competence}`,
+                icon: "clear",
+                label: "Limpar filtros",
+              })}
+            </div>
+          </form>
+        </details>
         ${toolbarIconLink({
           href: `/entries/new?competence=${competence}`,
           icon: "new",

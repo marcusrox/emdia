@@ -50,6 +50,22 @@
     }
   }
 
+  function autoSubmitOnChange(event) {
+    var field = event.target;
+    var form = field.closest("form[data-auto-submit-on-change]");
+
+    if (!form || !field.name) {
+      return;
+    }
+
+    if (typeof form.requestSubmit === "function") {
+      form.requestSubmit();
+      return;
+    }
+
+    form.submit();
+  }
+
   function clearFieldErrors(form) {
     form.querySelectorAll(".field-error").forEach(function (error) {
       error.remove();
@@ -122,8 +138,36 @@
     });
   }
 
+  function collapseMobileEntryFilters() {
+    if (!window.matchMedia || !window.matchMedia("(max-width: 980px)").matches) {
+      return;
+    }
+
+    document.querySelectorAll(".entries-filter-details").forEach(function (details) {
+      var form = details.querySelector("form");
+
+      if (!form || hasActiveEntryFilter(form)) {
+        return;
+      }
+
+      details.removeAttribute("open");
+    });
+  }
+
+  function hasActiveEntryFilter(form) {
+    return Array.prototype.some.call(form.elements, function (field) {
+      if (!field.name || field.name === "competence" || field.type === "hidden") {
+        return false;
+      }
+
+      return String(field.value || "").trim() !== "";
+    });
+  }
+
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
+  document.addEventListener("change", autoSubmitOnChange);
   document.addEventListener("submit", validateForms);
   restoreSettingsSections();
+  collapseMobileEntryFilters();
 })();
