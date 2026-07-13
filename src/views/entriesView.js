@@ -50,6 +50,14 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
     return `<div class="empty-state">Nenhum lançamento encontrado para esta competência.</div>`;
   }
 
+  const valueClass = (entry) =>
+    [
+      entry.entry_type === "INCOME" ? "positive" : "negative",
+      entry.status === "CANCELLED" ? "entry-value-cancelled" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
   return `<div class="table-wrap">
     <table>
       <thead>
@@ -74,7 +82,7 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
               </td>
               <td>${escapeHtml(entry.category_name || "Sem categoria")}</td>
               <td>${escapeHtml(entry.actual_account_name || entry.expected_account_name || "-")}</td>
-              <td class="${entry.entry_type === "INCOME" ? "positive" : "negative"}">${formatMoney(entry.expected_amount_cents)}</td>
+              <td class="${valueClass(entry)}">${formatMoney(entry.expected_amount_cents)}</td>
               <td><span class="status status-${entry.status.toLowerCase()}">${escapeHtml(statusLabel(entry.status))}</span></td>
               ${
                 compact

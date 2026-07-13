@@ -777,6 +777,13 @@ textarea {
   color: var(--danger);
 }
 
+.entry-value-cancelled {
+  text-decoration-line: line-through;
+  text-decoration-thickness: 0.16em;
+  text-decoration-color: currentColor;
+  text-decoration-skip-ink: none;
+}
+
 .split {
   display: grid;
   gap: 18px;
