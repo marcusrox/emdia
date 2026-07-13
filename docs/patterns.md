@@ -1,25 +1,25 @@
-# Padroes do Projeto EmDia
+# Padrões do Projeto EmDia
 
-Este documento descreve os padroes tecnicos esperados para evoluir o EmDia com
-mudancas pequenas, seguras e alinhadas ao PRD. Use este arquivo como referencia
-antes de alterar codigo, banco, rotas, telas ou regras financeiras.
+Este documento descreve os padrões técnicos esperados para evoluir o EmDia com
+mudanças pequenas, seguras e alinhadas ao PRD. Use este arquivo como referência
+antes de alterar código, banco, rotas, telas ou regras financeiras.
 
 ## 1. Principio central do produto
 
-O EmDia trabalha por competencia mensal.
+O EmDia trabalha por competência mensal.
 
-Quando nenhuma competencia for informada, telas operacionais devem usar a
-competencia do mes corrente do usuario como filtro padrao.
+Quando nenhuma competência for informada, telas operacionais devem usar a
+competência do mês corrente do usuário como filtro padrão.
 
 Isso vale para:
 
 - dashboard;
-- listagem de lancamentos;
+- listagem de lançamentos;
 - filtros e buscas;
-- relatorios mensais futuros;
+- relatórios mensais futuros;
 - calendario financeiro futuro.
 
-A competencia deve seguir o formato:
+A competência deve seguir o formato:
 
 ```text
 YYYY-MM
@@ -37,7 +37,7 @@ Datas civis, como vencimento e baixa, devem usar:
 YYYY-MM-DD
 ```
 
-Instantes tecnicos, como criacao, atualizacao e auditoria, devem usar ISO string
+Instantes técnicos, como criação, atualização e auditoria, devem usar ISO string
 com `new Date().toISOString()`.
 
 ## 2. Stack atual
@@ -51,13 +51,13 @@ O MVP atual usa:
 - HTML renderizado no servidor por views em `src/views/*.js`;
 - `src/services/viewEngine.js` como agregador de exports das views;
 - CSS puro em `public/css/styles.css`;
-- icones SVG via `lucide-static`, renderizados por helper server-side.
+- ícones SVG via `lucide-static`, renderizados por helper server-side.
 
-Nao assuma EJS, TypeScript, Drizzle ou bibliotecas de UI no codigo atual. Essas
-tecnologias podem aparecer no PRD como evolucao futura, mas nao fazem parte da
-implementacao vigente.
+Não assuma EJS, TypeScript, Drizzle ou bibliotecas de UI no código atual. Essas
+tecnologias podem aparecer no PRD como evolução futura, mas não fazem parte da
+implementação vigente.
 
-## 3. Organizacao de arquivos
+## 3. Organização de arquivos
 
 Estrutura principal:
 
@@ -75,36 +75,36 @@ public/css/styles.css
 
 Responsabilidades:
 
-- `app.js`: bootstrap da aplicacao, inicializacao do banco, seed e servidor.
-- `src/server.js`: app Express, middlewares, rotas HTTP e composicao dos fluxos.
+- `app.js`: bootstrap da aplicação, inicialização do banco, seed e servidor.
+- `src/server.js`: app Express, middlewares, rotas HTTP e composição dos fluxos.
 - `src/database/connection.js`: conexao SQLite e pragmas.
 - `src/database/schema.js`: schema, tabelas e indices.
 - `src/database/seed.js`: dados locais iniciais.
-- `src/models/*.js`: persistencia e regras proximas dos dados.
-- `src/services/*.js`: utilitarios e regras reutilizaveis.
-- `src/views/*.js`: renderizacao HTML server-side por dominio/tela.
-- `src/views/layout.js`: layout global, navegacao e componentes estruturais.
-- `src/services/viewHelpers.js`: helpers compartilhados de HTML, formularios,
-  labels, botoes e icones.
+- `src/models/*.js`: persistência e regras próximas dos dados.
+- `src/services/*.js`: utilitarios e regras reutilizáveis.
+- `src/views/*.js`: renderização HTML server-side por dominio/tela.
+- `src/views/layout.js`: layout global, navegação e componentes estruturais.
+- `src/services/viewHelpers.js`: helpers compartilhados de HTML, formulários,
+  labels, botões e ícones.
 - `src/services/viewEngine.js`: agregador/exportador das views usadas pelo
   servidor.
-- `public/css/styles.css`: estilos globais da aplicacao.
+- `public/css/styles.css`: estilos globais da aplicação.
 
-Evite criar novas camadas se uma alteracao localizada resolver o problema.
+Evite criar novas camadas se uma alteração localizada resolver o problema.
 
-## 4. Padroes JavaScript
+## 4. Padrões JavaScript
 
 - Use CommonJS: `require` e `module.exports`.
-- Nao introduza ESM sem uma migracao planejada.
-- Prefira funcoes pequenas com responsabilidade clara.
-- Use nomes descritivos em ingles para codigo e entidades tecnicas.
-- Mantenha textos visiveis ao usuario em portugues.
-- Evite dependencias novas sem necessidade clara.
-- Use `lucide-static` como fonte padrao de icones antes de adicionar outra
+- Não introduza ESM sem uma migracao planejada.
+- Prefira funções pequenas com responsabilidade clara.
+- Use nomes descritivos em ingles para código e entidades técnicas.
+- Mantenha textos visíveis ao usuário em português.
+- Evite dependências novas sem necessidade clara.
+- Use `lucide-static` como fonte padrão de ícones antes de adicionar outra
   biblioteca ou SVG avulso.
-- Evite estado global mutavel fora de modulos de infraestrutura, como conexao
+- Evite estado global mutavel fora de módulos de infraestrutura, como conexao
   com banco.
-- Use retorno explicito de objetos quando isso melhorar leitura do fluxo.
+- Use retorno explícito de objetos quando isso melhorar leitura do fluxo.
 
 Exemplo:
 
@@ -118,14 +118,14 @@ function getById(userId, id) {
 
 ## 5. Banco de dados e SQL
 
-Regras obrigatorias:
+Regras obrigatórias:
 
-- Use placeholders `?` para entrada do usuario.
+- Use placeholders `?` para entrada do usuário.
 - Nunca concatene valores externos em SQL.
 - Mantenha `user_id` nas tabelas principais.
-- Use `deleted_at` para exclusao logica quando o historico importar.
+- Use `deleted_at` para exclusão lógica quando o histórico importar.
 - Crie indices quando adicionar consultas operacionais frequentes.
-- Nao versionar arquivos SQLite locais.
+- Não versionar arquivos SQLite locais.
 
 Arquivos locais ignorados:
 
@@ -135,13 +135,13 @@ data/*.sqlite-*
 ```
 
 Mudancas no schema devem ser feitas em `src/database/schema.js`. Quando uma
-mudanca precisar de dados iniciais, atualize tambem `src/database/seed.js`.
+mudanca precisar de dados iniciais, atualize também `src/database/seed.js`.
 
 ## 6. Dinheiro
 
 Valores monetarios devem ser persistidos em centavos inteiros.
 
-Padrao:
+Padrão:
 
 ```text
 R$ 119,90 -> 11990
@@ -149,46 +149,46 @@ R$ 119,90 -> 11990
 
 Use os helpers de `src/services/moneyService.js`:
 
-- `toCents` para entrada de formulario;
-- `formatMoney` para exibicao.
+- `toCents` para entrada de formulário;
+- `formatMoney` para exibição.
 
-Nao use `float` como modelo de persistencia financeira.
+Não use `float` como modelo de persistência financeira.
 
-## 7. Lancamentos financeiros
+## 7. Lançamentos financeiros
 
-Lancamentos vivem em `financial_entries`.
+Lançamentos vivem em `financial_entries`.
 
 Campos conceituais importantes:
 
 - `entry_type`: `EXPENSE` ou `INCOME`;
-- `competence_month`: competencia mensal `YYYY-MM`;
+- `competence_month`: competência mensal `YYYY-MM`;
 - `due_date`: vencimento `YYYY-MM-DD`;
 - `expected_amount_cents`: valor previsto;
 - `realized_amount_cents`: valor realizado;
 - `status`: estado operacional;
-- `origin`: origem do lancamento.
+- `origin`: origem do lançamento.
 
-Ao criar ou atualizar lancamentos:
+Ao criar ou atualizar lançamentos:
 
-- normalize a competencia com `normalizeCompetence`;
+- normalize a competência com `normalizeCompetence`;
 - calcule status com `deriveStatus`;
 - mantenha valores em centavos;
-- registre auditoria quando a acao alterar dado financeiro relevante.
+- registre auditoria quando a ação alterar dado financeiro relevante.
 
 ## 8. Baixas e pagamentos
 
 Baixas devem ser registradas em `settlements`.
 
-Nao atualize apenas `realized_amount_cents` sem criar uma baixa correspondente.
-O lancamento deve refletir o total realizado, mas o historico de baixas deve
+Não atualize apenas `realized_amount_cents` sem criar uma baixa correspondente.
+O lançamento deve refletir o total realizado, mas o histórico de baixas deve
 ficar preservado.
 
 Fluxo esperado:
 
-1. localizar lancamento;
+1. localizar lançamento;
 2. validar conta financeira;
 3. criar settlement;
-4. atualizar valor realizado e status do lancamento;
+4. atualizar valor realizado e status do lançamento;
 5. registrar auditoria.
 
 ## 9. Status
@@ -213,15 +213,15 @@ status com `deriveStatus`.
 
 O roteamento atual fica em `src/server.js`.
 
-Padroes:
+Padrões:
 
-- GET renderiza telas ou retorna informacoes de leitura.
+- GET renderiza telas ou retorna informações de leitura.
 - POST altera dados.
-- Redirecione apos POST com status 303.
-- Use `express.urlencoded({ extended: false, limit: "1mb" })` para formularios
+- Redirecione após POST com status 303.
+- Use `express.urlencoded({ extended: false, limit: "1mb" })` para formulários
   URL encoded.
 - Use helpers locais de resposta para telas HTML, redirects 303 e JSON
-  pretty-print quando necessario.
+  pretty-print quando necessário.
 - Sirva assets com o prefixo `/public` por `express.static`.
 - Preserve URLs com `competence` quando a tela fizer parte do fluxo mensal.
 
@@ -247,72 +247,72 @@ GET  /categories
 POST /categories
 ```
 
-## 11. Renderizacao HTML
+## 11. Renderização HTML
 
-A renderizacao atual fica em `src/views/*.js`. O arquivo
+A renderização atual fica em `src/views/*.js`. O arquivo
 `src/services/viewEngine.js` deve permanecer como agregador/exportador das views
-para uso em `src/server.js`, nao como destino padrao para implementar telas
+para uso em `src/server.js`, não como destino padrão para implementar telas
 novas.
 
-Padroes:
+Padrões:
 
-- escape dados de usuario com `escapeHtml`;
-- mantenha textos de interface em portugues;
+- escape dados de usuário com `escapeHtml`;
+- mantenha textos de interface em português;
 - prefira componentes pequenos de string quando repetidos;
-- nao renderize HTML vindo de entrada externa sem sanitizacao;
+- não renderize HTML vindo de entrada externa sem sanitizacao;
 - prefira uma view por dominio/tela, como `entriesView.js`,
   `categoriesView.js` ou `recurrencesView.js`;
-- use `src/views/layout.js` para layout global, navegacao, seletor mensal e
+- use `src/views/layout.js` para layout global, navegação, seletor mensal e
   estruturas compartilhadas;
 - use `src/services/viewHelpers.js` para `escapeHtml`, `csrfInput`,
-  `buttonContent`, `buttonLink`, `option`, labels e icones;
-- mantenha o seletor de competencia visivel em telas mensais;
-- preserve acoes esperadas: mes anterior, proximo mes, aplicar competencia e
-  voltar para mes atual.
+  `buttonContent`, `buttonLink`, `option`, labels e ícones;
+- mantenha o seletor de competência visível em telas mensais;
+- preserve ações esperadas: mês anterior, próximo mês, aplicar competência e
+  voltar para mês atual.
 - use o helper `lucideIcon` de `src/services/viewHelpers.js` para renderizar
-  icones Lucide quando uma view precisar de iconografia.
+  ícones Lucide quando uma view precisar de iconografia.
 
-Se uma tela crescer demais, extraia helpers pequenos dentro da propria view ou,
-quando forem reutilizaveis entre telas, mova-os para `viewHelpers.js`. Evite
-concentrar implementacao de telas em `viewEngine.js`.
+Se uma tela crescer demais, extraia helpers pequenos dentro da própria view ou,
+quando forem reutilizáveis entre telas, mova-os para `viewHelpers.js`. Evite
+concentrar implementação de telas em `viewEngine.js`.
 
 ## 12. CSS e interface
 
 O CSS fica em `public/css/styles.css`.
 
-Padroes:
+Padrões:
 
 - use variaveis CSS em `:root` para cores e tokens principais;
 - mantenha componentes com borda, espacamento e estados consistentes;
 - preserve responsividade para telas menores;
 - evite estilos inline;
-- nao introduza frameworks CSS sem pedido explicito;
-- garanta que tabelas tenham `overflow-x` quando necessario;
-- botoes e links de acao devem ter estados visuais claros;
-- icones de interface devem vir de `lucide-static`, com SVG renderizado via
+- não introduza frameworks CSS sem pedido explícito;
+- garanta que tabelas tenham `overflow-x` quando necessário;
+- botões e links de ação devem ter estados visuais claros;
+- ícones de interface devem vir de `lucide-static`, com SVG renderizado via
   helper, `aria-hidden="true"` no SVG e texto acessivel no controle por
-  `aria-label` ou texto visivel;
-- acoes por registro em listagens devem usar o padrao `record-actions` e
-  `record-action-button`, preservando semantica de link para `GET` e formulario
+  `aria-label` ou texto visível;
+- ações por registro em listagens devem usar o padrão `record-actions` e
+  `record-action-button`, preservando semântica de link para `GET` e formulário
   para `POST`;
-- formularios de cadastro e edicao operacionais devem usar o padrao compacto
+- formulários de cadastro e edição operacionais devem usar o padrão compacto
   (`form-compact`) para reduzir rolagem e aumentar densidade sem perder
   legibilidade.
 
 ## 13. Auditoria
 
-Acoes financeiras relevantes devem registrar auditoria com `AuditLog.record`.
+Ações financeiras relevantes devem registrar auditoria com `AuditLog.record`.
 
 Exemplos:
 
-- criacao de lancamento;
-- edicao de lancamento;
+- criação de lançamento;
+- edição de lançamento;
 - cancelamento;
 - baixa;
 - estorno futuro;
-- confirmacao futura de OCR.
+- confirmação futura de OCR.
 
-O payload deve ser util para investigacao, mas nao deve conter segredos ou dados
+O payload deve ser util para investigacao, mas não deve conter segredos ou dados
 sensiveis desnecessarios.
 
 ## 14. Seed e dados locais
@@ -321,30 +321,30 @@ O seed deve ser idempotente.
 
 Regras:
 
-- nao duplicar usuario, contas, categorias ou lancamentos a cada execucao;
-- criar dados de exemplo na competencia corrente;
+- não duplicar usuário, contas, categorias ou lançamentos a cada execucao;
+- criar dados de exemplo na competência corrente;
 - manter dados simples e compreensiveis;
-- nao usar dados reais sensiveis.
+- não usar dados reais sensiveis.
 
 O banco local pode ser recriado durante desenvolvimento, mas nunca deve ser
 versionado.
 
-## 15. Seguranca
+## 15. Segurança
 
-Regras obrigatorias:
+Regras obrigatórias:
 
-- nao ler nem imprimir `.env`;
-- nao registrar senhas, tokens ou dados bancarios sensiveis;
-- nao servir arquivos de `data/`, `.git/`, `.env` ou caminhos arbitrarios;
+- não ler nem imprimir `.env`;
+- não registrar senhas, tokens ou dados bancarios sensiveis;
+- não servir arquivos de `data/`, `.git/`, `.env` ou caminhos arbitrarios;
 - usar placeholders SQL;
 - escapar HTML;
-- validar IDs e dados de formulario antes de confiar neles;
-- manter uploads, OCR e WhatsApp com confirmacao humana quando forem
+- validar IDs e dados de formulário antes de confiar neles;
+- manter uploads, OCR e WhatsApp com confirmação humana quando forem
   implementados.
 
-## 16. Validacao
+## 16. Validação
 
-Para alteracoes JavaScript:
+Para alterações JavaScript:
 
 ```powershell
 npm run check
@@ -358,7 +358,7 @@ node --check src\server.js
 node --check src\models\FinancialEntry.js
 ```
 
-Para fluxos web, teste quando houver servidor disponivel:
+Para fluxos web, teste quando houver servidor disponível:
 
 ```text
 GET /health
@@ -372,26 +372,26 @@ Para banco e seed:
 npm run seed
 ```
 
-Se uma validacao nao puder ser executada, informe o motivo na resposta final.
+Se uma validação não puder ser executada, informe o motivo na resposta final.
 
 ## 17. Git
 
-- Rode `git status --short` antes de mudancas maiores.
-- Nao reverta alteracoes de usuario sem pedido explicito.
-- Nao use `git reset --hard` ou `git checkout --` sem autorizacao explicita.
-- Nao misture refatoracao, feature e formatacao sem necessidade.
-- Nao adicione `data/`, `node_modules/` ou arquivos SQLite ao commit.
+- Rode `git status --short` antes de mudanças maiores.
+- Não reverta alterações de usuário sem pedido explícito.
+- Não use `git reset --hard` ou `git checkout --` sem autorizacao explícita.
+- Não misture refatoracao, feature e formatacao sem necessidade.
+- Não adicione `data/`, `node_modules/` ou arquivos SQLite ao commit.
 
-## 18. Evolucao futura
+## 18. Evolução futura
 
-Itens previstos no PRD, mas ainda nao implementados no MVP atual:
+Itens previstos no PRD, mas ainda não implementados no MVP atual:
 
-- autenticacao real;
-- recorrencias;
+- autenticação real;
+- recorrências;
 - anexos;
 - OCR;
 - WhatsApp/Evolution API;
-- relatorios avancados;
+- relatórios avancados;
 - testes automatizados;
 - migracoes formais;
 - TypeScript;
@@ -399,8 +399,8 @@ Itens previstos no PRD, mas ainda nao implementados no MVP atual:
 
 Ao implementar qualquer item futuro, preserve os principios atuais:
 
-- competencia mensal como filtro padrao;
+- competência mensal como filtro padrão;
 - dinheiro em centavos;
 - SQL seguro;
-- confirmacao humana para dados extraidos automaticamente;
-- separacao entre regra de negocio, persistencia e renderizacao.
+- confirmação humana para dados extraidos automaticamente;
+- separacao entre regra de negocio, persistência e renderização.

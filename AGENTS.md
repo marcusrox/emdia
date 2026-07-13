@@ -1,14 +1,14 @@
 # AGENTS.md
 
 Instrucoes para agentes de IA trabalhando neste repositorio. O objetivo e gerar
-mudancas pequenas, seguras e alinhadas ao EmDia, preservando a regra central do
-produto: trabalhar por padrao com contas, receitas e despesas da competencia do
-mes corrente.
+mudanças pequenas, seguras e alinhadas ao EmDia, preservando a regra central do
+produto: trabalhar por padrão com contas, receitas e despesas da competência do
+mês corrente.
 
-## Contexto rapido
+## Contexto rápido
 
 EmDia e um MVP web local para controle de contas, receitas, vencimentos e
-baixas financeiras, baseado no PRD tecnico `PRD_sistema_financas_pessoais.md`.
+baixas financeiras, baseado no PRD técnico `PRD_sistema_financas_pessoais.md`.
 
 - Bootstrap principal: `app.js` na raiz.
 - Servidor HTTP: `src/server.js`.
@@ -19,64 +19,64 @@ baixas financeiras, baseado no PRD tecnico `PRD_sistema_financas_pessoais.md`.
 - Services: `src/services/*.js`.
 - Views HTML: `src/views/*.js`.
 - Agregador de views: `src/services/viewEngine.js`.
-- Assets estaticos: `public/`.
+- Assets estáticos: `public/`.
 - Documentacao principal: `README.md`, `PRD_sistema_financas_pessoais.md`,
   `docs/patterns.md` e `docs/architecture.md`.
 
-O MVP atual usa CommonJS, Express, `node:sqlite` e `lucide-static` para icones
-SVG. Nao assuma EJS, Drizzle, TypeScript ou outras dependencias externas apenas
+O MVP atual usa CommonJS, Express, `node:sqlite` e `lucide-static` para ícones
+SVG. Não assuma EJS, Drizzle, TypeScript ou outras dependências externas apenas
 porque o PRD cita essas possibilidades futuras.
 
 ## Regra de produto mais importante
 
-As telas operacionais devem abrir filtradas pela competencia do mes corrente do
-usuario quando nenhuma competencia for informada.
+As telas operacionais devem abrir filtradas pela competência do mês corrente do
+usuário quando nenhuma competência for informada.
 
 Isto vale especialmente para:
 
 - dashboard;
-- listagem de lancamentos;
+- listagem de lançamentos;
 - filtros e buscas;
-- relatorios mensais futuros;
+- relatórios mensais futuros;
 - calendario financeiro futuro.
 
-A competencia deve usar o formato `YYYY-MM` e deve ser calculada no fuso horario
-do usuario. O usuario pode trocar a competencia manualmente, mas essa troca deve
-ser explicita e visivel na interface.
+A competência deve usar o formato `YYYY-MM` e deve ser calculada no fuso horario
+do usuário. O usuário pode trocar a competência manualmente, mas essa troca deve
+ser explícita e visível na interface.
 
 ## Como trabalhar
 
 - Comece pelos arquivos diretamente relacionados ao pedido.
-- Consulte `docs/patterns.md` quando precisar confirmar padroes de codigo,
-  banco, rotas, renderizacao, seguranca ou validacao.
-- Consulte `docs/architecture.md` quando precisar entender organizacao geral,
-  fluxos principais, decisoes tecnicas ou limites do MVP.
-- Use `rg` ou `rg --files` para localizar codigo quando disponivel.
+- Consulte `docs/patterns.md` quando precisar confirmar padrões de código,
+  banco, rotas, renderização, segurança ou validação.
+- Consulte `docs/architecture.md` quando precisar entender organização geral,
+  fluxos principais, decisões técnicas ou limites do MVP.
+- Use `rg` ou `rg --files` para localizar código quando disponível.
 - Evite varrer `node_modules`, `data/`, bancos SQLite, arquivos WAL/SHM e
   arquivos gerados.
 - Prefira patches pequenos e localizados.
-- Nao reescreva `src/server.js`, models inteiros ou views inteiras quando um
+- Não reescreva `src/server.js`, models inteiros ou views inteiras quando um
   ajuste pontual resolve.
 - Para novas telas, prefira criar ou alterar arquivos em `src/views/*.js` e
   exporta-los por `src/services/viewEngine.js`, que deve atuar como agregador.
-- Nao atualize dependencias, `package-lock.json` ou formato global do projeto
-  sem pedido explicito.
-- Nao altere `.env`, dados SQLite, `node_modules` ou arquivos gerados.
-- Nao versionar bancos locais, arquivos `*.sqlite`, `*.sqlite-wal` ou
+- Não atualize dependências, `package-lock.json` ou formato global do projeto
+  sem pedido explícito.
+- Não altere `.env`, dados SQLite, `node_modules` ou arquivos gerados.
+- Não versionar bancos locais, arquivos `*.sqlite`, `*.sqlite-wal` ou
   `*.sqlite-shm`.
 - Antes de mudar comportamento financeiro, confira o PRD para preservar
-  competencia, vencimento, status e baixas em tabela propria.
-- Quando a mudanca afetar telas, preserve a navegacao mensal: mes anterior,
-  proximo mes, seletor de competencia e retorno ao mes atual.
-- Ao concluir a implementacao de uma Task MD, atualize o controle de release em `src/config/release.js`, 
-  usando a data/hora atual do ambiente e incrementando em 1 o numero sequencial no formato `Release DD/MM/YYYY HH:mm - NNN`.
+  competência, vencimento, status e baixas em tabela própria.
+- Quando a mudanca afetar telas, preserve a navegação mensal: mês anterior,
+  próximo mês, seletor de competência e retorno ao mês atual.
+- Ao concluir a implementação de uma Task MD, atualize o controle de release em `src/config/release.js`,
+  usando a data/hora atual do ambiente e incrementando em 1 o número sequencial no formato `Release DD/MM/YYYY HH:mm - NNN`.
 
 
 ### Assinatura em Task MD
 
-Ao criar ou alterar arquivos `docs/tasks/TASK-*.md`, adicione ao final do arquivo uma assinatura da LLM responsavel pela criacao ou atualizacao da task.
+Ao criar ou alterar arquivos `docs/tasks/TASK-*.md`, adicione ao final do arquivo uma assinatura da LLM responsável pela criação ou atualização da task.
 
-Formato obrigatorio:
+Formato obrigatório:
 
 ```md
 ---
@@ -92,39 +92,39 @@ Formato obrigatorio:
 Regras:
 
 - Use a data atual do ambiente.
-- Informe o nome do modelo de linguagem usado quando estiver disponivel no ambiente ou na conversa.
-- Se a versao exata do modelo nao estiver disponivel, use `nao informado`.
-- Nao adicionar assinatura em arquivos de codigo-fonte, views, scripts, configs ou documentacao que nao seja task MD.
+- Informe o nome do modelo de linguagem usado quando estiver disponível no ambiente ou na conversa.
+- Se a versao exata do modelo não estiver disponível, use `não informado`.
+- Não adicionar assinatura em arquivos de código-fonte, views, scripts, configs ou documentacao que não seja task MD.
 - Ao atualizar uma task existente, preserve assinaturas anteriores e adicione uma nova assinatura ao final.
-- Nao usar essa assinatura como substituto de commit Git ou changelog.
+- Não usar essa assinatura como substituto de commit Git ou changelog.
 
-## Padroes do projeto
+## Padrões do projeto
 
-Para padroes detalhados de codigo, rotas, models, renderizacao, banco,
-frontend, seguranca e validacao, siga `docs/patterns.md`. Para visao estrutural,
-fluxos do sistema e decisoes arquiteturais, consulte `docs/architecture.md`.
+Para padrões detalhados de código, rotas, models, renderização, banco,
+frontend, segurança e validação, siga `docs/patterns.md`. Para visão estrutural,
+fluxos do sistema e decisões arquiteturais, consulte `docs/architecture.md`.
 
 Regras essenciais:
 
-- Use CommonJS (`require`, `module.exports`). Nao introduza ESM sem migracao
+- Use CommonJS (`require`, `module.exports`). Não introduza ESM sem migracao
   planejada.
-- Mantenha mensagens de usuario em portugues.
-- Use `lucide-static` como fonte padrao de icones da interface, preferindo o
+- Mantenha mensagens de usuário em português.
+- Use `lucide-static` como fonte padrão de ícones da interface, preferindo o
   helper `lucideIcon` em vez de SVGs avulsos nas views.
 - Use valores monetarios em centavos inteiros; nunca use `float` como modelo de
-  persistencia financeira.
+  persistência financeira.
 - Models SQLite devem usar placeholders `?`, nunca concatenacao de SQL com
-  entrada do usuario.
-- Datas civis devem usar ISO (`YYYY-MM-DD`) e competencias devem usar `YYYY-MM`.
-- Instantes de auditoria e criacao/alteracao devem usar `new Date().toISOString()`.
-- Regras de negocio devem ficar em models/services, nao espalhadas no servidor
-  HTTP ou na renderizacao.
-- Renderizacao HTML deve escapar dados de usuario com `escapeHtml`.
+  entrada do usuário.
+- Datas civis devem usar ISO (`YYYY-MM-DD`) e competências devem usar `YYYY-MM`.
+- Instantes de auditoria e criação/alteração devem usar `new Date().toISOString()`.
+- Regras de negocio devem ficar em models/services, não espalhadas no servidor
+  HTTP ou na renderização.
+- Renderização HTML deve escapar dados de usuário com `escapeHtml`.
 - Views devem usar `layout.js` para estrutura comum e `viewHelpers.js` para
   helpers como `escapeHtml`, `csrfInput`, `buttonContent`, `buttonLink`,
-  `option`, labels e icones.
-- Formularios que alteram dados devem usar POST.
-- Baixas financeiras devem ser persistidas em `settlements`; nao sobrescreva
+  `option`, labels e ícones.
+- Formulários que alteram dados devem usar POST.
+- Baixas financeiras devem ser persistidas em `settlements`; não sobrescreva
   apenas o valor realizado sem registrar a baixa.
 - Atualize status com `deriveStatus` quando alterar valores, vencimento ou baixa.
 
@@ -164,32 +164,32 @@ emdia/
     server.js
 ```
 
-`src/views/` e ativo e deve receber a implementacao das telas. O arquivo
+`src/views/` e ativo e deve receber a implementação das telas. O arquivo
 `src/services/viewEngine.js` permanece como ponto central de exportacao das
 views para compatibilidade com o servidor.
 
-## Seguranca obrigatoria
+## Segurança obrigatória
 
-- Nunca leia, imprima ou inclua conteudo real de `.env` em respostas, logs ou
+- Nunca leia, imprima ou inclua conteúdo real de `.env` em respostas, logs ou
   documentacao.
 - Nunca registre senhas, tokens, headers sensiveis ou dados bancarios sensiveis
   em `console.log`.
 - Escape qualquer dado externo antes de renderizar HTML.
-- Nao monte SQL concatenando entrada do usuario.
-- Nao exponha arquivos de `data/`, `.git/`, `.env` ou caminhos arbitrarios pelo
+- Não monte SQL concatenando entrada do usuário.
+- Não exponha arquivos de `data/`, `.git/`, `.env` ou caminhos arbitrarios pelo
   servidor.
 - Uploads, OCR, WhatsApp e anexos ainda sao escopo futuro; ao implementa-los,
-  valide tipo, tamanho, caminho, origem e confirmacao humana antes de gravar
-  lancamentos definitivos.
+  valide tipo, tamanho, caminho, origem e confirmação humana antes de gravar
+  lançamentos definitivos.
 
 ## Escopo de mudanca
 
-- Correcao pequena: altere apenas o arquivo do fluxo afetado e valide sintaxe.
-- Nova tela ou CRUD: adicione model/service/renderizacao/rota somente se todos
-  forem necessarios.
+- Correção pequena: altere apenas o arquivo do fluxo afetado e valide sintaxe.
+- Nova tela ou CRUD: adicione model/service/renderização/rota somente se todos
+  forem necessários.
 - Mudanca no banco: atualize `src/database/schema.js`, seed quando aplicavel e
-  preserve compatibilidade com bancos locais existentes quando possivel.
-- Mudanca financeira: valide competencia, vencimento, status, centavos inteiros
+  preserve compatibilidade com bancos locais existentes quando possível.
+- Mudanca financeira: valide competência, vencimento, status, centavos inteiros
   e auditoria.
 - Refatoracao: faca apenas se solicitada ou se reduzir risco imediato.
 - Evite misturar feature, limpeza e formatacao no mesmo patch.
@@ -205,51 +205,51 @@ node --check app.js
 node --check src\server.js
 ```
 
-Observacoes:
+Observações:
 
-- `npm run check` faz validacao sintatica dos principais arquivos JavaScript.
+- `npm run check` faz validação sintatica dos principais arquivos JavaScript.
 - `node:sqlite` pode emitir aviso experimental no Node 22; isso e esperado no
   MVP atual.
 - O banco local e criado automaticamente em `data/emdia.sqlite`.
 
-## Validacao esperada
+## Validação esperada
 
 - Rode `npm run check` quando alterar JavaScript.
-- Se mexer no bootstrap, rode tambem `node --check app.js`.
+- Se mexer no bootstrap, rode também `node --check app.js`.
 - Se mexer no servidor, valide `node --check src\server.js`.
 - Se mexer em banco, rode `npm run seed` em ambiente local seguro.
 - Se mexer em dashboard/listagem, teste ao menos:
   - `GET /health`;
   - `GET /dashboard`;
   - `GET /entries`.
-- Para CSS ou HTML, abra a tela afetada quando houver servidor disponivel ou
-  descreva que a validacao visual nao foi executada.
-- Se uma validacao nao puder ser executada, informe claramente o motivo.
+- Para CSS ou HTML, abra a tela afetada quando houver servidor disponível ou
+  descreva que a validação visual não foi executada.
+- Se uma validação não puder ser executada, informe claramente o motivo.
 
-## Validacao com servidor local
+## Validação com servidor local
 
-- A porta `3000` e exclusiva do usuario/desenvolvedor e pode estar ocupada por
+- A porta `3000` e exclusiva do usuário/desenvolvedor e pode estar ocupada por
   `npm run dev`.
 - O agente nunca deve iniciar, testar, reutilizar ou encerrar processos na porta
   `3000`.
-- Para validacoes HTTP proprias, o agente deve usar a porta `3100` como padrao.
-- Sempre iniciar o servidor de validacao com a variavel `PORT` definida
+- Para validações HTTP próprias, o agente deve usar a porta `3100` como padrão.
+- Sempre iniciar o servidor de validação com a variavel `PORT` definida
   explicitamente.
-- Se `3100` estiver ocupada, usar a proxima porta livre a partir de `3101`.
-- Ao iniciar servidor para validacao, capturar o PID do processo iniciado.
-- Ao finalizar a validacao, encerrar somente o processo iniciado pelo proprio
+- Se `3100` estiver ocupada, usar a próxima porta livre a partir de `3101`.
+- Ao iniciar servidor para validação, capturar o PID do processo iniciado.
+- Ao finalizar a validação, encerrar somente o processo iniciado pelo próprio
   agente.
-- Nunca encerrar processos descobertos por porta quando eles nao foram iniciados
+- Nunca encerrar processos descobertos por porta quando eles não foram iniciados
   pelo agente.
 
 ## Git e preservacao do trabalho local
 
-- Verifique `git status --short` antes de mudancas maiores.
-- Nao reverta alteracoes existentes sem pedido explicito.
-- Se houver mudancas de usuario no mesmo arquivo, leia com cuidado e preserve-as.
-- Nao use `git reset --hard`, `git checkout --` ou comandos destrutivos sem
-  autorizacao explicita.
-- Nao adicione `data/`, `node_modules/`, arquivos SQLite ou artefatos locais ao
+- Verifique `git status --short` antes de mudanças maiores.
+- Não reverta alterações existentes sem pedido explícito.
+- Se houver mudanças de usuário no mesmo arquivo, leia com cuidado e preserve-as.
+- Não use `git reset --hard`, `git checkout --` ou comandos destrutivos sem
+  autorizacao explícita.
+- Não adicione `data/`, `node_modules/`, arquivos SQLite ou artefatos locais ao
   commit.
 
 ## Resposta final do agente
@@ -258,12 +258,12 @@ Ao concluir, responda de forma breve:
 
 - arquivos alterados;
 - comportamento implementado ou corrigido;
-- validacoes executadas;
+- validações executadas;
 - riscos ou pendencias relevantes.
 
-Nao cole trechos longos de codigo se o arquivo ja foi alterado no workspace.
+Não cole trechos longos de código se o arquivo já foi alterado no workspace.
 
-Ao concluir a implementacao de uma task MD, informe de forma alarmante ao usuario a necessidade de fazer o `git commit`.
+Ao concluir a implementação de uma task MD, informe de forma alarmante ao usuário a necessidade de fazer o `git commit`.
 
 ## Execução de comandos no Windows
 

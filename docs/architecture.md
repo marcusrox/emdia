@@ -1,25 +1,25 @@
 # Arquitetura do EmDia
 
 Este documento descreve a arquitetura atual do MVP EmDia. Ele complementa
-`docs/patterns.md`: aqui ficam as decisoes estruturais e os fluxos principais;
-os padroes de implementacao ficam no arquivo de patterns.
+`docs/patterns.md`: aqui ficam as decisões estruturais e os fluxos principais;
+os padrões de implementação ficam no arquivo de patterns.
 
-## 1. Visao geral
+## 1. Visão geral
 
-EmDia e uma aplicacao web local para controle de contas, receitas, vencimentos e
+EmDia e uma aplicação web local para controle de contas, receitas, vencimentos e
 baixas financeiras. O MVP atual prioriza um fluxo simples:
 
 1. iniciar servidor local;
-2. criar banco SQLite quando necessario;
+2. criar banco SQLite quando necessário;
 3. gerar dados iniciais;
-4. abrir dashboard filtrado pela competencia do mes corrente;
-5. permitir registrar, editar, baixar, duplicar e cancelar lancamentos.
+4. abrir dashboard filtrado pela competência do mês corrente;
+5. permitir registrar, editar, baixar, duplicar e cancelar lançamentos.
 
-A arquitetura atual e monolitica e server-rendered. O servidor recebe a
+A arquitetura atual e monolítica e server-rendered. O servidor recebe a
 requisicao, consulta models/services, renderiza HTML no backend e devolve a tela
 completa ao navegador.
 
-## 2. Decisoes tecnicas atuais
+## 2. Decisões técnicas atuais
 
 Stack vigente:
 
@@ -27,26 +27,26 @@ Stack vigente:
 - CommonJS;
 - Express 5.x;
 - SQLite via `node:sqlite`;
-- HTML renderizado por funcoes em `src/views/*.js`;
+- HTML renderizado por funções em `src/views/*.js`;
 - `src/services/viewEngine.js` como agregador de views para o servidor;
 - CSS puro em `public/css/styles.css`;
-- icones SVG do pacote `lucide-static`.
+- ícones SVG do pacote `lucide-static`.
 
-Decisoes intencionais:
+Decisões intencionais:
 
 - manter o pipeline HTTP pequeno, com Express usado apenas para rotas,
-  middlewares basicos e arquivos estaticos;
-- manter persistencia local simples;
+  middlewares básicos e arquivos estáticos;
+- manter persistência local simples;
 - manter regras financeiras em models/services;
 - centralizar iconografia de interface com `lucide-static` e helper server-side,
   evitando CDN e SVGs avulsos espalhados pelas views;
-- preservar a competencia mensal como regra central de produto;
-- manter a aplicacao facil de executar com `npm start`.
+- preservar a competência mensal como regra central de produto;
+- manter a aplicação facil de executar com `npm start`.
 
-O PRD cita tecnologias como EJS, TypeScript e Drizzle como caminhos possiveis,
-mas elas ainda nao fazem parte da arquitetura implementada.
+O PRD cita tecnologias como EJS, TypeScript e Drizzle como caminhos possíveis,
+mas elas ainda não fazem parte da arquitetura implementada.
 
-## 3. Mapa de modulos
+## 3. Mapa de módulos
 
 ```text
 app.js
@@ -88,7 +88,7 @@ src/views/
 public/css/styles.css
 ```
 
-## 4. Fluxo de inicializacao
+## 4. Fluxo de inicialização
 
 ```text
 npm start
@@ -101,12 +101,12 @@ npm start
 
 Responsabilidades:
 
-- `initializeDatabase`: cria tabelas e indices se nao existirem.
-- `seedDatabase`: cria usuario local, contas, categorias e exemplos se o banco
+- `initializeDatabase`: cria tabelas e indices se não existirem.
+- `seedDatabase`: cria usuário local, contas, categorias e exemplos se o banco
   ainda estiver vazio.
 - `createServer`: cria o Express app, registra middlewares e rotas.
 
-O banco padrao fica em:
+O banco padrão fica em:
 
 ```text
 data/emdia.sqlite
@@ -126,7 +126,7 @@ Navegador
   -> resposta HTTP
 ```
 
-GETs renderizam telas ou retornam informacao de leitura. POSTs alteram dados e
+GETs renderizam telas ou retornam informação de leitura. POSTs alteram dados e
 redirecionam com status 303.
 
 Rotas principais:
@@ -151,9 +151,9 @@ GET  /categories
 POST /categories
 ```
 
-## 6. Fluxo da competencia mensal
+## 6. Fluxo da competência mensal
 
-A competencia mensal e a principal regra de navegacao e consulta.
+A competência mensal e a principal regra de navegação e consulta.
 
 ```text
 request sem competence
@@ -162,7 +162,7 @@ request sem competence
   -> consulta filtrada por financial_entries.competence_month
 ```
 
-Request com competencia explicita:
+Request com competência explícita:
 
 ```text
 ?competence=2026-07
@@ -172,10 +172,10 @@ Request com competencia explicita:
 
 Telas mensais devem manter controles para:
 
-- mes anterior;
-- proximo mes;
-- seletor de competencia;
-- voltar para mes atual.
+- mês anterior;
+- próximo mês;
+- seletor de competência;
+- voltar para mês atual.
 
 ## 7. Modelo de dados principal
 
@@ -193,22 +193,22 @@ users
 
 Resumo:
 
-- `users`: usuario local atual e configuracoes basicas.
+- `users`: usuário local atual e configurações básicas.
 - `financial_accounts`: contas financeiras, carteira, bancos e similares.
 - `categories`: categorias de receita/despesa.
 - `parties`: favorecidos ou pagadores.
 - `financial_entries`: receitas e despesas.
 - `settlements`: baixas/pagamentos/recebimentos.
-- `audit_logs`: trilha basica de acoes relevantes.
+- `audit_logs`: trilha básica de ações relevantes.
 
-## 8. Lancamentos e baixas
+## 8. Lançamentos e baixas
 
 `financial_entries` representa a conta, receita ou despesa planejada/realizada.
 
 Campos conceituais:
 
 - tipo: receita ou despesa;
-- competencia;
+- competência;
 - vencimento;
 - valor previsto;
 - valor realizado;
@@ -216,13 +216,13 @@ Campos conceituais:
 - origem.
 
 `settlements` representa a baixa. Uma baixa nunca deve ser substituida apenas
-por alteracao direta do valor realizado.
+por alteração direta do valor realizado.
 
 Fluxo de baixa:
 
 ```text
 POST /entries/:id/settlements
-  -> localiza lancamento
+  -> localiza lançamento
   -> valida conta financeira
   -> cria settlement
   -> soma total ao realized_amount_cents
@@ -251,33 +251,33 @@ Regras gerais:
 - vencimento anterior a hoje, sem baixa completa, vira `OVERDUE`;
 - cancelado permanece `CANCELLED`.
 
-## 10. Renderizacao
+## 10. Renderização
 
-A renderizacao server-side fica em `src/views/*.js`. Cada arquivo de view tende
+A renderização server-side fica em `src/views/*.js`. Cada arquivo de view tende
 a representar um dominio ou conjunto de telas relacionado, por exemplo
 `entriesView.js`, `categoriesView.js`, `accountsView.js` ou
 `recurrencesView.js`.
 
 O arquivo `src/services/viewEngine.js` funciona como agregador/exportador das
 views consumidas por `src/server.js`. Ele preserva um ponto central de import no
-servidor, mas nao deve concentrar a implementacao de novas telas.
+servidor, mas não deve concentrar a implementação de novas telas.
 
 Componentes principais:
 
-- `src/views/layout.js`: layout global, navegacao superior e seletor mensal;
-- `src/services/viewHelpers.js`: escape HTML, inputs, labels, botoes, CSRF e
-  icones;
-- navegacao superior;
-- seletor de competencia;
+- `src/views/layout.js`: layout global, navegação superior e seletor mensal;
+- `src/services/viewHelpers.js`: escape HTML, inputs, labels, botões, CSRF e
+  ícones;
+- navegação superior;
+- seletor de competência;
 - cards de metricas;
-- tabelas de lancamentos;
-- formularios;
+- tabelas de lançamentos;
+- formulários;
 - telas de contas e categorias.
 
-Todo dado dinamico vindo de usuario ou banco deve passar por escape antes de ser
+Todo dado dinâmico vindo de usuário ou banco deve passar por escape antes de ser
 inserido em HTML.
 
-## 11. Persistencia e arquivos locais
+## 11. Persistência e arquivos locais
 
 O banco local e criado automaticamente em `data/emdia.sqlite`.
 
@@ -295,45 +295,45 @@ O SQLite usa:
 - `PRAGMA journal_mode = WAL`.
 
 O uso de WAL pode criar arquivos `*.sqlite-wal` e `*.sqlite-shm`. Eles sao
-artefatos locais e nao devem ser commitados.
+artefatos locais e não devem ser commitados.
 
 ## 12. Limites do MVP atual
 
-Ainda nao existem:
+Ainda não existem:
 
-- autenticacao real;
+- autenticação real;
 - multiusuario real na interface;
-- recorrencias;
+- recorrências;
 - anexos;
 - OCR;
 - WhatsApp/Evolution API;
-- relatorios avancados;
+- relatórios avancados;
 - testes automatizados;
 - migracoes versionadas;
 - templates EJS;
 - API JSON completa.
 
-Esses itens estao previstos no PRD ou em evolucao futura, mas nao devem ser
-presumidos em mudancas pequenas.
+Esses itens estao previstos no PRD ou em evolução futura, mas não devem ser
+presumidos em mudanças pequenas.
 
-## 13. Caminhos de evolucao
+## 13. Caminhos de evolução
 
-Evolucoes provaveis:
+Evolucoes prováveis:
 
-1. autenticar usuarios;
-2. implementar recorrencias;
+1. autenticar usuários;
+2. implementar recorrências;
 3. adicionar anexos e comprovantes;
-4. criar OCR com revisao humana;
+4. criar OCR com revisão humana;
 5. integrar WhatsApp/Evolution API;
-6. extrair relatorios;
+6. extrair relatórios;
 7. adicionar testes automatizados;
 8. avaliar migracao para EJS/TypeScript/Drizzle se o projeto crescer.
 
-Qualquer evolucao deve preservar:
+Qualquer evolução deve preservar:
 
-- competencia mensal como filtro padrao;
+- competência mensal como filtro padrão;
 - dinheiro em centavos;
 - baixas em `settlements`;
 - SQL com placeholders;
 - HTML escapado;
-- separacao entre dados, regras e renderizacao.
+- separacao entre dados, regras e renderização.
