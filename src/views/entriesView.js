@@ -14,7 +14,7 @@ const {
   option,
 } = require("../services/viewHelpers");
 const { currentCompetence } = require("../services/dateService");
-const { auditHistoryList } = require("./auditView");
+const { actionLabel, payloadSummary } = require("./auditView");
 const { layout, monthSwitcher } = require("./layout");
 
 const ACTION_ICONS = {
@@ -318,40 +318,120 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
   });
 }
 
+function entryFact(label, value, className = "") {
+  const classes = ["entry-fact", className].filter(Boolean).join(" ");
+
+  return `<div class="${classes}">
+    <span>${escapeHtml(label)}</span>
+    <strong>${value}</strong>
+  </div>`;
+}
+
+function entrySummaryItem(label, value, icon, tone = "") {
+  const classes = ["entry-summary-item", tone].filter(Boolean).join(" ");
+
+  return `<div class="${classes}">
+    <span class="entry-summary-icon">${lucideIcon(icon)}</span>
+    <span>${escapeHtml(label)}</span>
+    <strong>${value}</strong>
+  </div>`;
+}
+
+function formatAuditDateTime(value) {
+  if (!value) return "-";
+
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Sao_Paulo",
+    }).format(new Date(value));
+  } catch (error) {
+    return value;
+  }
+}
+
+function entryHistoryList(auditEvents) {
+  if (!auditEvents.length) {
+    return `<div class="empty-state">Nenhum evento de auditoria registrado.</div>`;
+  }
+
+  return `<ol class="entry-history-list">
+    ${auditEvents
+      .map(
+        (event) => `<li>
+          <div>
+            <span>${escapeHtml(formatAuditDateTime(event.created_at))}</span>
+            <strong>${escapeHtml(actionLabel(event.action))}</strong>
+          </div>
+          <code class="entry-history-meta">${escapeHtml(payloadSummary(event.payload_json))}</code>
+        </li>`
+      )
+      .join("")}
+  </ol>`;
+}
+
 function entryDetailView({ user, entry, settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null }) {
   const settlementValue = (field, fallback = "") => settlementValues?.[field] ?? fallback;
   const principalValue = settlementValue("principal", moneyInput(entry.expected_amount_cents - entry.realized_amount_cents));
   const settledAtValue = settlementValue("settled_at", new Date().toISOString().slice(0, 10));
+  const openAmountCents = Math.max(0, Number(entry.expected_amount_cents || 0) - Number(entry.realized_amount_cents || 0));
+  const recurrenceLink = entry.recurrence_rule_id
+    ? `<a class="strong-link" href="/recurrences/${entry.recurrence_rule_id}/edit">Recorrência: ${escapeHtml(entry.recurrence_description || entry.description)}</a>`
+    : "-";
+  const statusClass = `status status-${entry.status.toLowerCase()}`;
 
   return layout({
     title: entry.description,
     user,
     active: "/entries",
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">${entry.entry_type === "INCOME" ? "Receita" : "Despesa"} · ${escapeHtml(entry.competence_month)}</span>
-        <h1>${escapeHtml(entry.description)}</h1>
+      <section class="entry-detail-header">
+        <div>
+          <span class="eyebrow">${entry.entry_type === "INCOME" ? "Receita" : "Despesa"} · ${escapeHtml(entry.competence_month)}</span>
+          <h1>${escapeHtml(entry.description)}</h1>
+        </div>
+        <span class="${statusClass}">${escapeHtml(statusLabel(entry.status))}</span>
+        <div class="entry-detail-actions">
+          ${buttonLink({ href: `/entries?competence=${entry.competence_month}`, label: "Voltar", icon: "arrow-left" })}
+          ${buttonLink({ href: `/entries/${entry.id}/edit`, label: "Editar", icon: "pencil", tone: "primary" })}
+        </div>
       </section>
-      <section class="split">
-        <article class="panel detail-list">
-          <p><span>Status</span><strong>${escapeHtml(statusLabel(entry.status))}</strong></p>
-          <p><span>Valor previsto</span><strong>${formatMoney(entry.expected_amount_cents)}</strong></p>
-          <p><span>Valor realizado</span><strong>${formatMoney(entry.realized_amount_cents)}</strong></p>
-          <p><span>Vencimento</span><strong>${escapeHtml(entry.due_date)}</strong></p>
-          <p><span>Categoria</span><strong>${escapeHtml(entry.category_name || "-")}</strong></p>
-          ${
-            entry.recurrence_rule_id
-              ? `<p><span>Origem</span><strong><a class="strong-link" href="/recurrences/${entry.recurrence_rule_id}/edit">Recorrência: ${escapeHtml(entry.recurrence_description || entry.description)}</a></strong></p>`
-              : ""
-          }
-          <p><span>Conta</span><strong>${escapeHtml(entry.actual_account_name || entry.expected_account_name || "-")}</strong></p>
-          <p><span>Favorecido/Pagador</span><strong>${escapeHtml(entry.party_name || "-")}</strong></p>
-          <div class="form-actions">
-            ${buttonLink({ href: `/entries?competence=${entry.competence_month}`, label: "Voltar", icon: "arrow-left" })}
-            ${buttonLink({ href: `/entries/${entry.id}/edit`, label: "Editar", icon: "pencil", tone: "primary" })}
+
+      <section class="entry-summary-grid">
+        ${entrySummaryItem("Valor previsto", formatMoney(entry.expected_amount_cents), "wallet", entry.entry_type === "INCOME" ? "good" : "bad")}
+        ${entrySummaryItem("Valor realizado", formatMoney(entry.realized_amount_cents), "check-circle", entry.realized_amount_cents > 0 ? "good" : "")}
+        ${entrySummaryItem("Saldo em aberto", formatMoney(openAmountCents), "circle-dollar-sign", openAmountCents > 0 ? "warning" : "good")}
+        ${entrySummaryItem("Vencimento", escapeHtml(entry.due_date), "calendar-days")}
+      </section>
+
+      <section class="entry-detail-grid">
+        <article class="panel entry-detail-main">
+          <div class="section-title"><h2>Dados do lançamento</h2></div>
+          <div class="entry-facts-grid">
+            ${entryFact("Categoria", escapeHtml(entry.category_name || "-"))}
+            ${entryFact("Conta", escapeHtml(entry.actual_account_name || entry.expected_account_name || "-"))}
+            ${entryFact("Favorecido/Pagador", escapeHtml(entry.party_name || "-"))}
+            ${entryFact("Origem", recurrenceLink, "entry-fact-wide")}
           </div>
+          <div class="section-title compact"><h2>Baixas</h2></div>
+          <ul class="entry-settlement-list">
+            ${
+              settlements.length
+                ? settlements.map((item) => `<li>
+                    <div>
+                      <strong>${formatMoney(item.total_cents)}</strong>
+                      <span>${escapeHtml(item.settled_at)} · ${escapeHtml(item.account_name)}</span>
+                    </div>
+                  </li>`).join("")
+                : "<li><div><strong>-</strong><span>Nenhuma baixa registrada</span></div></li>"
+            }
+          </ul>
+          <div class="section-title compact"><h2>Histórico</h2></div>
+          ${entryHistoryList(auditEvents)}
         </article>
-        <article class="panel">
+
+        <aside class="panel entry-settlement-panel">
           <div class="section-title"><h2>Registrar baixa</h2></div>
           <form method="post" action="/entries/${entry.id}/settlements" class="settlement-form" data-validate-form>
             ${csrfInput(user)}
@@ -383,17 +463,7 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
             </label>
             <button type="submit">${buttonContent("Baixar", "check-circle")}</button>
           </form>
-          <div class="section-title compact"><h2>Baixas</h2></div>
-          <ul class="settlement-list">
-            ${
-              settlements.length
-                ? settlements.map((item) => `<li><span>${escapeHtml(item.settled_at)} · ${escapeHtml(item.account_name)}</span><strong>${formatMoney(item.total_cents)}</strong></li>`).join("")
-                : "<li><span>Nenhuma baixa registrada</span><strong>-</strong></li>"
-            }
-          </ul>
-          <div class="section-title compact"><h2>Histórico</h2></div>
-          ${auditHistoryList(auditEvents)}
-        </article>
+        </aside>
       </section>
     `,
   });
