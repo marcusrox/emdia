@@ -8,6 +8,7 @@ const Settlement = require("./models/Settlement");
 const User = require("./models/User");
 const { dueDateFromCompetence, normalizeCompetence } = require("./services/dateService");
 const Auth = require("./services/authService");
+const { logError, logInfo, logWarn } = require("./services/operationalLogger");
 const {
   accountsView,
   categoriesView,
@@ -42,12 +43,13 @@ function createServer() {
   });
 
   app.post("/login", (req, res) => {
-    return handleLogin(res, req.body);
+    return handleLogin(req, res, req.body);
   });
 
   app.use(requireAuth);
 
   app.post("/logout", requireCsrf, (req, res) => {
+    logInfo("auth.logout", "Logout realizado.", { user: req.user });
     Auth.invalidateSession(req);
     res.set("Set-Cookie", Auth.clearSessionCookie());
     return redirect(res, "/login");
@@ -149,14 +151,39 @@ function createServer() {
   });
 
   app.post("/entries", requireCsrf, (req, res) => {
-    const entry = Entry.create(req.user, req.body);
-    return redirect(res, `/entries?competence=${entry.competence_month}`);
+    try {
+      const entry = Entry.create(req.user, req.body);
+      return redirect(res, `/entries?competence=${entry.competence_month}`);
+    } catch (error) {
+      logBusinessError(req, "business.financial_entry.save_failed", "Falha ao salvar lançamento.", error, {
+        entity: "financial_entry",
+        competenceMonth: req.body.competence_month,
+      });
+      throw error;
+    }
   });
 
   app.post("/entries/:id", requireCsrf, (req, res) => {
-    const entry = Entry.update(req.user, req.params.id, req.body);
-    const competence = entry ? entry.competence_month : normalizeCompetence(req.body.competence_month, req.user.timezone);
-    return redirect(res, `/entries?competence=${competence}`);
+    try {
+      const entry = Entry.update(req.user, req.params.id, req.body);
+      const competence = entry ? entry.competence_month : normalizeCompetence(req.body.competence_month, req.user.timezone);
+      if (!entry) {
+        logWarn("business.not_found", "Lançamento não encontrado para atualização.", {
+          user: req.user,
+          entity: "financial_entry",
+          entityId: req.params.id,
+          competenceMonth: competence,
+        });
+      }
+      return redirect(res, `/entries?competence=${competence}`);
+    } catch (error) {
+      logBusinessError(req, "business.financial_entry.save_failed", "Falha ao atualizar lançamento.", error, {
+        entity: "financial_entry",
+        entityId: req.params.id,
+        competenceMonth: req.body.competence_month,
+      });
+      throw error;
+    }
   });
 
   app.post("/entries/:id/cancel", requireCsrf, (req, res) => {
@@ -173,8 +200,23 @@ function createServer() {
   });
 
   app.post("/entries/:id/settlements", requireCsrf, (req, res) => {
-    const entry = Entry.settle(req.user, req.params.id, req.body);
-    return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
+    try {
+      const entry = Entry.settle(req.user, req.params.id, req.body);
+      if (!entry) {
+        logWarn("business.not_found", "Lançamento não encontrado para baixa.", {
+          user: req.user,
+          entity: "financial_entry",
+          entityId: req.params.id,
+        });
+      }
+      return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
+    } catch (error) {
+      logBusinessError(req, "business.settlement.save_failed", "Falha ao registrar baixa.", error, {
+        entity: "financial_entry",
+        entityId: req.params.id,
+      });
+      throw error;
+    }
   });
 
   app.get("/recurrences", (req, res) => {
@@ -327,6 +369,14 @@ function createServer() {
   app.post("/profile", requireCsrf, (req, res) => {
     const result = User.updateProfile(req.user.id, req.body);
     if (!result.ok) {
+      logWarn("business.validation.failed", "Validação de perfil falhou.", {
+        user: req.user,
+        entity: "user",
+        entityId: req.user.id,
+        details: {
+          fields: Object.keys(result.errors || {}),
+        },
+      });
       const profile = { ...req.user, ...result.profile };
       return sendHtml(res, profileView({ user: req.user, profile, errors: result.errors }), 400);
     }
@@ -340,18 +390,38 @@ function createServer() {
 
   app.post("/settings", requireCsrf, (req, res) => {
     User.updateInterfacePreferences(req.user.id, req.body);
+    logInfo("sensitive.settings.updated", "Preferências de interface atualizadas.", {
+      user: req.user,
+      entity: "user",
+      entityId: req.user.id,
+    });
     return redirect(res, "/settings?saved=1");
   });
 
   app.use((req, res) => {
     if (req.method === "GET") {
+      logWarn("business.not_found", "Rota não encontrada.", {
+        user: req.user,
+        details: requestDetails(req),
+      });
       return sendHtml(res, notFoundView(req.user), 404);
     }
 
+    logWarn("business.operation.rejected", "Método não permitido.", {
+      user: req.user,
+      details: requestDetails(req),
+    });
     return sendJson(res, { error: "Método não permitido" }, 405);
   });
 
   app.use((err, req, res, next) => {
+    logError("business.operation.rejected", "Operação rejeitada por erro funcional ou técnico.", {
+      user: req.user,
+      details: {
+        ...requestDetails(req),
+        error: errorDetails(err),
+      },
+    });
     console.error(err);
     if (res.headersSent) return next(err);
 
@@ -386,11 +456,18 @@ function loadSession(req, res, next) {
 
 function requireAuth(req, res, next) {
   if (req.user) return next();
+  logWarn("auth.access.denied", "Acesso negado a rota protegida sem autenticação.", {
+    details: requestDetails(req),
+  });
   return redirect(res, "/login");
 }
 
 function requireCsrf(req, res, next) {
   if (Auth.verifyCsrf(req, req.body)) return next();
+  logWarn("sensitive.route.forbidden", "Requisição bloqueada por token CSRF inválido.", {
+    user: req.user,
+    details: requestDetails(req),
+  });
   return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
 }
 
@@ -407,16 +484,23 @@ function sessionUser(session) {
   };
 }
 
-function handleLogin(res, body) {
+function handleLogin(req, res, body) {
   const email = String(body.email || "").trim();
   const password = String(body.password || "");
   const user = User.findByEmail(email);
 
   if (!user || !Auth.verifyPassword(password, user.password_hash)) {
+    logWarn("auth.login.failed", "Falha de login.", {
+      details: {
+        emailProvided: Boolean(email),
+        ...requestDetails(req),
+      },
+    });
     return sendHtml(res, loginView({ email, error: "E-mail ou senha inválidos." }), 401);
   }
 
   const session = Auth.createSession(user.id);
+  logInfo("auth.login.success", "Login realizado com sucesso.", { user });
   res.set("Set-Cookie", session.cookie);
   return redirect(res, "/dashboard");
 }
@@ -449,6 +533,13 @@ function startDevelopmentSession(req, res) {
   const session = Auth.createSession(devUser.id);
   const nextPath = req.path === "/login" ? "/dashboard" : req.originalUrl;
 
+  logInfo("auth.login.success", "Login de desenvolvimento realizado.", {
+    user: devUser,
+    details: {
+      mode: "development",
+      nextPath,
+    },
+  });
   res.set("Set-Cookie", session.cookie);
   return redirect(res, nextPath);
 }
@@ -469,6 +560,38 @@ function redirect(res, location) {
 
 function sendJson(res, payload, statusCode = 200) {
   return res.status(statusCode).type("json").send(JSON.stringify(payload, null, 2));
+}
+
+function requestDetails(req) {
+  return {
+    method: req.method,
+    path: req.path,
+    originalUrl: req.originalUrl,
+  };
+}
+
+function logBusinessError(req, event, message, error, context = {}) {
+  logError(event, message, {
+    user: req.user,
+    entity: context.entity,
+    entityId: context.entityId,
+    competenceMonth: context.competenceMonth,
+    details: {
+      ...requestDetails(req),
+      error: errorDetails(error),
+    },
+  });
+}
+
+function errorDetails(error) {
+  if (!error || typeof error !== "object") {
+    return { message: String(error || "Erro desconhecido") };
+  }
+
+  return {
+    name: error.name,
+    message: error.message,
+  };
 }
 
 module.exports = {

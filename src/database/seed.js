@@ -5,6 +5,7 @@ const Category = require("../models/Category");
 const Entry = require("../models/FinancialEntry");
 const User = require("../models/User");
 const { currentCompetence, dueDateFromCompetence } = require("../services/dateService");
+const { logInfo } = require("../services/operationalLogger");
 
 function seedDatabase() {
   initializeDatabase();
@@ -100,6 +101,15 @@ function seedDatabase() {
       due_date: dueDateFromCompetence(competence, 20),
     });
   }
+
+  logInfo("sensitive.seed.run", "Seed do EmDia verificado.", {
+    user,
+    details: {
+      accountsAlreadyExisted: Boolean(accountCount),
+      categoriesAlreadyExisted: Boolean(categoryCount),
+      entriesAlreadyExisted: Boolean(entryCount),
+    },
+  });
 }
 
 if (require.main === module) {
