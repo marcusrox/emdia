@@ -88,6 +88,18 @@ textarea {
   font: inherit;
 }
 
+.sr-only {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 button,
 .primary-button,
 .ghost-button,
@@ -1119,7 +1131,9 @@ tbody tr:hover {
 }
 
 .settings-form {
+  margin: 0 auto;
   max-width: 760px;
+  width: 100%;
 }
 
 .profile-form {
@@ -1200,6 +1214,67 @@ tbody tr:hover {
   font-size: 13px;
   font-weight: 800;
   margin-bottom: 6px;
+}
+
+.settings-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  overflow: hidden;
+}
+
+.settings-section summary {
+  align-items: center;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 10px;
+  justify-content: space-between;
+  list-style: none;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.settings-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-section summary::after {
+  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  content: "";
+  height: 8px;
+  margin-top: -4px;
+  opacity: 0.58;
+  transform: rotate(45deg);
+  transition: transform 0.16s ease;
+  width: 8px;
+}
+
+.settings-section[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-section[open] summary::after {
+  margin-top: 2px;
+  transform: rotate(225deg);
+}
+
+.settings-section summary:hover,
+.settings-section summary:focus-visible {
+  background: #eef7f6;
+  color: var(--primary-dark);
+}
+
+.settings-section summary:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: -3px;
+}
+
+.settings-section-body {
+  padding: 12px;
 }
 
 .choice-card {

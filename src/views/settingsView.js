@@ -23,32 +23,38 @@ function settingsView({ user, saved = false }) {
       </section>
       <form method="post" action="/settings" class="panel form-stack form-compact settings-form">
         ${csrfInput(user)}
-        <fieldset class="choice-group">
-          <legend>Tamanho da fonte</legend>
-          ${FONT_SCALE_OPTIONS.map(
-            ([value, label, description]) => `
-              <label class="choice-card">
-                <input type="radio" name="font_scale" value="${value}"${normalizeFontScale(user.font_scale) === value ? " checked" : ""}>
-                <span>
-                  <strong>${label}</strong>
-                  <small>${description}</small>
-                </span>
-              </label>`
-          ).join("")}
-        </fieldset>
-        <fieldset class="choice-group">
-          <legend>Densidade das listagens</legend>
-          ${LIST_DENSITY_OPTIONS.map(
-            ([value, label, description]) => `
-              <label class="choice-card">
-                <input type="radio" name="list_density" value="${value}"${normalizeListDensity(user.list_density) === value ? " checked" : ""}>
-                <span>
-                  <strong>${label}</strong>
-                  <small>${description}</small>
-                </span>
-              </label>`
-          ).join("")}
-        </fieldset>
+        <details class="settings-section" data-persistent-details data-settings-section data-storage-key="emdia.settings.fontScale.open" open>
+          <summary>Tamanho da fonte</summary>
+          <fieldset class="choice-group settings-section-body">
+            <legend class="sr-only">Tamanho da fonte</legend>
+            ${FONT_SCALE_OPTIONS.map(
+              ([value, label, description]) => `
+                <label class="choice-card">
+                  <input type="radio" name="font_scale" value="${value}"${normalizeFontScale(user.font_scale) === value ? " checked" : ""}>
+                  <span>
+                    <strong>${label}</strong>
+                    <small>${description}</small>
+                  </span>
+                </label>`
+            ).join("")}
+          </fieldset>
+        </details>
+        <details class="settings-section" data-persistent-details data-settings-section data-storage-key="emdia.settings.listDensity.open" open>
+          <summary>Densidade das listagens</summary>
+          <fieldset class="choice-group settings-section-body">
+            <legend class="sr-only">Densidade das listagens</legend>
+            ${LIST_DENSITY_OPTIONS.map(
+              ([value, label, description]) => `
+                <label class="choice-card">
+                  <input type="radio" name="list_density" value="${value}"${normalizeListDensity(user.list_density) === value ? " checked" : ""}>
+                  <span>
+                    <strong>${label}</strong>
+                    <small>${description}</small>
+                  </span>
+                </label>`
+            ).join("")}
+          </fieldset>
+        </details>
         <div class="form-actions">
           ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
           <button type="submit">${buttonContent("Salvar configurações", "save")}</button>
