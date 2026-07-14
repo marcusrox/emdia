@@ -146,6 +146,38 @@ function initializeDatabase() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS notification_preferences (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE REFERENCES users(id),
+      whatsapp_enabled INTEGER NOT NULL DEFAULT 0,
+      daily_summary_enabled INTEGER NOT NULL DEFAULT 1,
+      daily_summary_time TEXT NOT NULL DEFAULT '08:00',
+      due_reminder_offsets_json TEXT NOT NULL DEFAULT '[5,2,0]',
+      overdue_reminder_interval_days INTEGER NOT NULL DEFAULT 3,
+      quiet_hours_start TEXT,
+      quiet_hours_end TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      financial_entry_id TEXT REFERENCES financial_entries(id),
+      channel TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      scheduled_at TEXT NOT NULL,
+      sent_at TEXT,
+      status TEXT NOT NULL,
+      provider_message_id TEXT,
+      attempt_count INTEGER NOT NULL DEFAULT 0,
+      idempotency_key TEXT NOT NULL UNIQUE,
+      payload_json TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_entries_user_competence
       ON financial_entries(user_id, competence_month, deleted_at);
 
@@ -164,6 +196,9 @@ function initializeDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_settlements_entry
       ON settlements(financial_entry_id, reversed_at);
+
+    CREATE INDEX IF NOT EXISTS idx_notifications_schedule
+      ON notifications(status, scheduled_at);
   `);
 
   ensureColumn(db, "users", "font_scale", "TEXT NOT NULL DEFAULT 'medium'");

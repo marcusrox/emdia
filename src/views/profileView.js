@@ -1,4 +1,4 @@
-const { buttonContent, buttonLink, csrfInput, escapeHtml } = require("../services/viewHelpers");
+const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function profileView({ user, profile = user, saved = false, errors = [] }) {
@@ -23,6 +23,9 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
         </label>
         <label class="profile-field-half">E-mail
           <input type="email" name="email" value="${escapeHtml(profile.email || "")}" required>
+        </label>
+        <label class="profile-field-half">${fieldLabel("Telefone WhatsApp", "Use +5571999999999 ou (71) 99999-9999. O sistema salva no formato internacional E.164.")}
+          <input name="phone_e164" value="${escapeHtml(profile.phone_e164 || "")}" placeholder="+5571999999999" inputmode="tel">
         </label>
         <label class="profile-field-third">Senha atual
           <input type="password" name="current_password" autocomplete="current-password">

@@ -266,6 +266,9 @@ Padrões:
   estruturas compartilhadas;
 - use `src/services/viewHelpers.js` para `escapeHtml`, `csrfInput`,
   `buttonContent`, `buttonLink`, `option`, labels e ícones;
+- dicas curtas de preenchimento devem usar o helper `fieldLabel(label,
+  helpText)`, exibindo a ajuda em uma interrogação clicável, em vez de texto
+  auxiliar sempre visível;
 - mantenha o seletor de competência visível em telas mensais;
 - preserve ações esperadas: mês anterior, próximo mês, aplicar competência e
   voltar para mês atual.

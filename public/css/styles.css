@@ -1699,6 +1699,29 @@ textarea[aria-invalid="true"] {
   padding: 12px;
 }
 
+.settings-status-card {
+  background: #fbfcfa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+}
+
+.settings-status-card span,
+.settings-status-card small {
+  color: var(--muted);
+}
+
+.settings-status-card span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.settings-status-card strong {
+  color: var(--primary-dark);
+}
+
 .choice-card {
   align-items: center;
   background: var(--surface);

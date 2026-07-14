@@ -4,11 +4,13 @@ const Account = require("./models/FinancialAccount");
 const AuditLog = require("./models/AuditLog");
 const Category = require("./models/Category");
 const Entry = require("./models/FinancialEntry");
+const NotificationPreference = require("./models/NotificationPreference");
 const Recurrence = require("./models/Recurrence");
 const Settlement = require("./models/Settlement");
 const User = require("./models/User");
 const { dueDateFromCompetence, normalizeCompetence } = require("./services/dateService");
 const Auth = require("./services/authService");
+const { getWhatsAppStatus } = require("./services/notificationService");
 const { logError, logInfo, logWarn } = require("./services/operationalLogger");
 const {
   accountsView,
@@ -463,20 +465,34 @@ function createServer() {
     AuditLog.record(req.user.id, "user", req.user.id, "profile_updated", {
       name: result.user.name,
       email: result.user.email,
+      phone_changed: req.body.phone_e164 !== req.user.phone_e164,
       password_changed: Boolean(req.body.new_password),
     });
     return redirect(res, "/profile?saved=1");
   });
 
-  app.get("/settings", (req, res) => {
-    return sendHtml(res, settingsView({ user: req.user, saved: queryValue(req, "saved") === "1" }));
+  app.get("/settings", async (req, res) => {
+    const notificationPreferences = NotificationPreference.getOrCreate(req.user.id);
+    const whatsappStatus = await getWhatsAppStatus();
+    return sendHtml(
+      res,
+      settingsView({
+        user: req.user,
+        saved: queryValue(req, "saved") === "1",
+        notificationPreferences,
+        whatsappStatus,
+      })
+    );
   });
 
   app.post("/settings", requireCsrf, (req, res) => {
     User.updateInterfacePreferences(req.user.id, req.body);
+    const notificationPreferences = NotificationPreference.update(req.user.id, req.body);
     AuditLog.record(req.user.id, "settings", req.user.id, "settings_updated", {
       font_scale: req.body.font_scale,
       list_density: req.body.list_density,
+      whatsapp_enabled: Boolean(notificationPreferences.whatsapp_enabled),
+      daily_summary_enabled: Boolean(notificationPreferences.daily_summary_enabled),
     });
     logInfo("sensitive.settings.updated", "Preferências de interface atualizadas.", {
       user: req.user,
@@ -576,6 +592,7 @@ function sessionUser(session) {
     id: session.user_id,
     name: session.name,
     email: session.email,
+    phone_e164: session.phone_e164,
     timezone: session.timezone,
     locale: session.locale,
     is_active: session.is_active,

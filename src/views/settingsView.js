@@ -4,12 +4,18 @@ const {
   buttonContent,
   buttonLink,
   csrfInput,
+  escapeHtml,
   normalizeFontScale,
   normalizeListDensity,
 } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
-function settingsView({ user, saved = false }) {
+function settingsView({ user, saved = false, notificationPreferences, whatsappStatus }) {
+  const preferences = notificationPreferences || {};
+  const offsets = parseOffsets(preferences.due_reminder_offsets_json);
+  const whatsappEnabled = Boolean(preferences.whatsapp_enabled);
+  const dailySummaryEnabled = preferences.daily_summary_enabled !== 0;
+
   return layout({
     title: "Configurações",
     user,
@@ -55,6 +61,39 @@ function settingsView({ user, saved = false }) {
             ).join("")}
           </fieldset>
         </details>
+        <details class="settings-section" data-persistent-details data-settings-section data-storage-key="emdia.settings.notifications.open" open>
+          <summary>Notificações por WhatsApp</summary>
+          <div class="settings-section-body form-grid form-short">
+            <label class="choice-card field-span-2">
+              <input type="checkbox" name="whatsapp_enabled"${whatsappEnabled ? " checked" : ""}>
+              <span>
+                <strong>Enviar notificações pelo WhatsApp</strong>
+                <small>${user.phone_e164 ? `Envio para ${escapeHtml(user.phone_e164)}.` : "Cadastre um telefone no Perfil para receber mensagens."}</small>
+              </span>
+            </label>
+            <label class="choice-card field-span-2">
+              <input type="checkbox" name="daily_summary_enabled"${dailySummaryEnabled ? " checked" : ""}>
+              <span>
+                <strong>Resumo diário</strong>
+                <small>Enviar um resumo quando houver vencimentos, atrasos ou pendências próximas.</small>
+              </span>
+            </label>
+            <label>Horário do resumo
+              <input type="time" name="daily_summary_time" value="${escapeHtml(preferences.daily_summary_time || "08:00")}">
+            </label>
+            <label>Dias antes do vencimento
+              <input name="due_reminder_offsets" value="${escapeHtml(offsets.join(", "))}" placeholder="5, 2, 0">
+            </label>
+            <label>Repetir vencidas a cada
+              <input name="overdue_reminder_interval_days" value="${escapeHtml(preferences.overdue_reminder_interval_days || 3)}" inputmode="numeric">
+            </label>
+            <div class="settings-status-card">
+              <span>Status da integração</span>
+              <strong>${escapeHtml(whatsappStatus?.state || "UNKNOWN")}</strong>
+              <small>${escapeHtml(whatsappStatus?.message || whatsappStatus?.provider || "WhatsApp outbound")}</small>
+            </div>
+          </div>
+        </details>
         <div class="form-actions">
           ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
           <button type="submit">${buttonContent("Salvar configurações", "save")}</button>
@@ -62,6 +101,15 @@ function settingsView({ user, saved = false }) {
       </form>
     `,
   });
+}
+
+function parseOffsets(value) {
+  try {
+    const parsed = JSON.parse(value || "[5,2,0]");
+    return Array.isArray(parsed) ? parsed : [5, 2, 0];
+  } catch (error) {
+    return [5, 2, 0];
+  }
 }
 
 module.exports = {

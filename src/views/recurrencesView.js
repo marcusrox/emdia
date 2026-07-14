@@ -8,6 +8,7 @@ const {
   escapeHtml,
   fieldError,
   fieldErrorAttributes,
+  fieldLabel,
   lucideIcon,
   moneyInput,
   option,
@@ -118,17 +119,6 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action, er
       </form>
     `,
   });
-}
-
-function fieldLabel(label, helpText = "") {
-  const help = helpText
-    ? `<details class="field-help">
-        <summary aria-label="Ajuda sobre ${escapeHtml(label)}">?</summary>
-        <span class="field-help-popover">${escapeHtml(helpText)}</span>
-      </details>`
-    : "";
-
-  return `<span class="field-label-row"><span>${escapeHtml(label)}</span>${help}</span>`;
 }
 
 function recurrencesTable(recurrences, user) {

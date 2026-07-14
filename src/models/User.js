@@ -23,6 +23,10 @@ function getDefaultUser() {
   return getDatabase().prepare("SELECT * FROM users WHERE is_active = 1 ORDER BY created_at LIMIT 1").get();
 }
 
+function listActive() {
+  return getDatabase().prepare("SELECT * FROM users WHERE is_active = 1 ORDER BY created_at").all();
+}
+
 function ensureDefaultUser() {
   const existing = getDefaultUser();
   if (existing) {
@@ -98,19 +102,23 @@ function updateProfile(userId, data) {
     .prepare(
       `
       UPDATE users
-      SET name = ?, email = ?, password_hash = ?, updated_at = ?
+      SET name = ?, email = ?, phone_e164 = ?, password_hash = ?, updated_at = ?
       WHERE id = ? AND is_active = 1
     `
     )
-    .run(profile.name, profile.email, passwordHash, new Date().toISOString(), userId);
+    .run(profile.name, profile.email, profile.phone_e164 || null, passwordHash, new Date().toISOString(), userId);
 
   return { ok: true, user: getById(userId) };
 }
 
 function normalizeProfile(data) {
+  const phone = normalizePhoneE164(data.phone_e164);
+
   return {
     name: String(data.name || "").trim(),
     email: String(data.email || "").trim().toLowerCase(),
+    phone_e164: phone.value,
+    phone_error: phone.error,
     current_password: String(data.current_password || ""),
     new_password: String(data.new_password || ""),
     confirm_password: String(data.confirm_password || ""),
@@ -134,6 +142,10 @@ function validateProfile(current, profile) {
     }
   }
 
+  if (profile.phone_error) {
+    errors.push(profile.phone_error);
+  }
+
   if (wantsPasswordChange) {
     if (!verifyPassword(profile.current_password, current.password_hash)) {
       errors.push("Senha atual incorreta.");
@@ -155,6 +167,31 @@ function validateProfile(current, profile) {
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidE164(value) {
+  return /^\+[1-9]\d{7,14}$/.test(value);
+}
+
+function normalizePhoneE164(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return { value: "" };
+
+  const digits = raw.replace(/\D/g, "");
+  const withCountry = raw.startsWith("+")
+    ? `+${digits}`
+    : digits.length === 10 || digits.length === 11
+      ? `+55${digits}`
+      : `+${digits}`;
+
+  if (!isValidE164(withCountry)) {
+    return {
+      value: raw,
+      error: "Informe um telefone válido, como +5571999999999 ou (71) 99999-9999.",
+    };
+  }
+
+  return { value: withCountry };
 }
 
 function updateFontScale(userId, fontScale) {
@@ -189,6 +226,7 @@ module.exports = {
   ensureDefaultUser,
   getById,
   getDefaultUser,
+  listActive,
   normalizeFontScale,
   normalizeListDensity,
   updateFontScale,

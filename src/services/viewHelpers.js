@@ -34,6 +34,17 @@ function fieldErrorAttributes(errors, field) {
   return ` aria-invalid="true" aria-describedby="${escapeHtml(field)}-error"`;
 }
 
+function fieldLabel(label, helpText = "") {
+  const help = helpText
+    ? `<details class="field-help">
+        <summary aria-label="Ajuda sobre ${escapeHtml(label)}">?</summary>
+        <span class="field-help-popover">${escapeHtml(helpText)}</span>
+      </details>`
+    : "";
+
+  return `<span class="field-label-row"><span>${escapeHtml(label)}</span>${help}</span>`;
+}
+
 const ACCOUNT_TYPE_OPTIONS = [
   ["CHECKING", "Conta corrente"],
   ["SAVINGS", "Poupança"],
@@ -170,6 +181,7 @@ module.exports = {
   escapeHtml,
   fieldError,
   fieldErrorAttributes,
+  fieldLabel,
   lucideIcon,
   moneyInput,
   normalizeFontScale,

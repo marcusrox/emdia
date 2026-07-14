@@ -1,8 +1,13 @@
+const { loadEnv } = require("./src/config/env");
+
+loadEnv();
+
 const { createServer } = require("./src/server");
 const { initializeDatabase } = require("./src/database/schema");
 const { seedDatabase } = require("./src/database/seed");
 const { RELEASE_LABEL } = require("./src/config/release");
 const { logError, logInfo } = require("./src/services/operationalLogger");
+const { startNotificationScheduler } = require("./src/services/notificationScheduler");
 
 const port = Number(process.env.PORT || 3000);
 
@@ -34,6 +39,7 @@ try {
     });
     console.log(`EmDia rodando em http://localhost:${port}`);
   });
+  startNotificationScheduler();
 } catch (error) {
   logError("app.startup.failed", "Falha crítica durante a inicialização.", {
     details: errorDetails(error),
