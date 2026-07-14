@@ -188,13 +188,18 @@ Exemplo:
 
 ---
 
+## 💬 Integração com WhatsApp/Evolution API.
+Testar: node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { getWhatsAppStatus } = require('./src/services/notificationService'); getWhatsAppStatus().then((s)=>console.log(JSON.stringify({provider:s.provider, ok:s.ok, state:s.state, message:s.message||null})))"
+
+---
+
 ## 🛣️ Próximos passos sugeridos
 
 - 🔑 Autenticação real.
 - 🔁 Recorrências e geração automática de ocorrências.
 - 📎 Upload de comprovantes, boletos e recibos.
 - 🤖 OCR com confirmação humana antes da gravação.
-- 💬 Integração futura com WhatsApp/Evolution API.
+
 - 📈 Relatórios avançados.
 - 🧪 Testes automatizados.
 

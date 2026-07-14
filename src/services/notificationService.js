@@ -8,6 +8,7 @@ const { logError, logInfo, logWarn } = require("./operationalLogger");
 const { createWhatsAppClient } = require("./whatsappClient");
 
 const FINAL_STATUSES = new Set(["PAID", "RECEIVED", "CANCELLED"]);
+const CONNECTED_WHATSAPP_STATES = new Set(["open", "opened", "connected"]);
 
 async function runNotificationCycle() {
   generatePendingNotifications();
@@ -129,6 +130,19 @@ function generateDailySummary(user, preferences) {
 
 async function sendPendingNotifications() {
   const client = createWhatsAppClient();
+  const connectionState = await client.getConnectionState();
+  const state = String(connectionState.state || "").toLowerCase();
+  const isMock = connectionState.provider === "mock";
+  if (!isMock && !CONNECTED_WHATSAPP_STATES.has(state)) {
+    logWarn("whatsapp.notification.skipped_disconnected", "Envio WhatsApp adiado porque a instância não está conectada.", {
+      details: {
+        provider: connectionState.provider,
+        state: connectionState.state,
+      },
+    });
+    return;
+  }
+
   const notifications = Notification.listPending(25);
 
   for (const notification of notifications) {
