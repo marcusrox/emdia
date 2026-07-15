@@ -37,37 +37,39 @@ function record(userId, entityType, entityId, action, payload = {}) {
 
 function list(userId, filters = {}) {
   const params = [userId];
-  const clauses = ["user_id = ?"];
+  const clauses = ["audit_logs.user_id = ?"];
   const limit = normalizeLimit(filters.limit);
   const offset = Math.max(Number(filters.offset) || 0, 0);
 
   if (filters.from_date) {
-    clauses.push("created_at >= ?");
+    clauses.push("audit_logs.created_at >= ?");
     params.push(`${filters.from_date}T00:00:00.000Z`);
   }
 
   if (filters.to_date) {
-    clauses.push("created_at <= ?");
+    clauses.push("audit_logs.created_at <= ?");
     params.push(`${filters.to_date}T23:59:59.999Z`);
   }
 
   if (filters.entity_type) {
-    clauses.push("entity_type = ?");
+    clauses.push("audit_logs.entity_type = ?");
     params.push(filters.entity_type);
   }
 
   if (filters.entity_id) {
-    clauses.push("entity_id = ?");
+    clauses.push("audit_logs.entity_id = ?");
     params.push(filters.entity_id);
   }
 
   if (filters.action) {
-    clauses.push("action = ?");
+    clauses.push("audit_logs.action = ?");
     params.push(filters.action);
   }
 
   if (filters.q) {
-    clauses.push("(entity_type LIKE ? OR entity_id LIKE ? OR action LIKE ? OR payload_json LIKE ?)");
+    clauses.push(
+      "(audit_logs.entity_type LIKE ? OR audit_logs.entity_id LIKE ? OR audit_logs.action LIKE ? OR audit_logs.payload_json LIKE ?)"
+    );
     const q = `%${filters.q}%`;
     params.push(q, q, q, q);
   }
@@ -79,7 +81,7 @@ function list(userId, filters = {}) {
       FROM audit_logs
       LEFT JOIN users ON users.id = audit_logs.user_id
       WHERE ${clauses.join(" AND ")}
-      ORDER BY created_at DESC
+      ORDER BY audit_logs.created_at DESC
       LIMIT ? OFFSET ?
     `
     )
@@ -110,7 +112,7 @@ function listEntityHistory(userId, entityType, entityId) {
       WHERE audit_logs.user_id = ?
         AND audit_logs.entity_type = ?
         AND audit_logs.entity_id = ?
-      ORDER BY created_at ASC
+      ORDER BY audit_logs.created_at ASC
     `
     )
     .all(userId, entityType, entityId);
