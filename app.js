@@ -37,7 +37,7 @@ try {
         port,
       },
     });
-    console.log(`EmDia rodando em http://localhost:${port}`);
+    console.log(startupMessage(port));
   });
   startNotificationScheduler();
 } catch (error) {
@@ -105,4 +105,27 @@ function errorDetails(error) {
     name: error.name,
     message: error.message,
   };
+}
+
+function startupMessage(port) {
+  const mode = isWatchMode() ? "Start/restart" : "Start";
+
+  return [
+    `[${formatConsoleDateTime()}] ${mode} do EmDia concluído`,
+    `URL: http://localhost:${port}`,
+    `Ambiente: ${process.env.NODE_ENV || "production"}`,
+    `Release: ${RELEASE_LABEL}`,
+  ].join(" | ");
+}
+
+function isWatchMode() {
+  return process.execArgv.some((arg) => arg === "--watch" || arg.startsWith("--watch="));
+}
+
+function formatConsoleDateTime() {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "medium",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
 }

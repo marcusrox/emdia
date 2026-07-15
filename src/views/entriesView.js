@@ -237,22 +237,22 @@ function entriesListView({
           <form method="get" action="/entries" class="filters">
             <input type="hidden" name="competence" value="${escapeHtml(competence)}">
             <input name="q" value="${escapeHtml(filters.q || "")}" placeholder="Buscar descrição ou favorecido">
-            <select name="entry_type">
+            <select name="entry_type" data-auto-submit-on-change>
               ${option("", "Todos os tipos", filters.entry_type)}
               ${option("EXPENSE", entryTypeLabel("EXPENSE"), filters.entry_type)}
               ${option("INCOME", entryTypeLabel("INCOME"), filters.entry_type)}
             </select>
-            <select name="status">
+            <select name="status" data-auto-submit-on-change>
               ${option("", "Todos os status", filters.status)}
               ${["PENDING", "OVERDUE", "PARTIALLY_PAID", "PAID", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"]
                 .map((status) => option(status, statusLabel(status), filters.status))
                 .join("")}
             </select>
-            <select name="category_id">
+            <select name="category_id" data-auto-submit-on-change>
               ${option("", "Todas as categorias", filters.category_id)}
               ${categories.map((category) => option(category.id, categoryOptionLabel(category), filters.category_id)).join("")}
             </select>
-            <select name="account_id">
+            <select name="account_id" data-auto-submit-on-change>
               ${option("", "Todas as contas", filters.account_id)}
               ${accounts.map((account) => option(account.id, account.name, filters.account_id)).join("")}
             </select>

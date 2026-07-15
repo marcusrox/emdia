@@ -22,6 +22,7 @@ function layout({ title, user, active, body, notifications = [] }) {
 
   const fontScale = normalizeFontScale(user?.font_scale);
   const listDensity = normalizeListDensity(user?.list_density);
+  const systemDateTime = formatSystemDateTime(user?.timezone);
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -100,9 +101,9 @@ function layout({ title, user, active, body, notifications = [] }) {
   ${renderNotifications(notifications)}
   <main class="page">${body}</main>
   <footer class="app-footer">
-    <span>EmDia</span>
-    <p>Desenvolvido com <span class="footer-heart" aria-label="coração vermelho"></span> para você ficar sempre dentro do planejamento</p>
-    <small>${escapeHtml(RELEASE_LABEL)}</small>
+    <small class="footer-system-time">Sistema: ${escapeHtml(systemDateTime)}</small>
+    <p class="footer-message"><strong>EmDia</strong> Desenvolvido com <span class="footer-heart" aria-label="coração vermelho"></span> para você ficar sempre dentro do planejamento</p>
+    <small class="footer-release">${escapeHtml(RELEASE_LABEL)}</small>
   </footer>
   <script src="/public/js/app.js"></script>
 </body>
@@ -131,6 +132,22 @@ function card(label, value, tone = "") {
     <span>${escapeHtml(label)}</span>
     <strong>${escapeHtml(value)}</strong>
   </article>`;
+}
+
+function formatSystemDateTime(timezone = "America/Sao_Paulo") {
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "medium",
+      timeZone: timezone || "America/Sao_Paulo",
+    }).format(new Date());
+  } catch (error) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "medium",
+      timeZone: "America/Sao_Paulo",
+    }).format(new Date());
+  }
 }
 
 module.exports = {

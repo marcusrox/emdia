@@ -1987,23 +1987,34 @@ textarea {
   align-items: center;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  display: flex;
+  display: grid;
   font-size: 12px;
   gap: 10px;
-  justify-content: center;
+  grid-template-columns: minmax(220px, 1fr) minmax(280px, auto) minmax(220px, 1fr);
   margin: 10px auto 0;
   max-width: 1280px;
   padding: 18px 28px 26px;
   text-align: center;
 }
 
-.app-footer > span {
+.footer-message {
+  justify-self: center;
+  margin: 0;
+}
+
+.footer-message strong {
   color: var(--primary);
   font-weight: 900;
 }
 
-.app-footer p {
-  margin: 0;
+.footer-system-time {
+  justify-self: start;
+  text-align: left;
+}
+
+.footer-release {
+  justify-self: end;
+  text-align: right;
 }
 
 .footer-heart {
@@ -2020,11 +2031,6 @@ textarea {
 
 .app-footer small {
   color: var(--muted);
-}
-
-.app-footer small::before {
-  content: "·";
-  margin-right: 10px;
 }
 
 @media (max-width: 980px) {
@@ -2395,14 +2401,16 @@ textarea {
 
   .app-footer {
     align-items: center;
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: 4px;
     padding: 16px 18px 22px;
   }
 
-  .app-footer small::before {
-    content: "";
-    margin-right: 0;
+  .footer-system-time,
+  .footer-message,
+  .footer-release {
+    justify-self: center;
+    text-align: center;
   }
 }
 

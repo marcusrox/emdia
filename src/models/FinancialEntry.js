@@ -16,6 +16,8 @@ const { deriveStatus } = require("../services/statusService");
 
 function list(user, filters = {}) {
   const competence = normalizeCompetence(filters.competence, user.timezone);
+  refreshOverdueStatuses(user, competence);
+
   const params = [user.id, competence];
   const clauses = ["e.user_id = ?", "e.deleted_at IS NULL", "e.competence_month = ?"];
 
@@ -66,7 +68,11 @@ function list(user, filters = {}) {
     .all(...params);
 }
 
-function getById(userId, id) {
+function getById(userOrId, id) {
+  refreshOverdueStatuses(userOrId);
+
+  const userId = userIdFrom(userOrId);
+
   return getDatabase()
     .prepare(`
       SELECT
@@ -85,6 +91,40 @@ function getById(userId, id) {
       WHERE e.user_id = ? AND e.id = ? AND e.deleted_at IS NULL
     `)
     .get(userId, id);
+}
+
+function refreshOverdueStatuses(userOrId, competence = "") {
+  const userId = userIdFrom(userOrId);
+  if (!userId) return;
+
+  const params = ["OVERDUE", new Date().toISOString(), userId, todayIso(timezoneFrom(userOrId))];
+  const clauses = [
+    "user_id = ?",
+    "deleted_at IS NULL",
+    "status = 'PENDING'",
+    "due_date < ?",
+  ];
+
+  if (competence) {
+    clauses.push("competence_month = ?");
+    params.push(competence);
+  }
+
+  getDatabase()
+    .prepare(
+      `UPDATE financial_entries
+       SET status = ?, updated_at = ?
+       WHERE ${clauses.join(" AND ")}`
+    )
+    .run(...params);
+}
+
+function userIdFrom(userOrId) {
+  return typeof userOrId === "object" ? userOrId?.id : userOrId;
+}
+
+function timezoneFrom(userOrId) {
+  return typeof userOrId === "object" ? userOrId?.timezone || "America/Bahia" : "America/Bahia";
 }
 
 function create(user, data) {
