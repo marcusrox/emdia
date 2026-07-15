@@ -52,7 +52,9 @@
 
   function autoSubmitOnChange(event) {
     var field = event.target;
-    var form = field.closest("form[data-auto-submit-on-change]");
+    var form = field.matches("[data-auto-submit-on-change]")
+      ? field.closest("form")
+      : field.closest("form[data-auto-submit-on-change]");
 
     if (!form || !field.name) {
       return;
@@ -164,10 +166,174 @@
     });
   }
 
+  function startOperationalLogPolling() {
+    var container = document.querySelector("[data-operational-logs]");
+
+    if (!container || !window.fetch) {
+      return;
+    }
+
+    var status = document.querySelector("[data-operational-log-status]");
+    var intervalMs = 5000;
+
+    function poll() {
+      var apiUrl = container.getAttribute("data-api-url");
+      var latestTimestamp = container.getAttribute("data-latest-timestamp") || "";
+      var separator = apiUrl.indexOf("?") === -1 ? "?" : "&";
+      var url = apiUrl + separator + "since=" + encodeURIComponent(latestTimestamp);
+
+      setOperationalLogStatus(status, "Buscando novos registros...");
+
+      fetch(url, { headers: { Accept: "application/json" } })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("Falha ao atualizar logs.");
+          }
+
+          return response.json();
+        })
+        .then(function (payload) {
+          prependOperationalLogRows(container, payload.entries || []);
+          setOperationalLogStatus(status, "Leitura automática ativa");
+        })
+        .catch(function () {
+          setOperationalLogStatus(status, "Atualização automática pausada");
+        });
+    }
+
+    window.setInterval(poll, intervalMs);
+  }
+
+  function prependOperationalLogRows(container, entries) {
+    if (!entries.length) {
+      return;
+    }
+
+    var empty = container.querySelector("[data-operational-log-empty]");
+    var tbody = container.querySelector("[data-operational-log-rows]");
+
+    if (empty || !tbody) {
+      window.location.reload();
+      return;
+    }
+
+    entries
+      .slice()
+      .reverse()
+      .forEach(function (entry) {
+        tbody.insertBefore(createOperationalLogRow(entry), tbody.firstChild);
+      });
+
+    var latest = entries.reduce(function (current, entry) {
+      return entry.timestamp && entry.timestamp > current ? entry.timestamp : current;
+    }, container.getAttribute("data-latest-timestamp") || "");
+
+    container.setAttribute("data-latest-timestamp", latest);
+  }
+
+  function createOperationalLogRow(entry) {
+    var row = document.createElement("tr");
+
+    row.setAttribute("data-log-timestamp", entry.timestamp || "");
+    appendCell(row, formatOperationalLogDate(entry.timestamp), "log-time", "Linha " + entry.lineNumber);
+    appendLevelCell(row, entry.level);
+    appendCodeCell(row, entry.event || "-");
+    appendCell(row, entry.message || "-");
+    appendCell(row, entry.username || entry.userId || "-");
+    appendCell(row, detailsText(entry.details), "log-details");
+
+    return row;
+  }
+
+  function appendCell(row, text, className, smallText) {
+    var cell = document.createElement("td");
+
+    if (className) {
+      cell.className = className;
+    }
+
+    cell.appendChild(document.createTextNode(text));
+
+    if (smallText) {
+      var small = document.createElement("small");
+      small.textContent = smallText;
+      cell.appendChild(small);
+    }
+
+    row.appendChild(cell);
+  }
+
+  function appendLevelCell(row, level) {
+    var cell = document.createElement("td");
+    var badge = document.createElement("span");
+    var normalized = ["info", "warn", "error"].indexOf(level) === -1 ? "info" : level;
+
+    badge.className = "level-badge level-" + normalized;
+    badge.textContent = levelLabel(normalized);
+    cell.appendChild(badge);
+    row.appendChild(cell);
+  }
+
+  function appendCodeCell(row, text) {
+    var cell = document.createElement("td");
+    var code = document.createElement("code");
+
+    code.textContent = text;
+    cell.appendChild(code);
+    row.appendChild(cell);
+  }
+
+  function formatOperationalLogDate(value) {
+    if (!value) {
+      return "-";
+    }
+
+    try {
+      return new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "medium",
+        timeZone: "America/Sao_Paulo",
+      }).format(new Date(value));
+    } catch (error) {
+      return value;
+    }
+  }
+
+  function detailsText(details) {
+    if (!details) {
+      return "-";
+    }
+
+    try {
+      return JSON.stringify(details);
+    } catch (error) {
+      return "-";
+    }
+  }
+
+  function levelLabel(level) {
+    if (level === "warn") return "Alerta";
+    if (level === "error") return "Erro";
+    return "Informação";
+  }
+
+  function setOperationalLogStatus(status, text) {
+    if (!status) {
+      return;
+    }
+
+    var label = status.querySelector("strong");
+
+    if (label) {
+      label.textContent = text;
+    }
+  }
+
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
   document.addEventListener("change", autoSubmitOnChange);
   document.addEventListener("submit", validateForms);
   restoreSettingsSections();
   collapseMobileEntryFilters();
+  startOperationalLogPolling();
 })();

@@ -76,7 +76,7 @@ function auditTable(entries) {
   }
 
   return `<div class="table-wrap">
-    <table>
+    <table class="audit-table">
       <thead>
         <tr>
           <th>Data/hora</th>

@@ -50,7 +50,7 @@ mas elas ainda não fazem parte da arquitetura implementada.
 
 ```text
 app.js
-  inicializa schema
+  executa migrations de banco
   executa seed
   cria servidor HTTP
 
@@ -62,6 +62,8 @@ src/server.js
 
 src/database/
   connection.js
+  migrator.js
+  migrations/
   schema.js
   seed.js
 
@@ -94,6 +96,7 @@ public/css/styles.css
 npm start
   -> node app.js
     -> initializeDatabase()
+    -> runMigrations()
     -> seedDatabase()
     -> createServer()
     -> app.listen(PORT)
@@ -101,7 +104,10 @@ npm start
 
 Responsabilidades:
 
-- `initializeDatabase`: cria tabelas e indices se não existirem.
+- `initializeDatabase`: ponto público de inicialização do banco; delega para o
+  migrator.
+- `runMigrations`: cria `schema_migrations`, carrega migrations versionadas em
+  `src/database/migrations/` e aplica apenas as pendentes.
 - `seedDatabase`: cria usuário local, contas, categorias e exemplos se o banco
   ainda estiver vazio.
 - `createServer`: cria o Express app, registra middlewares e rotas.
@@ -294,6 +300,13 @@ O SQLite usa:
 - `PRAGMA foreign_keys = ON`;
 - `PRAGMA journal_mode = WAL`.
 
+Mudanças de schema são controladas por migrations JavaScript versionadas. O
+histórico aplicado fica em:
+
+```text
+schema_migrations
+```
+
 O uso de WAL pode criar arquivos `*.sqlite-wal` e `*.sqlite-shm`. Eles sao
 artefatos locais e não devem ser commitados.
 
@@ -309,7 +322,6 @@ Ainda não existem:
 - WhatsApp/Evolution API;
 - relatórios avancados;
 - testes automatizados;
-- migracoes versionadas;
 - templates EJS;
 - API JSON completa.
 

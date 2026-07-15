@@ -116,7 +116,7 @@ function getById(userId, id) {
 }
 ```
 
-## 5. Banco de dados e SQL
+## 5. Banco de dados, migrações e SQL
 
 Regras obrigatórias:
 
@@ -134,8 +134,24 @@ data/*.sqlite
 data/*.sqlite-*
 ```
 
-Mudancas no schema devem ser feitas em `src/database/schema.js`. Quando uma
-mudanca precisar de dados iniciais, atualize também `src/database/seed.js`.
+Mudancas no schema devem ser feitas por migrations versionadas em
+`src/database/migrations/*.js`. O arquivo `src/database/schema.js` permanece como
+ponto publico de inicialização e delega a execução para
+`src/database/migrator.js`.
+
+O migrator registra migrations aplicadas na tabela `schema_migrations` e executa
+apenas as pendentes, em ordem crescente. Para criar uma nova migration:
+
+- adicione um arquivo numerado em `src/database/migrations/`;
+- exporte `id`, `description` e `up(db)`;
+- mantenha o `id` estável e único;
+- use `new Date().toISOString()` apenas para instantes técnicos gravados pela
+  migration;
+- atualize `npm run check` para validar o novo arquivo.
+
+Quando uma mudanca precisar de dados iniciais, atualize também
+`src/database/seed.js`. Migrations cuidam de estrutura e transformações
+necessárias de dados; seed cuida dos dados locais iniciais.
 
 ## 6. Dinheiro
 
@@ -396,7 +412,6 @@ Itens previstos no PRD, mas ainda não implementados no MVP atual:
 - WhatsApp/Evolution API;
 - relatórios avancados;
 - testes automatizados;
-- migracoes formais;
 - TypeScript;
 - EJS/Drizzle.
 

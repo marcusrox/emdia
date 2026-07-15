@@ -11,6 +11,7 @@ const User = require("./models/User");
 const { dueDateFromCompetence, normalizeCompetence } = require("./services/dateService");
 const Auth = require("./services/authService");
 const { getWhatsAppStatus } = require("./services/notificationService");
+const { listOperationalLogs } = require("./services/operationalLogReader");
 const { logError, logInfo, logWarn } = require("./services/operationalLogger");
 const {
   accountsView,
@@ -24,6 +25,7 @@ const {
   entryFormView,
   loginView,
   notFoundView,
+  operationalLogsView,
   profileView,
   recurrenceFormView,
   recurrencesListView,
@@ -514,6 +516,30 @@ function createServer() {
     return sendHtml(res, auditView({ user: req.user, entries: AuditLog.list(req.user.id, filters), filters }));
   });
 
+  app.get("/operational-logs", (req, res) => {
+    const result = listOperationalLogs(operationalLogFilters(req));
+
+    return sendHtml(
+      res,
+      operationalLogsView({
+        user: req.user,
+        entries: result.entries,
+        filters: result.filters,
+        dates: result.dates,
+      })
+    );
+  });
+
+  app.get("/operational-logs/events", (req, res) => {
+    const result = listOperationalLogs(operationalLogFilters(req));
+
+    return sendJson(res, {
+      entries: result.entries,
+      filters: result.filters,
+      dates: result.dates,
+    });
+  });
+
   app.use((req, res) => {
     if (req.method === "GET") {
       logWarn("business.not_found", "Rota não encontrada.", {
@@ -682,6 +708,17 @@ function entriesNotifications(req) {
       message: `${count} ${count === 1 ? "lançamento removido" : "lançamentos removidos"} da competência selecionada.`,
     },
   ];
+}
+
+function operationalLogFilters(req) {
+  return {
+    date: queryValue(req, "date"),
+    level: queryValue(req, "level"),
+    event: queryValue(req, "event"),
+    q: queryValue(req, "q"),
+    since: queryValue(req, "since"),
+    limit: queryValue(req, "limit"),
+  };
 }
 
 function recurrenceForm(user, { recurrence = null, action, errors = {} }) {
