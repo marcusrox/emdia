@@ -2163,6 +2163,16 @@ textarea {
   text-align: center;
 }
 
+.settlement-blocked-message strong {
+  color: var(--text);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.settlement-blocked-message p {
+  margin: 0;
+}
+
 .app-footer {
   align-items: center;
   border-top: 1px solid var(--line);

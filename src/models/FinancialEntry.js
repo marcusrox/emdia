@@ -12,7 +12,7 @@ const {
   validationError,
 } = require("../services/formValidation");
 const { newId } = require("../services/id");
-const { deriveStatus } = require("../services/statusService");
+const { deriveStatus, settlementEligibility } = require("../services/statusService");
 
 function list(user, filters = {}) {
   const competence = normalizeCompetence(filters.competence, user.timezone);
@@ -286,59 +286,104 @@ function duplicate(user, id) {
 }
 
 function settle(user, id, data) {
-  const entry = getById(user.id, id);
-  if (!entry) return null;
+  const db = getDatabase();
+  db.exec("BEGIN IMMEDIATE");
+  let transactionActive = true;
 
-  const validation = validateSettlementPayload(user, data, {
-    getAccount: Account.getById,
-  });
-  if (!validation.ok) {
-    throw validationError(validation);
+  try {
+    const entry = getById(user.id, id);
+    if (!entry) {
+      db.exec("ROLLBACK");
+      transactionActive = false;
+      return null;
+    }
+
+    const eligibility = settlementEligibility(entry);
+    if (!eligibility.allowed) {
+      throw settlementNotAllowedError(data, eligibility);
+    }
+
+    const validation = validateSettlementPayload(user, data, {
+      getAccount: Account.getById,
+    });
+    if (!validation.ok) {
+      throw validationError(validation);
+    }
+
+    if (validation.normalized.principalCents > eligibility.openAmountCents) {
+      validation.errors.principal = `O valor principal não pode superar o saldo em aberto de ${formatCentsForMessage(eligibility.openAmountCents)}.`;
+      throw validationError(validation);
+    }
+
+    const settlement = Settlement.create(user.id, id, {
+      ...data,
+      financial_account_id: validation.normalized.account.id,
+      settlement_type: entry.entry_type === "INCOME" ? "RECEIPT" : "PAYMENT",
+      principal_cents: validation.normalized.principalCents,
+      interest_cents: validation.normalized.interestCents,
+      penalty_cents: validation.normalized.penaltyCents,
+      discount_cents: validation.normalized.discountCents,
+      other_adjustment_cents: validation.normalized.otherAdjustmentCents,
+      total_cents: validation.normalized.totalCents,
+      settled_at: validation.normalized.settledAt,
+    });
+
+    const realized = entry.realized_amount_cents + settlement.total_cents;
+    const updated = {
+      ...entry,
+      realized_amount_cents: realized,
+      status: entry.status,
+    };
+    updated.status = deriveStatus(updated, user.timezone);
+
+    db.prepare(`
+        UPDATE financial_entries
+        SET realized_amount_cents = ?, settled_at = ?,
+          status = ?, updated_at = ?
+        WHERE user_id = ? AND id = ?
+      `)
+      .run(
+        realized,
+        validation.normalized.settledAt || todayIso(user.timezone),
+        updated.status,
+        new Date().toISOString(),
+        user.id,
+        id
+      );
+
+    AuditLog.record(user.id, "financial_entry", id, "settled", {
+      settlement_id: settlement.id,
+      total_cents: settlement.total_cents,
+    });
+
+    db.exec("COMMIT");
+    transactionActive = false;
+    return getById(user.id, id);
+  } catch (error) {
+    if (transactionActive) db.exec("ROLLBACK");
+    throw error;
   }
+}
 
-  const settlement = Settlement.create(user.id, id, {
-    ...data,
-    financial_account_id: validation.normalized.account.id,
-    settlement_type: entry.entry_type === "INCOME" ? "RECEIPT" : "PAYMENT",
-    principal_cents: validation.normalized.principalCents,
-    interest_cents: validation.normalized.interestCents,
-    penalty_cents: validation.normalized.penaltyCents,
-    discount_cents: validation.normalized.discountCents,
-    other_adjustment_cents: validation.normalized.otherAdjustmentCents,
-    total_cents: validation.normalized.totalCents,
-    settled_at: validation.normalized.settledAt,
-  });
+function settlementNotAllowedError(data, eligibility) {
+  const error = validationError(
+    {
+      errors: { settlement: eligibility.message },
+      values: { ...data },
+    },
+    eligibility.message,
+  );
+  error.code = "SETTLEMENT_NOT_ALLOWED";
+  error.reason = eligibility.reason;
+  error.statusCode = 409;
+  return error;
+}
 
-  const realized = entry.realized_amount_cents + settlement.total_cents;
-  const updated = {
-    ...entry,
-    realized_amount_cents: realized,
-    status: entry.status,
-  };
-  updated.status = deriveStatus(updated, user.timezone);
-
-  getDatabase()
-    .prepare(`
-      UPDATE financial_entries
-      SET realized_amount_cents = ?, settled_at = ?,
-        status = ?, updated_at = ?
-      WHERE user_id = ? AND id = ?
-    `)
-    .run(
-      realized,
-      validation.normalized.settledAt || todayIso(user.timezone),
-      updated.status,
-      new Date().toISOString(),
-      user.id,
-      id
-    );
-
-  AuditLog.record(user.id, "financial_entry", id, "settled", {
-    settlement_id: settlement.id,
-    total_cents: settlement.total_cents,
-  });
-
-  return getById(user.id, id);
+function formatCentsForMessage(cents) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(Number(cents || 0) / 100);
 }
 
 function normalizeEntryData(user, data) {

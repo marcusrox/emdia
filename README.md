@@ -188,8 +188,19 @@ Exemplo:
 
 ---
 
-## 💬 Integração com WhatsApp/Evolution API.
-Testar: node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { getWhatsAppStatus } = require('./src/services/notificationService'); getWhatsAppStatus().then((s)=>console.log(JSON.stringify({provider:s.provider, ok:s.ok, state:s.state, message:s.message||null})))"
+## 💬 Integração com WhatsApp
+
+O envio de notificações aceita `mock`, `evolution-api` ou `waha` em
+`WHATSAPP_PROVIDER`. Configure somente as variáveis do provedor selecionado,
+conforme o `.env.example`; as chaves nunca devem ser versionadas ou exibidas em
+logs.
+
+Consultar o estado configurado, exibindo somente dados operacionais
+sanitizados:
+
+```powershell
+node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { getWhatsAppStatus } = require('./src/services/notificationService'); getWhatsAppStatus().then((s)=>console.log(JSON.stringify({provider:s.provider,ok:s.ok,state:s.state,message:s.message||null})))"
+```
 
 ---
 

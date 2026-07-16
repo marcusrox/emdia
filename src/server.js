@@ -268,13 +268,22 @@ function createServer() {
         const entry = Entry.getById(req.user.id, req.params.id);
         if (!entry) return sendHtml(res, notFoundView(req.user), 404);
 
+        if (error.code === "SETTLEMENT_NOT_ALLOWED") {
+          logWarn("business.settlement.blocked", "Tentativa de baixa bloqueada.", {
+            user: req.user,
+            entity: "financial_entry",
+            entityId: req.params.id,
+            details: { reason: error.reason || "unknown" },
+          });
+        }
+
         return sendHtml(
           res,
           entryDetail(req.user, entry, {
             settlementErrors: error.errors,
             settlementValues: error.values,
           }),
-          400
+          error.statusCode || 400
         );
       }
 

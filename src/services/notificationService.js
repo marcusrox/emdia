@@ -8,7 +8,7 @@ const { logError, logInfo, logWarn } = require("./operationalLogger");
 const { createWhatsAppClient } = require("./whatsappClient");
 
 const FINAL_STATUSES = new Set(["PAID", "RECEIVED", "CANCELLED"]);
-const CONNECTED_WHATSAPP_STATES = new Set(["open", "opened", "connected"]);
+const CONNECTED_WHATSAPP_STATES = new Set(["open", "opened", "connected", "working"]);
 
 async function runNotificationCycle() {
   generatePendingNotifications();

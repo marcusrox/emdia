@@ -207,10 +207,17 @@ ficar preservado.
 Fluxo esperado:
 
 1. localizar lançamento;
-2. validar conta financeira;
-3. criar settlement;
-4. atualizar valor realizado e status do lançamento;
-5. registrar auditoria.
+2. avaliar a elegibilidade da baixa com `settlementEligibility`;
+3. validar conta financeira, valor e saldo principal em aberto;
+4. criar settlement;
+5. atualizar valor realizado e status do lançamento;
+6. registrar auditoria.
+
+Elegibilidade, validação dependente do saldo, criação do settlement, atualização
+do lançamento e auditoria devem ocorrer na mesma transação. Lançamentos pagos,
+recebidos, cancelados, em rascunho, sem saldo ou com status incompatível não
+aceitam nova baixa. A interface deve orientar o usuário, mas o bloqueio no model
+é obrigatório.
 
 ## 9. Status
 
@@ -414,7 +421,6 @@ Itens previstos no PRD, mas ainda não implementados no MVP atual:
 - recorrências;
 - anexos;
 - OCR;
-- WhatsApp/Evolution API;
 - relatórios avancados;
 - testes automatizados;
 - TypeScript;
@@ -427,3 +433,21 @@ Ao implementar qualquer item futuro, preserve os principios atuais:
 - SQL seguro;
 - confirmação humana para dados extraidos automaticamente;
 - separacao entre regra de negocio, persistência e renderização.
+
+## 19. Provedores de WhatsApp outbound
+
+As notificações usam a interface interna definida em
+`src/services/whatsappClient.js`. A fábrica seleciona `mock`, `evolution-api`
+ou `waha` por `WHATSAPP_PROVIDER` e valida somente a configuração do provedor
+ativo.
+
+Regras do adaptador:
+
+- manter endpoints, autenticação e payload encapsulados no cliente de cada
+  provedor;
+- retornar `provider`, `state` e `providerMessageId` no contrato comum;
+- considerar `WORKING` conectado no WAHA e os estados existentes da Evolution
+  API sem misturar os contratos externos;
+- usar timeout com `AbortController`;
+- nunca registrar chave, telefone completo ou texto integral da mensagem;
+- manter segredos apenas no ambiente e valores vazios no `.env.example`.

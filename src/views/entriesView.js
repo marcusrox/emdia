@@ -1,5 +1,5 @@
 const { formatMoney } = require("../services/moneyService");
-const { statusLabel } = require("../services/statusService");
+const { settlementEligibility, statusLabel } = require("../services/statusService");
 const {
   buttonContent,
   buttonLink,
@@ -421,6 +421,7 @@ function entryHistoryList(auditEvents) {
 }
 
 function entryDetailView({ user, entry, settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null }) {
+  const eligibility = settlementEligibility(entry);
   const settlementValue = (field, fallback = "") => settlementValues?.[field] ?? fallback;
   const principalValue = settlementValue("principal", moneyInput(entry.expected_amount_cents - entry.realized_amount_cents));
   const settledAtValue = settlementValue("settled_at", new Date().toISOString().slice(0, 10));
@@ -482,6 +483,9 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
 
         <aside class="panel entry-settlement-panel">
           <div class="section-title"><h2>Registrar baixa</h2></div>
+          ${
+            eligibility.allowed
+              ? `
           <form method="post" action="/entries/${entry.id}/settlements" class="settlement-form" data-validate-form>
             ${csrfInput(user)}
             <label>Conta
@@ -512,6 +516,12 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
             </label>
             <button type="submit">${buttonContent("Baixar", "check-circle")}</button>
           </form>
+          `
+              : `<div class="empty-state settlement-blocked-message" role="status">
+                  <strong>Baixa indisponível</strong>
+                  <p>${escapeHtml(eligibility.message)}</p>
+                </div>`
+          }
         </aside>
       </section>
     `,

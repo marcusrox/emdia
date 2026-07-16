@@ -1526,6 +1526,8 @@ Utilizar uma instância auto-hospedada da Evolution API como gateway entre o sis
 
 A aplicação financeira não deve implementar diretamente o protocolo do WhatsApp. Toda comunicação deve passar por uma abstração `WhatsAppClient`, cuja implementação inicial será `EvolutionApiWhatsAppClient`.
 
+Para notificações outbound, a mesma abstração também pode selecionar um cliente WAHA por configuração. Evolution API e WAHA devem permanecer intercambiáveis para as regras de negócio, com seus contratos HTTP isolados em adaptadores próprios.
+
 A Evolution API pode trabalhar com diferentes mecanismos de conexão. Para o MVP, considerar uma instância baseada em conexão por QR Code, mantendo o provedor configurável para permitir futura migração para a API oficial da Meta sem alterar as regras de negócio.
 
 A conexão baseada em WhatsApp Web não é uma integração oficial da Meta e pode sofrer desconexões, mudanças de protocolo ou bloqueio da conta. Por isso:
@@ -2236,6 +2238,11 @@ EVOLUTION_WEBHOOK_SECRET=
 EVOLUTION_REQUEST_TIMEOUT_MS=10000
 EVOLUTION_MAX_RETRIES=3
 
+WAHA_API_BASE_URL=https://waha.exemplo.com
+WAHA_API_KEY=
+WAHA_SESSION=
+WAHA_REQUEST_TIMEOUT_MS=15000
+
 OCR_PROVIDER=mock
 OCR_API_KEY=
 
@@ -2674,6 +2681,7 @@ Não implementar todas as funcionalidades em uma única alteração.
 - SQLite pragmas: https://sqlite.org/pragma.html
 - Evolution API — documentação oficial: https://docs.evolutionfoundation.com.br/evolution-api
 - Evolution API — repositório oficial: https://github.com/evolution-foundation/evolution-api
+- WAHA — documentação oficial: https://waha.devlike.pro/docs/overview/introduction/
 - HTMX: https://htmx.org/docs/
 - Drizzle ORM: https://orm.drizzle.team/docs/overview
 - Zod: https://zod.dev/

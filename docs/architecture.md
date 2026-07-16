@@ -324,7 +324,6 @@ Ainda não existem:
 - recorrências;
 - anexos;
 - OCR;
-- WhatsApp/Evolution API;
 - relatórios avancados;
 - testes automatizados;
 - templates EJS;
@@ -341,7 +340,7 @@ Evolucoes prováveis:
 2. implementar recorrências;
 3. adicionar anexos e comprovantes;
 4. criar OCR com revisão humana;
-5. integrar WhatsApp/Evolution API;
+5. evoluir a integração WhatsApp para entrada de mensagens e mídias;
 6. extrair relatórios;
 7. adicionar testes automatizados;
 8. avaliar migracao para EJS/TypeScript/Drizzle se o projeto crescer.
@@ -354,3 +353,17 @@ Qualquer evolução deve preservar:
 - SQL com placeholders;
 - HTML escapado;
 - separacao entre dados, regras e renderização.
+
+## 14. Notificações WhatsApp outbound
+
+`notificationService.js` gera e consome a fila de notificações sem conhecer o
+gateway externo. `whatsappClient.js` seleciona, por configuração, um dos
+adaptadores compatíveis:
+
+- `MockWhatsAppClient`, para desenvolvimento sem rede;
+- `EvolutionApiWhatsAppClient`, para Evolution API;
+- `WahaWhatsAppClient`, para WAHA.
+
+Evolution API e WAHA mantêm seus próprios endpoints, headers, payloads e estados
+de sessão. Ambos retornam o mesmo contrato interno para que troca de provedor
+não altere geração de lembretes, idempotência, persistência ou interface.
