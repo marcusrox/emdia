@@ -4,6 +4,7 @@ const {
   buttonLink,
   csrfInput,
   escapeHtml,
+  lucideIcon,
   normalizeFontScale,
   normalizeListDensity,
   renderNotifications,
@@ -127,9 +128,12 @@ function monthSwitcher(pathname, competence, current = currentCompetence()) {
   </section>`;
 }
 
-function card(label, value, tone = "") {
+function card(label, value, tone = "", icon = "circle-dollar-sign") {
   return `<article class="metric ${tone}">
-    <span>${escapeHtml(label)}</span>
+    <div class="metric-heading">
+      <span>${escapeHtml(label)}</span>
+      <span class="metric-icon">${lucideIcon(icon)}</span>
+    </div>
     <strong>${escapeHtml(value)}</strong>
   </article>`;
 }

@@ -1,4 +1,4 @@
-const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel } = require("../services/viewHelpers");
+const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, lucideIcon } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function profileView({ user, profile = user, saved = false, errors = [] }) {
@@ -16,29 +16,52 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
         <h1>Perfil</h1>
         <p>Dados de acesso e identificacao usados na sua conta EmDia.</p>
       </section>
-      <form method="post" action="/profile" class="panel form-grid form-compact profile-form">
+      <form method="post" action="/profile" class="panel profile-form">
         ${csrfInput(user)}
-        <label class="profile-field-half">Nome
-          <input name="name" value="${escapeHtml(profile.name || "")}" required>
-        </label>
-        <label class="profile-field-half">E-mail
-          <input type="email" name="email" value="${escapeHtml(profile.email || "")}" required>
-        </label>
-        <label class="profile-field-half">${fieldLabel("Telefone WhatsApp", "Use +5571999999999 ou (71) 99999-9999. O sistema salva no formato internacional E.164.")}
-          <input name="phone_e164" value="${escapeHtml(profile.phone_e164 || "")}" placeholder="+5571999999999" inputmode="tel">
-        </label>
-        <label class="profile-field-third">Senha atual
-          <input type="password" name="current_password" autocomplete="current-password">
-        </label>
-        <label class="profile-field-third">Nova senha
-          <input type="password" name="new_password" autocomplete="new-password">
-        </label>
-        <label class="profile-field-third">Confirmar nova senha
-          <input type="password" name="confirm_password" autocomplete="new-password">
-        </label>
-        <div class="form-actions wide">
+        <div class="profile-form-section">
+          <div class="profile-section-heading">
+            <span class="profile-section-icon">${lucideIcon("user-round")}</span>
+            <div>
+              <h2>Dados pessoais</h2>
+              <p>Informações usadas para identificar sua conta.</p>
+            </div>
+          </div>
+          <div class="profile-fields">
+            <label>Nome completo
+              <input name="name" value="${escapeHtml(profile.name || "")}" autocomplete="name" required>
+            </label>
+            <label>E-mail
+              <input type="email" name="email" value="${escapeHtml(profile.email || "")}" autocomplete="email" required>
+            </label>
+            <label class="profile-field-wide">${fieldLabel("Telefone WhatsApp", "Use +5571999999999 ou (71) 99999-9999. O sistema salva no formato internacional E.164.")}
+              <input name="phone_e164" value="${escapeHtml(profile.phone_e164 || "")}" placeholder="(71) 99999-9999" inputmode="tel" autocomplete="tel">
+              <small>Usado somente para notificações que você habilitar.</small>
+            </label>
+          </div>
+        </div>
+        <div class="profile-form-section profile-security-section">
+          <div class="profile-section-heading">
+            <span class="profile-section-icon">${lucideIcon("lock-keyhole")}</span>
+            <div>
+              <h2>Segurança</h2>
+              <p>Preencha estes campos apenas se quiser alterar sua senha.</p>
+            </div>
+          </div>
+          <div class="profile-fields profile-password-fields">
+            <label class="profile-field-wide">Senha atual
+              <input type="password" name="current_password" autocomplete="current-password" placeholder="Digite sua senha atual">
+            </label>
+            <label>Nova senha
+              <input type="password" name="new_password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres">
+            </label>
+            <label>Confirmar nova senha
+              <input type="password" name="confirm_password" autocomplete="new-password" placeholder="Repita a nova senha">
+            </label>
+          </div>
+        </div>
+        <div class="form-actions profile-form-actions">
           ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
-          <button type="submit">${buttonContent("Salvar", "save")}</button>
+          <button type="submit">${buttonContent("Salvar alterações", "save")}</button>
         </div>
       </form>
     `,

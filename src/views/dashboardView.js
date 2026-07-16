@@ -18,14 +18,14 @@ function dashboardView({ user, competence, dashboard }) {
     body: `
       ${monthSwitcher("/dashboard", competence, current)}
       <section class="metrics-grid">
-        ${card("Saldo previsto", formatMoney(dashboard.cards.expectedBalance), dashboard.cards.expectedBalance >= 0 ? "good" : "bad")}
-        ${card("Receitas previstas", formatMoney(dashboard.cards.incomeExpected), "good")}
-        ${card("Receitas recebidas", formatMoney(dashboard.cards.incomeReceived), "good")}
-        ${card("Despesas previstas", formatMoney(dashboard.cards.expenseExpected), "bad")}
-        ${card("Despesas pagas", formatMoney(dashboard.cards.expensePaid))}
-        ${card("Despesas vencidas", formatMoney(dashboard.cards.expenseOverdue), "bad")}
-        ${card("Despesas pendentes", formatMoney(dashboard.cards.expensePending))}
-        ${card("Vencem hoje", String(dashboard.cards.dueToday))}
+        ${card("Saldo previsto", formatMoney(dashboard.cards.expectedBalance), dashboard.cards.expectedBalance >= 0 ? "balance good" : "balance bad", "wallet-cards")}
+        ${card("Receitas previstas", formatMoney(dashboard.cards.incomeExpected), "income good", "trending-up")}
+        ${card("Receitas recebidas", formatMoney(dashboard.cards.incomeReceived), "received good", "badge-check")}
+        ${card("Despesas previstas", formatMoney(dashboard.cards.expenseExpected), "expense bad", "receipt-text")}
+        ${card("Despesas pagas", formatMoney(dashboard.cards.expensePaid), "paid", "circle-check-big")}
+        ${card("Despesas vencidas", formatMoney(dashboard.cards.expenseOverdue), "overdue bad", "triangle-alert")}
+        ${card("Despesas pendentes", formatMoney(dashboard.cards.expensePending), "pending", "clock-3")}
+        ${card("Vencem hoje", String(dashboard.cards.dueToday), "today", "calendar-clock")}
       </section>
       <section class="split">
         <article class="panel">
