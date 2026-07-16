@@ -154,6 +154,7 @@ function isValidIsoDate(value) {
 
 function validateRecurrencePayload(user, data, dependencies) {
   const result = createValidationResult(data);
+  const getAccount = dependencies.getAccount;
   const getCategory = dependencies.getCategory;
   const normalizeCompetence = dependencies.normalizeCompetence;
 
@@ -175,6 +176,8 @@ function validateRecurrencePayload(user, data, dependencies) {
   }
 
   const expectedAmountCents = validateMoney(result, "expected_amount");
+  const account = validateOptionalReference(result, "financial_account_id", user, getAccount, "Selecione uma conta válida.");
+  validateActiveAccount(result, "financial_account_id", account);
 
   let startCompetence = null;
   let endCompetence = null;
@@ -201,6 +204,7 @@ function validateRecurrencePayload(user, data, dependencies) {
     ...result,
     ok: !hasErrors(result),
     normalized: {
+      account,
       category,
       expectedAmountCents,
       startCompetence,
@@ -222,28 +226,23 @@ function validateEntryPayload(user, data, dependencies) {
 
   const competenceMonth = validateCompetenceMonth(result, "competence_month", "Informe uma competência válida.");
   const dueDate = validateIsoDate(result, "due_date", { message: "Informe um vencimento válido." });
-  const issueDate = validateIsoDate(result, "issue_date", { required: false, message: "Informe uma emissão válida." });
   const expectedAmountCents = validateMoney(result, "expected_amount");
   const realizedAmountCents = validateMoney(result, "realized_amount", { required: false });
   const category = validateOptionalReference(result, "category_id", user, getCategory, "Selecione uma categoria válida.");
-  const expectedAccount = validateOptionalReference(result, "expected_account_id", user, getAccount, "Selecione uma conta prevista válida.");
-  const actualAccount = validateOptionalReference(result, "actual_account_id", user, getAccount, "Selecione uma conta efetiva válida.");
+  const account = validateOptionalReference(result, "financial_account_id", user, getAccount, "Selecione uma conta válida.");
 
-  validateActiveAccount(result, "expected_account_id", expectedAccount);
-  validateActiveAccount(result, "actual_account_id", actualAccount);
+  validateActiveAccount(result, "financial_account_id", account);
 
   return {
     ...result,
     ok: !hasErrors(result),
     normalized: {
-      actualAccount,
+      account,
       category,
       competenceMonth,
       dueDate,
       entryType,
-      expectedAccount,
       expectedAmountCents,
-      issueDate,
       realizedAmountCents,
     },
   };

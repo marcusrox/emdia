@@ -177,6 +177,7 @@ Lançamentos vivem em `financial_entries`.
 Campos conceituais importantes:
 
 - `entry_type`: `EXPENSE` ou `INCOME`;
+- `financial_account_id`: conta associada ao lançamento, opcional;
 - `competence_month`: competência mensal `YYYY-MM`;
 - `due_date`: vencimento `YYYY-MM-DD`;
 - `expected_amount_cents`: valor previsto;
@@ -190,6 +191,10 @@ Ao criar ou atualizar lançamentos:
 - calcule status com `deriveStatus`;
 - mantenha valores em centavos;
 - registre auditoria quando a ação alterar dado financeiro relevante.
+
+A conta do lançamento fica em `financial_entries.financial_account_id`. A conta
+usada em cada baixa fica em `settlements.financial_account_id` e pode ser
+diferente, sem alterar silenciosamente a conta do lançamento.
 
 ## 8. Baixas e pagamentos
 

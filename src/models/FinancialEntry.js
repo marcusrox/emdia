@@ -37,8 +37,8 @@ function list(user, filters = {}) {
   }
 
   if (filters.account_id) {
-    clauses.push("(e.expected_account_id = ? OR e.actual_account_id = ?)");
-    params.push(filters.account_id, filters.account_id);
+    clauses.push("e.financial_account_id = ?");
+    params.push(filters.account_id);
   }
 
   if (filters.q) {
@@ -53,14 +53,12 @@ function list(user, filters = {}) {
         c.name AS category_name,
         c.color AS category_color,
         p.name AS party_name,
-        ea.name AS expected_account_name,
-        aa.name AS actual_account_name,
+        a.name AS financial_account_name,
         r.description AS recurrence_description
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id
-      LEFT JOIN financial_accounts ea ON ea.id = e.expected_account_id
-      LEFT JOIN financial_accounts aa ON aa.id = e.actual_account_id
+      LEFT JOIN financial_accounts a ON a.id = e.financial_account_id
       LEFT JOIN recurrences r ON r.id = e.recurrence_rule_id
       WHERE ${clauses.join(" AND ")}
       ORDER BY e.due_date ASC, e.description ASC
@@ -79,14 +77,12 @@ function getById(userOrId, id) {
         e.*,
         c.name AS category_name,
         p.name AS party_name,
-        ea.name AS expected_account_name,
-        aa.name AS actual_account_name,
+        a.name AS financial_account_name,
         r.description AS recurrence_description
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id
-      LEFT JOIN financial_accounts ea ON ea.id = e.expected_account_id
-      LEFT JOIN financial_accounts aa ON aa.id = e.actual_account_id
+      LEFT JOIN financial_accounts a ON a.id = e.financial_account_id
       LEFT JOIN recurrences r ON r.id = e.recurrence_rule_id
       WHERE e.user_id = ? AND e.id = ? AND e.deleted_at IS NULL
     `)
@@ -146,10 +142,10 @@ function create(user, data) {
     .prepare(`
       INSERT INTO financial_entries (
         id, user_id, entry_type, description, category_id, party_id,
-        expected_account_id, actual_account_id, expected_amount_cents,
-        realized_amount_cents, issue_date, competence_month, due_date,
+        financial_account_id, expected_amount_cents, realized_amount_cents,
+        competence_month, due_date,
         settled_at, status, origin, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     .run(
       id,
@@ -158,11 +154,9 @@ function create(user, data) {
       validation.description,
       validation.category_id,
       party ? party.id : null,
-      validation.expected_account_id,
-      validation.actual_account_id,
+      validation.financial_account_id,
       validation.expected_amount_cents,
       validation.realized_amount_cents,
-      validation.issue_date,
       validation.competence_month,
       draft.due_date,
       data.settled_at || null,
@@ -197,8 +191,8 @@ function update(user, id, data) {
     .prepare(`
       UPDATE financial_entries
       SET entry_type = ?, description = ?, category_id = ?, party_id = ?,
-        expected_account_id = ?, actual_account_id = ?, expected_amount_cents = ?,
-        realized_amount_cents = ?, issue_date = ?, competence_month = ?,
+        financial_account_id = ?, expected_amount_cents = ?,
+        realized_amount_cents = ?, competence_month = ?,
         due_date = ?, status = ?, notes = ?, updated_at = ?
       WHERE user_id = ? AND id = ?
     `)
@@ -207,11 +201,9 @@ function update(user, id, data) {
       validation.description,
       validation.category_id,
       party ? party.id : null,
-      validation.expected_account_id,
-      validation.actual_account_id,
+      validation.financial_account_id,
       updated.expected_amount_cents,
       updated.realized_amount_cents,
-      validation.issue_date,
       validation.competence_month,
       updated.due_date,
       updated.status,
@@ -284,7 +276,7 @@ function duplicate(user, id) {
     description: `${entry.description} (cópia)`,
     category_id: entry.category_id,
     party_name: entry.party_name,
-    expected_account_id: entry.expected_account_id,
+    financial_account_id: entry.financial_account_id,
     expected_amount: entry.expected_amount_cents / 100,
     competence_month: entry.competence_month,
     due_date: entry.due_date,
@@ -328,12 +320,11 @@ function settle(user, id, data) {
   getDatabase()
     .prepare(`
       UPDATE financial_entries
-      SET actual_account_id = ?, realized_amount_cents = ?, settled_at = ?,
+      SET realized_amount_cents = ?, settled_at = ?,
         status = ?, updated_at = ?
       WHERE user_id = ? AND id = ?
     `)
     .run(
-      validation.normalized.account.id,
       realized,
       validation.normalized.settledAt || todayIso(user.timezone),
       updated.status,
@@ -361,15 +352,13 @@ function normalizeEntryData(user, data) {
   }
 
   return {
-    actual_account_id: validation.normalized.actualAccount?.id || null,
     category_id: validation.normalized.category?.id || null,
     competence_month: normalizeCompetence(validation.normalized.competenceMonth, user.timezone),
     description: String(data.description || "").trim(),
     due_date: validation.normalized.dueDate,
     entry_type: validation.normalized.entryType,
-    expected_account_id: validation.normalized.expectedAccount?.id || null,
+    financial_account_id: validation.normalized.account?.id || null,
     expected_amount_cents: validation.normalized.expectedAmountCents,
-    issue_date: validation.normalized.issueDate,
     notes: data.notes || null,
     realized_amount_cents: validation.normalized.realizedAmountCents,
   };

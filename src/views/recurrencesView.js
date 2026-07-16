@@ -97,7 +97,7 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action, er
           </select>
           ${fieldError(errors, "status")}
         </label>
-        <label>${fieldLabel("Conta prevista")}
+        <label>${fieldLabel("Conta")}
           <select name="financial_account_id"${fieldErrorAttributes(errors, "financial_account_id")}>
             ${option("", "Sem conta", fieldValue("financial_account_id"))}
             ${accounts.map((account) => option(account.id, account.name, fieldValue("financial_account_id"))).join("")}

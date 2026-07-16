@@ -85,7 +85,7 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
                 <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.recurrence_rule_id ? " · Recorrente" : ""}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
               </td>
               <td>${escapeHtml(entry.category_name || "Sem categoria")}</td>
-              <td>${escapeHtml(entry.actual_account_name || entry.expected_account_name || "-")}</td>
+              <td>${escapeHtml(entry.financial_account_name || "-")}</td>
               <td class="${valueClass(entry)}">${formatMoney(entry.expected_amount_cents)}</td>
               <td><span class="status status-${entry.status.toLowerCase()}">${escapeHtml(statusLabel(entry.status))}</span></td>
               ${
@@ -132,7 +132,7 @@ function entriesMobileList(entries, { user, valueClass }) {
   return `<div class="entries-mobile-list" aria-label="Lançamentos">
     ${entries
       .map((entry) => {
-        const account = entry.actual_account_name || entry.expected_account_name || "-";
+        const account = entry.financial_account_name || "-";
         const typeLabel = entry.entry_type === "INCOME" ? "Receita" : "Despesa";
         const recurrence = entry.recurrence_rule_id ? "Recorrente" : "";
         const party = entry.party_name || "";
@@ -336,10 +336,6 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
           <input type="date" name="due_date" value="${escapeHtml(fieldValue("due_date"))}" required${fieldErrorAttributes(errors, "due_date")}>
           ${fieldError(errors, "due_date")}
         </label>
-        <label>Emissão
-          <input type="date" name="issue_date" value="${escapeHtml(fieldValue("issue_date"))}"${fieldErrorAttributes(errors, "issue_date")}>
-          ${fieldError(errors, "issue_date")}
-        </label>
         <label>Categoria
           <select name="category_id"${fieldErrorAttributes(errors, "category_id")}>
             ${option("", "Sem categoria", fieldValue("category_id"))}
@@ -347,19 +343,12 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
           </select>
           ${fieldError(errors, "category_id")}
         </label>
-        <label>Conta prevista
-          <select name="expected_account_id"${fieldErrorAttributes(errors, "expected_account_id")}>
-            ${option("", "Sem conta", fieldValue("expected_account_id"))}
-            ${accounts.map((account) => option(account.id, account.name, fieldValue("expected_account_id"))).join("")}
+        <label>Conta
+          <select name="financial_account_id"${fieldErrorAttributes(errors, "financial_account_id")}>
+            ${option("", "Sem conta", fieldValue("financial_account_id"))}
+            ${accounts.map((account) => option(account.id, account.name, fieldValue("financial_account_id"))).join("")}
           </select>
-          ${fieldError(errors, "expected_account_id")}
-        </label>
-        <label>Conta efetiva
-          <select name="actual_account_id"${fieldErrorAttributes(errors, "actual_account_id")}>
-            ${option("", "Usar na baixa", fieldValue("actual_account_id"))}
-            ${accounts.map((account) => option(account.id, account.name, fieldValue("actual_account_id"))).join("")}
-          </select>
-          ${fieldError(errors, "actual_account_id")}
+          ${fieldError(errors, "financial_account_id")}
         </label>
         <label>Favorecido/Pagador
           <input name="party_name" value="${escapeHtml(fieldValue("party_name"))}"${fieldErrorAttributes(errors, "party_name")}>
@@ -470,7 +459,7 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
           <div class="section-title"><h2>Dados do lançamento</h2></div>
           <div class="entry-facts-grid">
             ${entryFact("Categoria", escapeHtml(entry.category_name || "-"))}
-            ${entryFact("Conta", escapeHtml(entry.actual_account_name || entry.expected_account_name || "-"))}
+            ${entryFact("Conta", escapeHtml(entry.financial_account_name || "-"))}
             ${entryFact("Favorecido/Pagador", escapeHtml(entry.party_name || "-"))}
             ${entryFact("Origem", recurrenceLink, "entry-fact-wide")}
           </div>
@@ -497,7 +486,7 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
             ${csrfInput(user)}
             <label>Conta
               <select name="financial_account_id" required${fieldErrorAttributes(settlementErrors, "financial_account_id")}>
-                ${accounts.map((account) => option(account.id, account.name, settlementValue("financial_account_id", entry.actual_account_id || entry.expected_account_id))).join("")}
+                ${accounts.map((account) => option(account.id, account.name, settlementValue("financial_account_id", entry.financial_account_id))).join("")}
               </select>
               ${fieldError(settlementErrors, "financial_account_id")}
             </label>

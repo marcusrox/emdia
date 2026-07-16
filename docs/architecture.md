@@ -214,6 +214,7 @@ Resumo:
 Campos conceituais:
 
 - tipo: receita ou despesa;
+- conta associada ao lançamento;
 - competência;
 - vencimento;
 - valor previsto;
@@ -223,6 +224,10 @@ Campos conceituais:
 
 `settlements` representa a baixa. Uma baixa nunca deve ser substituida apenas
 por alteração direta do valor realizado.
+
+O lançamento possui uma única conta em `financial_account_id`. Cada baixa
+também registra sua própria conta em `settlements.financial_account_id`; escolher
+uma conta diferente na baixa não altera a conta do lançamento.
 
 Fluxo de baixa:
 

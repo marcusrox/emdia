@@ -1,5 +1,6 @@
 const { getDatabase } = require("../database/connection");
 const AuditLog = require("./AuditLog");
+const Account = require("./FinancialAccount");
 const Category = require("./Category");
 const Party = require("./Party");
 const { dueDateFromCompetence, normalizeCompetence } = require("../services/dateService");
@@ -205,7 +206,7 @@ function createEntryFromRecurrence(user, recurrence, competence) {
     .prepare(`
       INSERT INTO financial_entries (
         id, user_id, entry_type, description, category_id, party_id,
-        expected_account_id, expected_amount_cents, realized_amount_cents,
+        financial_account_id, expected_amount_cents, realized_amount_cents,
         competence_month, due_date, status, origin, recurrence_rule_id,
         notes, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -250,6 +251,7 @@ function setStatus(user, id, status, action) {
 
 function normalizeData(user, data) {
   const validation = validateRecurrencePayload(user, data, {
+    getAccount: Account.getById,
     getCategory: Category.getById,
     normalizeCompetence,
   });
@@ -265,7 +267,7 @@ function normalizeData(user, data) {
   return {
     description: String(data.description || "").trim(),
     category_id: category.id,
-    financial_account_id: data.financial_account_id || null,
+    financial_account_id: validation.normalized.account?.id || null,
     party_id: party ? party.id : null,
     expected_amount_cents: validation.normalized.expectedAmountCents ?? toCents(data.expected_amount),
     due_day: dueDay,
