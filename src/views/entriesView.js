@@ -27,7 +27,6 @@ const ACTION_ICONS = {
 const TOOLBAR_ICONS = {
   filter: lucideIcon("filter"),
   clear: lucideIcon("eraser"),
-  new: lucideIcon("plus"),
 };
 
 function recordActionLink({ href, icon, label, tone = "" }) {
@@ -231,7 +230,19 @@ function entriesListView({
     active: "/entries",
     notifications,
     body: `
-      ${monthSwitcher({ pathname: "/entries", competence, current, title: "Lançamentos", eyebrow: "Financeiro" })}
+      ${monthSwitcher({
+        pathname: "/entries",
+        competence,
+        current,
+        title: "Lançamentos",
+        eyebrow: "Financeiro",
+        additionalActions: buttonLink({
+          href: `/entries/new?competence=${competence}`,
+          label: "Novo lançamento",
+          icon: "plus",
+          tone: "primary",
+        }),
+      })}
       <section class="toolbar entries-toolbar">
         <details class="entries-filter-details" data-persistent-details open>
           <summary class="entries-filter-summary">${buttonContent("Filtros", "sliders-horizontal")}</summary>
@@ -271,12 +282,6 @@ function entriesListView({
             </div>
           </form>
         </details>
-        ${toolbarIconLink({
-          href: `/entries/new?competence=${competence}`,
-          icon: "new",
-          label: "Novo lançamento",
-          tone: "primary",
-        })}
       </section>
       ${entriesTable(entries, { user })}
       ${deleteMonthPanel({

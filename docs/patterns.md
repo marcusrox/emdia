@@ -474,3 +474,8 @@ Regras:
 - escapar título, eyebrow e descrição no helper;
 - não recriar marcação ou CSS concorrente para cabeçalhos específicos;
 - classes adicionais devem atuar apenas como modificadores.
+
+`monthSwitcher` pode receber `additionalActions` com HTML produzido por
+helpers internos. A opção deve ser usada para ações primárias relacionadas à
+página, sem introduzir rotas ou regras de domínio no helper mensal. Quando não
+for informada, o cabeçalho mantém apenas os controles de competência.

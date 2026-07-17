@@ -2379,9 +2379,7 @@ textarea {
 
   .entries-toolbar {
     align-items: start;
-    display: grid;
-    gap: 10px;
-    grid-template-columns: minmax(0, 1fr) 44px;
+    display: block;
   }
 
   .entries-filter-details {
@@ -2461,12 +2459,6 @@ textarea {
     aspect-ratio: 1;
     min-height: 44px;
     width: 44px;
-  }
-
-  .entries-toolbar > .toolbar-icon-button {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
   }
 
   .entries-desktop-table {

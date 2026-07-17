@@ -112,7 +112,7 @@ function layout({ title, user, active, body, notifications = [] }) {
 </html>`;
 }
 
-function monthSwitcher({ pathname, competence, current = currentCompetence(), title, eyebrow }) {
+function monthSwitcher({ pathname, competence, current = currentCompetence(), title, eyebrow, additionalActions = "" }) {
   const actions = `<div class="month-actions">
       <a class="icon-button" title="Mês anterior" href="${pathname}?competence=${addMonths(competence, -1)}">‹</a>
       <form action="${pathname}" method="get" class="month-form" data-auto-submit-on-change>
@@ -120,7 +120,7 @@ function monthSwitcher({ pathname, competence, current = currentCompetence(), ti
       </form>
       <a class="icon-button" title="Próximo mês" href="${pathname}?competence=${addMonths(competence, 1)}">›</a>
       ${buttonLink({ href: `${pathname}?competence=${current}`, label: "Mês atual", icon: "calendar-days" })}
-    </div>`;
+    </div>${String(additionalActions || "").trim()}`;
 
   return pageHeading({
     eyebrow,
