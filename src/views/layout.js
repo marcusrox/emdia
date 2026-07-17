@@ -7,6 +7,7 @@ const {
   lucideIcon,
   normalizeFontScale,
   normalizeListDensity,
+  pageHeading,
   renderNotifications,
 } = require("../services/viewHelpers");
 const { RELEASE_LABEL } = require("../config/release");
@@ -111,21 +112,23 @@ function layout({ title, user, active, body, notifications = [] }) {
 </html>`;
 }
 
-function monthSwitcher(pathname, competence, current = currentCompetence()) {
-  return `<section class="monthbar">
-    <div>
-      <span class="eyebrow">Competência selecionada</span>
-      <h1>${escapeHtml(monthLabel(competence))}</h1>
-    </div>
-    <div class="month-actions">
+function monthSwitcher({ pathname, competence, current = currentCompetence(), title, eyebrow }) {
+  const actions = `<div class="month-actions">
       <a class="icon-button" title="Mês anterior" href="${pathname}?competence=${addMonths(competence, -1)}">‹</a>
       <form action="${pathname}" method="get" class="month-form" data-auto-submit-on-change>
         <input type="month" name="competence" value="${escapeHtml(competence)}" aria-label="Competência">
       </form>
       <a class="icon-button" title="Próximo mês" href="${pathname}?competence=${addMonths(competence, 1)}">›</a>
       ${buttonLink({ href: `${pathname}?competence=${current}`, label: "Mês atual", icon: "calendar-days" })}
-    </div>
-  </section>`;
+    </div>`;
+
+  return pageHeading({
+    eyebrow,
+    title,
+    description: `Competência: ${monthLabel(competence)}`,
+    actions,
+    className: "page-heading-monthly",
+  });
 }
 
 function card(label, value, tone = "", icon = "circle-dollar-sign") {

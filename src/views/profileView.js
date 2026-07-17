@@ -1,4 +1,4 @@
-const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, lucideIcon } = require("../services/viewHelpers");
+const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, lucideIcon, pageHeading } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function profileView({ user, profile = user, saved = false, errors = [] }) {
@@ -11,11 +11,11 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
       ...errors.map((error) => ({ type: "error", message: error })),
     ],
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">Conta do usuario</span>
-        <h1>Perfil</h1>
-        <p>Dados de acesso e identificacao usados na sua conta EmDia.</p>
-      </section>
+      ${pageHeading({
+        eyebrow: "Conta do usuário",
+        title: "Perfil",
+        description: "Dados de acesso e identificação usados na sua conta EmDia.",
+      })}
       <form method="post" action="/profile" class="panel profile-form">
         ${csrfInput(user)}
         <div class="profile-form-section">

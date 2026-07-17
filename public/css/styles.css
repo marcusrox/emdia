@@ -645,39 +645,34 @@ td small {
   min-width: 0;
 }
 
-.monthbar {
-  align-items: center;
-  background: transparent;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 0 0 16px;
-}
-
 .page-heading {
   background: transparent;
   border-bottom: 1px solid var(--line);
   display: grid;
   gap: 2px;
   justify-items: start;
+  margin-bottom: 18px;
+  min-width: 0;
   padding: 0 0 16px;
 }
 
-.monthbar {
-  margin-bottom: 20px;
+.page-heading-content {
+  min-width: 0;
 }
 
-.page-heading {
-  margin-bottom: 18px;
+.page-heading-with-actions {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
 }
 
-.page-actions {
+.page-heading-actions {
   align-items: center;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin: -6px 0 18px;
+  min-width: 0;
 }
 
 .panel-heading {
@@ -708,14 +703,13 @@ h2 {
   margin: 0;
 }
 
-.monthbar h1,
 .page-heading h1 {
   font-size: 24px;
   letter-spacing: 0;
   line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
-.monthbar .eyebrow,
 .page-heading .eyebrow {
   font-size: 11px;
   margin-bottom: 2px;
@@ -907,12 +901,8 @@ textarea {
 
 .entry-detail-header {
   align-items: start;
-  border-bottom: 1px solid var(--line);
-  display: grid;
   gap: 14px;
-  grid-template-columns: minmax(0, 1fr) auto auto;
   margin-bottom: 16px;
-  padding-bottom: 16px;
 }
 
 .entry-detail-header h1 {
@@ -1488,13 +1478,6 @@ tbody tr:hover {
 .audit-table code,
 .audit-table td {
   overflow-wrap: anywhere;
-}
-
-.operational-log-heading {
-  align-items: flex-start;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
 }
 
 .live-log-status {
@@ -2236,11 +2219,17 @@ textarea {
     top: 16px;
   }
 
-  .monthbar,
+  .page-heading-with-actions,
   .toolbar {
     align-items: stretch;
     display: flex;
     flex-direction: column;
+  }
+
+  .page-heading-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
   }
 
   .topbar {
@@ -2360,7 +2349,6 @@ textarea {
   }
 
   .split,
-  .entry-detail-header,
   .entry-detail-grid,
   .form-grid,
   .filters {
@@ -2374,10 +2362,6 @@ textarea {
   .entry-summary-grid,
   .entry-facts-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .entry-detail-header {
-    gap: 10px;
   }
 
   .entry-detail-actions {

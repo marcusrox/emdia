@@ -176,9 +176,10 @@ class WahaWhatsAppClient {
   }
 
   async sendText(input) {
+    const chatId = await this.resolveChatId(input.to);
     const payload = await this.request("POST", "/api/sendText", {
       session: this.session,
-      chatId: toWahaChatId(input.to),
+      chatId,
       text: input.message,
     });
 
@@ -187,6 +188,24 @@ class WahaWhatsAppClient {
       provider: "waha",
       providerMessageId: wahaMessageId(payload),
     };
+  }
+
+  async resolveChatId(value) {
+    const phone = toWahaPhoneNumber(value);
+    const query = new URLSearchParams({ phone, session: this.session });
+    const payload = await this.request("GET", `/api/contacts/check-exists?${query.toString()}`);
+
+    if (!payload || typeof payload !== "object" || typeof payload.numberExists !== "boolean") {
+      throw new Error("WAHA retornou uma verificação de contato inválida.");
+    }
+    if (!payload.numberExists) {
+      throw new Error("O telefone informado não está cadastrado no WhatsApp.");
+    }
+    if (typeof payload.chatId !== "string" || !/^[1-9]\d{7,14}@(c\.us|lid)$/.test(payload.chatId)) {
+      throw new Error("WAHA não retornou um chatId válido para o telefone.");
+    }
+
+    return payload.chatId;
   }
 
   async request(method, pathname, body = null) {
@@ -223,7 +242,7 @@ class WahaWhatsAppClient {
   }
 }
 
-function toWahaChatId(value) {
+function toWahaPhoneNumber(value) {
   const raw = String(value || "").trim();
   if (!raw || !/^\+?[\d\s().-]+$/.test(raw)) {
     throw new Error("Telefone WhatsApp inválido para envio.");
@@ -233,7 +252,7 @@ function toWahaChatId(value) {
   if (!/^[1-9]\d{7,14}$/.test(digits)) {
     throw new Error("Telefone WhatsApp inválido para envio.");
   }
-  return `${digits}@c.us`;
+  return digits;
 }
 
 function wahaMessageId(payload) {
@@ -275,5 +294,5 @@ module.exports = {
   MockWhatsAppClient,
   WahaWhatsAppClient,
   createWhatsAppClient,
-  toWahaChatId,
+  toWahaPhoneNumber,
 };

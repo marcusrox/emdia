@@ -1,5 +1,5 @@
 const { layout } = require("./layout");
-const { buttonContent, escapeHtml, option } = require("../services/viewHelpers");
+const { buttonContent, escapeHtml, option, pageHeading } = require("../services/viewHelpers");
 
 const ENTITY_OPTIONS = [
   ["financial_entry", "Lançamento"],
@@ -37,11 +37,11 @@ function auditView({ user, entries, filters }) {
     user,
     active: "/audit",
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">Histórico funcional</span>
-        <h1>Auditoria</h1>
-        <p>A auditoria mostra ações relevantes registradas no sistema.</p>
-      </section>
+      ${pageHeading({
+        eyebrow: "Histórico funcional",
+        title: "Auditoria",
+        description: "A auditoria mostra ações relevantes registradas no sistema.",
+      })}
       <section class="toolbar">
         <form method="get" action="/audit" class="filters audit-filters">
           <label>De

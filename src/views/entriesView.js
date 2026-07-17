@@ -12,6 +12,7 @@ const {
   lucideIcon,
   moneyInput,
   option,
+  pageHeading,
 } = require("../services/viewHelpers");
 const { currentCompetence } = require("../services/dateService");
 const { actionLabel, payloadSummary } = require("./auditView");
@@ -230,7 +231,7 @@ function entriesListView({
     active: "/entries",
     notifications,
     body: `
-      ${monthSwitcher("/entries", competence, current)}
+      ${monthSwitcher({ pathname: "/entries", competence, current, title: "Lançamentos", eyebrow: "Financeiro" })}
       <section class="toolbar entries-toolbar">
         <details class="entries-filter-details" data-persistent-details open>
           <summary class="entries-filter-summary">${buttonContent("Filtros", "sliders-horizontal")}</summary>
@@ -302,10 +303,10 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
     user,
     active: "/entries/new",
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">${isEdit ? "Editar" : "Novo"}</span>
-        <h1>${isEdit ? escapeHtml(entry.description) : "Lançamento financeiro"}</h1>
-      </section>
+      ${pageHeading({
+        eyebrow: isEdit ? "Editar" : "Novo",
+        title: isEdit ? entry.description : "Lançamento financeiro",
+      })}
       <form method="post" action="${action}" class="form-grid form-compact panel" data-validate-form>
         ${csrfInput(user)}
         <label class="field-span-2">Descrição
@@ -436,17 +437,16 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
     user,
     active: "/entries",
     body: `
-      <section class="entry-detail-header">
-        <div>
-          <span class="eyebrow">${entry.entry_type === "INCOME" ? "Receita" : "Despesa"} · ${escapeHtml(entry.competence_month)}</span>
-          <h1>${escapeHtml(entry.description)}</h1>
-        </div>
-        <span class="${statusClass}">${escapeHtml(statusLabel(entry.status))}</span>
+      ${pageHeading({
+        eyebrow: `${entry.entry_type === "INCOME" ? "Receita" : "Despesa"} · ${entry.competence_month}`,
+        title: entry.description,
+        className: "entry-detail-header",
+        actions: `<span class="${statusClass}">${escapeHtml(statusLabel(entry.status))}</span>
         <div class="entry-detail-actions">
           ${buttonLink({ href: `/entries?competence=${entry.competence_month}`, label: "Voltar", icon: "arrow-left" })}
           ${buttonLink({ href: `/entries/${entry.id}/edit`, label: "Editar", icon: "pencil", tone: "primary" })}
-        </div>
-      </section>
+        </div>`,
+      })}
 
       <section class="entry-summary-grid">
         ${entrySummaryItem("Valor previsto", formatMoney(entry.expected_amount_cents), "wallet", entry.entry_type === "INCOME" ? "good" : "bad")}

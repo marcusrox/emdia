@@ -448,6 +448,29 @@ Regras do adaptador:
 - retornar `provider`, `state` e `providerMessageId` no contrato comum;
 - considerar `WORKING` conectado no WAHA e os estados existentes da Evolution
   API sem misturar os contratos externos;
+- manter o telefone canônico em E.164 e, no cliente WAHA, resolver o `chatId`
+  real com `GET /api/contacts/check-exists` antes de cada envio, especialmente
+  para compatibilidade com números brasileiros;
+- aceitar do WAHA somente identificadores individuais numéricos com sufixo
+  `@c.us` ou `@lid`, rejeitando grupos, canais e identificadores arbitrários;
 - usar timeout com `AbortController`;
 - nunca registrar chave, telefone completo ou texto integral da mensagem;
 - manter segredos apenas no ambiente e valores vazios no `.env.example`.
+
+## 20. Cabeçalhos das páginas internas
+
+Toda view renderizada pelo layout autenticado deve usar `pageHeading`, de
+`src/services/viewHelpers.js`, para produzir a section principal com a classe
+`page-heading` e exatamente um `h1`.
+
+Regras:
+
+- usar o `h1` para identificar a página, não apenas o mês ou filtro atual;
+- informar contexto curto em `eyebrow` e descrição opcional;
+- construir ações com helpers internos e passá-las em `actions`;
+- usar `page-heading-with-actions` somente por meio do helper;
+- manter a competência explícita nas páginas mensais e os controles em
+  `page-heading-actions`;
+- escapar título, eyebrow e descrição no helper;
+- não recriar marcação ou CSS concorrente para cabeçalhos específicos;
+- classes adicionais devem atuar apenas como modificadores.

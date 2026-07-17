@@ -124,10 +124,17 @@ Corpo:
 }
 ```
 
-O cliente deve converter o telefone E.164 armazenado pelo EmDia, como
-`+5571999999999`, para `5571999999999@c.us`. Antes de montar o `chatId`, remover
-somente caracteres de formatação aceitos e validar que o resultado contém
-apenas dígitos. Não aceitar um `chatId` arbitrário vindo da fila.
+O cliente deve manter o telefone E.164 armazenado pelo EmDia e remover apenas o
+`+` e caracteres de formatação aceitos para consultar:
+
+```http
+GET /api/contacts/check-exists?phone=5571999999999&session=sessao-configurada
+```
+
+O envio deve usar exclusivamente o `chatId` retornado por essa consulta. Isso é
+necessário especialmente para números brasileiros, cujo identificador interno
+do WhatsApp pode existir com ou sem o nono dígito. Não remover o nono dígito por
+regra fixa e não aceitar um `chatId` arbitrário vindo da fila.
 
 Extrair o identificador da mensagem da resposta do WAHA quando disponível e
 retorná-lo como `providerMessageId`. Se a versão/engine do WAHA não devolver um
@@ -220,9 +227,13 @@ aplicação.
 - Uma sessão não operacional mantém as notificações pendentes sem tentativa de
   envio.
 - O envio usa `POST /api/sendText` com `session`, `chatId` e `text`.
-- Um telefone `+5571999999999` é enviado como
-  `5571999999999@c.us`.
+- Um telefone E.164 é consultado em `/api/contacts/check-exists` e o envio usa o
+  `chatId` retornado pelo WAHA, inclusive quando ele difere pela presença do
+  nono dígito brasileiro.
 - Telefone vazio ou inválido é rejeitado antes da chamada ao WAHA.
+- `numberExists: false` impede o envio com mensagem clara e sem expor o número.
+- Resposta sem `chatId` individual numérico terminado em `@c.us` ou `@lid`
+  impede o envio.
 - Um envio 2xx é marcado como enviado e armazena o ID retornado quando houver.
 - Erros HTTP, autenticação, sessão inexistente, timeout e JSON inválido são
   tratados sem expor segredos.
@@ -306,8 +317,8 @@ número sequencial em 1 e usando a data/hora atual do ambiente.
   `GET /api/sessions/{session}` e envio de texto em `POST /api/sendText`.
 - O cliente usa `X-Api-Key`, `Accept: application/json`, timeout com
   `AbortController` e mensagens de erro sanitizadas.
-- Telefones E.164 são validados e convertidos para o formato `@c.us` antes do
-  envio, sem aceitar um `chatId` arbitrário.
+- Telefones E.164 são validados antes do envio, sem aceitar um `chatId`
+  arbitrário.
 - A fábrica passou a selecionar `waha`, `evolution-api` ou `mock`, validando
   somente as variáveis do provedor ativo.
 - O contrato e os endpoints existentes da Evolution API foram preservados.
@@ -328,6 +339,45 @@ número sequencial em 1 e usando a data/hora atual do ambiente.
 ## Assinatura da LLM
 
 - Data: 16/07/2026 20:29
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualização
+
+## Ajuste de resolução do destinatário brasileiro
+
+- O telefone continua persistido e validado em E.164 no EmDia.
+- Antes de enviar, o cliente WAHA consulta
+  `GET /api/contacts/check-exists`, informando telefone e sessão.
+- O `chatId` retornado pelo WAHA é validado e usado sem adicionar ou remover o
+  nono dígito por heurística.
+- Contato inexistente, resposta inválida ou `chatId` inválido interrompem o
+  envio com mensagem sanitizada.
+- O controle de release foi atualizado para a sequência 035.
+
+---
+
+## Assinatura da LLM
+
+- Data: 16/07/2026 21:01
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualização
+
+## Ajuste para identificadores LID
+
+- A resposta real do WAHA confirmou que `check-exists` pode resolver um número
+  brasileiro para um identificador numérico terminado em `@lid`.
+- O cliente passou a aceitar `@c.us` e `@lid` como destinos individuais
+  válidos retornados pelo WAHA.
+- Identificadores de grupos, canais ou formatos arbitrários continuam
+  bloqueados antes do envio.
+- O controle de release foi atualizado para a sequência 036.
+
+---
+
+## Assinatura da LLM
+
+- Data: 16/07/2026 21:15
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: atualização

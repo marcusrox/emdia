@@ -367,3 +367,13 @@ adaptadores compatíveis:
 Evolution API e WAHA mantêm seus próprios endpoints, headers, payloads e estados
 de sessão. Ambos retornam o mesmo contrato interno para que troca de provedor
 não altere geração de lembretes, idempotência, persistência ou interface.
+
+## 15. Cabeçalhos das views internas
+
+`src/services/viewHelpers.js` fornece `pageHeading`, responsável pela marcação
+comum, escape dos textos e composição opcional de ações. As views informam
+título, eyebrow, descrição e ações específicas sem duplicar a estrutura.
+
+`monthSwitcher`, em `src/views/layout.js`, compõe esse helper para dashboard e
+lançamentos. A competência continua calculada pelos serviços de data e visível
+no cabeçalho; o helper de view cuida somente da apresentação e navegação.

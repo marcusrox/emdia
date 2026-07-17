@@ -1,5 +1,5 @@
 const { layout } = require("./layout");
-const { buttonContent, escapeHtml, option } = require("../services/viewHelpers");
+const { buttonContent, escapeHtml, option, pageHeading } = require("../services/viewHelpers");
 const { detailsSummary } = require("../services/operationalLogReader");
 
 const LEVEL_OPTIONS = [
@@ -21,18 +21,17 @@ function operationalLogsView({ user, entries, filters, dates }) {
     user,
     active: "/operational-logs",
     body: `
-      <section class="page-heading operational-log-heading">
-        <div>
-          <span class="eyebrow">Eventos técnicos</span>
-          <h1>Logs operacionais</h1>
-          <p>Visualize eventos gravados em arquivo texto e acompanhe novos registros automaticamente.</p>
-        </div>
-        <div class="live-log-status" data-operational-log-status>
+      ${pageHeading({
+        eyebrow: "Eventos técnicos",
+        title: "Logs operacionais",
+        description: "Visualize eventos gravados em arquivo texto e acompanhe novos registros automaticamente.",
+        className: "operational-log-heading",
+        actions: `<div class="live-log-status" data-operational-log-status>
           <span class="live-dot" aria-hidden="true"></span>
           <strong>Leitura automática ativa</strong>
           <small>Atualizando a cada 5 segundos</small>
-        </div>
-      </section>
+        </div>`,
+      })}
       <section class="toolbar">
         <form method="get" action="/operational-logs" class="filters operational-log-filters">
           <label>Arquivo

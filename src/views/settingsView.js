@@ -7,6 +7,7 @@ const {
   escapeHtml,
   normalizeFontScale,
   normalizeListDensity,
+  pageHeading,
 } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
@@ -22,11 +23,11 @@ function settingsView({ user, saved = false, notificationPreferences, whatsappSt
     active: "",
     notifications: saved ? [{ type: "success", message: "Configuração salva com sucesso." }] : [],
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">Preferências</span>
-        <h1>Configurações</h1>
-        <p>Ajustes individuais da sua interface no EmDia.</p>
-      </section>
+      ${pageHeading({
+        eyebrow: "Preferências",
+        title: "Configurações",
+        description: "Ajustes individuais da sua interface no EmDia.",
+      })}
       <form method="post" action="/settings" class="panel form-stack form-compact settings-form">
         ${csrfInput(user)}
         <details class="settings-section" data-persistent-details data-settings-section data-storage-key="emdia.settings.fontScale.open" open>

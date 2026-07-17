@@ -9,6 +9,7 @@ const {
   lucideIcon,
   moneyInput,
   option,
+  pageHeading,
 } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
@@ -43,7 +44,7 @@ function accountsView({ user, accounts, account = null, action = "/accounts" }) 
     user,
     active: "/accounts",
     body: `
-      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>${isEdit ? "Editar conta" : "Contas"}</h1></section>
+      ${pageHeading({ eyebrow: "Cadastros", title: isEdit ? "Editar conta" : "Contas" })}
       <section class="split compact-crud">
         <form method="post" action="${escapeHtml(action)}" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
@@ -78,10 +79,11 @@ function deletedAccountsView({ user, accounts }) {
     user,
     active: "/accounts",
     body: `
-      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Contas arquivadas</h1></section>
-      <div class="page-actions">
-        ${buttonLink({ href: "/accounts", label: "Voltar para contas ativas", icon: "arrow-left" })}
-      </div>
+      ${pageHeading({
+        eyebrow: "Cadastros",
+        title: "Contas arquivadas",
+        actions: buttonLink({ href: "/accounts", label: "Voltar para contas ativas", icon: "arrow-left" }),
+      })}
       <article class="panel">${deletedAccountsTable(accounts, user)}</article>
     `,
   });

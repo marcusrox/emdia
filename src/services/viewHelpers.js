@@ -131,6 +131,22 @@ function buttonLink({ href, label, icon = "", tone = "secondary", className = ""
   return `<a class="${classes}" href="${escapeHtml(href)}">${buttonContent(label, icon)}</a>`;
 }
 
+function pageHeading({ eyebrow = "", title, description = "", actions = "", className = "" }) {
+  const actionHtml = String(actions || "").trim();
+  const classes = ["page-heading", actionHtml ? "page-heading-with-actions" : "", className]
+    .filter(Boolean)
+    .join(" ");
+
+  return `<section class="${escapeHtml(classes)}">
+    <div class="page-heading-content">
+      ${eyebrow ? `<span class="eyebrow">${escapeHtml(eyebrow)}</span>` : ""}
+      <h1>${escapeHtml(title)}</h1>
+      ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+    </div>
+    ${actionHtml ? `<div class="page-heading-actions">${actionHtml}</div>` : ""}
+  </section>`;
+}
+
 function normalizeNotifications(notifications = []) {
   return notifications
     .filter(Boolean)
@@ -187,5 +203,6 @@ module.exports = {
   normalizeFontScale,
   normalizeListDensity,
   option,
+  pageHeading,
   renderNotifications,
 };

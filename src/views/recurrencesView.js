@@ -12,6 +12,7 @@ const {
   lucideIcon,
   moneyInput,
   option,
+  pageHeading,
 } = require("../services/viewHelpers");
 const { currentCompetence } = require("../services/dateService");
 const { layout } = require("./layout");
@@ -35,13 +36,11 @@ function recurrencesListView({ user, recurrences }) {
     user,
     active: "/recurrences",
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">Regras mensais</span>
-        <h1>Recorrências</h1>
-      </section>
-      <section class="toolbar">
-        ${buttonLink({ href: "/recurrences/new", label: "Nova recorrência", icon: "plus", tone: "primary" })}
-      </section>
+      ${pageHeading({
+        eyebrow: "Regras mensais",
+        title: "Recorrências",
+        actions: buttonLink({ href: "/recurrences/new", label: "Nova recorrência", icon: "plus", tone: "primary" }),
+      })}
       ${recurrencesTable(recurrences, user)}
     `,
   });
@@ -58,10 +57,10 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action, er
     user,
     active: "/recurrences",
     body: `
-      <section class="page-heading">
-        <span class="eyebrow">${isEdit ? "Editar" : "Nova"}</span>
-        <h1>${isEdit ? escapeHtml(recurrence.description) : "Recorrência mensal"}</h1>
-      </section>
+      ${pageHeading({
+        eyebrow: isEdit ? "Editar" : "Nova",
+        title: isEdit ? recurrence.description : "Recorrência mensal",
+      })}
       <form method="post" action="${escapeHtml(action)}" class="form-grid form-compact panel" data-validate-form>
         ${csrfInput(user)}
         <label class="field-span-2">${fieldLabel("Descrição")}

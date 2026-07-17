@@ -7,6 +7,7 @@ const {
   escapeHtml,
   lucideIcon,
   option,
+  pageHeading,
 } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
@@ -54,7 +55,7 @@ function categoriesView({ user, categories, category = null, action = "/categori
     user,
     active: "/categories",
     body: `
-      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>${isEdit ? "Editar categoria" : "Categorias"}</h1></section>
+      ${pageHeading({ eyebrow: "Cadastros", title: isEdit ? "Editar categoria" : "Categorias" })}
       <section class="split compact-crud">
         <form method="post" action="${escapeHtml(action)}" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
@@ -109,10 +110,11 @@ function deletedCategoriesView({ user, categories }) {
     user,
     active: "/categories",
     body: `
-      <section class="page-heading"><span class="eyebrow">Cadastros</span><h1>Categorias arquivadas</h1></section>
-      <div class="page-actions">
-        ${buttonLink({ href: "/categories", label: "Voltar para categorias ativas", icon: "arrow-left" })}
-      </div>
+      ${pageHeading({
+        eyebrow: "Cadastros",
+        title: "Categorias arquivadas",
+        actions: buttonLink({ href: "/categories", label: "Voltar para categorias ativas", icon: "arrow-left" }),
+      })}
       <article class="panel">${deletedCategoriesTable(categories, user)}</article>
     `,
   });
