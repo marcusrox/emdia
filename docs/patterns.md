@@ -479,3 +479,23 @@ Regras:
 helpers internos. A opção deve ser usada para ações primárias relacionadas à
 página, sem introduzir rotas ou regras de domínio no helper mensal. Quando não
 for informada, o cabeçalho mantém apenas os controles de competência.
+
+## 21. Diagnóstico seguro do ambiente
+
+Informações do processo usadas para suporte devem ser coletadas em service
+dedicado e entregues às views já normalizadas e sanitizadas.
+
+Regras:
+
+- usar allowlist para variáveis de ambiente; nunca enumerar `process.env` na
+  interface;
+- omitir valores de senha, token, chave, sessão, URL, caminho e credencial;
+- não ler o arquivo `.env` para montar páginas de diagnóstico;
+- converter caminhos de módulos internos em identificadores relativos ao
+  projeto e pacotes externos somente em nomes de pacote;
+- não expor diretório pessoal, hostname, IP, MAC ou caminhos absolutos;
+- não executar shell, varrer `node_modules` ou testar serviços externos durante
+  uma requisição de diagnóstico;
+- tratar indisponibilidade parcial sem devolver stack trace ou detalhes
+  internos;
+- manter a view responsável apenas pela apresentação e pelo escape HTML.

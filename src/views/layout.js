@@ -64,6 +64,7 @@ function layout({ title, user, active, body, notifications = [] }) {
           <a href="/settings">Configurações</a>
           <a href="/audit">Auditoria</a>
           <a href="/operational-logs">Logs operacionais</a>
+          <a href="/runtime-environment" class="${active === "/runtime-environment" ? "active" : ""}">Ambiente de execução</a>
           <form method="post" action="/logout">
             ${csrfInput(user)}
             <button type="submit">${buttonContent("Sair", "log-out")}</button>
@@ -93,6 +94,7 @@ function layout({ title, user, active, body, notifications = [] }) {
         <a href="/settings">Configurações</a>
         <a href="/audit">Auditoria</a>
         <a href="/operational-logs">Logs operacionais</a>
+        <a href="/runtime-environment" class="${active === "/runtime-environment" ? "active" : ""}">Ambiente de execução</a>
         <form method="post" action="/logout">
           ${csrfInput(user)}
           <button type="submit">${buttonContent("Sair", "log-out")}</button>

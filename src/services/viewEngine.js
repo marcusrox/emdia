@@ -8,6 +8,7 @@ const { notFoundView } = require("../views/errorsView");
 const { operationalLogsView } = require("../views/operationalLogsView");
 const { profileView } = require("../views/profileView");
 const { recurrenceFormView, recurrencesListView } = require("../views/recurrencesView");
+const { runtimeEnvironmentView } = require("../views/runtimeEnvironmentView");
 const { settingsView } = require("../views/settingsView");
 const { escapeHtml } = require("./viewHelpers");
 
@@ -28,5 +29,6 @@ module.exports = {
   profileView,
   recurrenceFormView,
   recurrencesListView,
+  runtimeEnvironmentView,
   settingsView,
 };

@@ -377,3 +377,15 @@ título, eyebrow, descrição e ações específicas sem duplicar a estrutura.
 `monthSwitcher`, em `src/views/layout.js`, compõe esse helper para dashboard e
 lançamentos. A competência continua calculada pelos serviços de data e visível
 no cabeçalho; o helper de view cuida somente da apresentação e navegação.
+
+## 16. Ambiente de execução
+
+A rota autenticada `GET /runtime-environment` oferece um diagnóstico somente
+leitura do processo atual. `src/services/runtimeEnvironmentService.js` coleta e
+sanitiza aplicação, sistema operacional, Node.js, dependências, cache CommonJS,
+variáveis permitidas e configurações seguras. A view
+`src/views/runtimeEnvironmentView.js` somente organiza e escapa essa estrutura.
+
+O limite de segurança fica no service: segredos, URLs, caminhos absolutos,
+identificadores da máquina e variáveis desconhecidas não são devolvidos para a
+camada de renderização.

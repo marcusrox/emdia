@@ -13,6 +13,7 @@ const Auth = require("./services/authService");
 const { getWhatsAppStatus } = require("./services/notificationService");
 const { listOperationalLogs } = require("./services/operationalLogReader");
 const { logError, logInfo, logWarn } = require("./services/operationalLogger");
+const { collectRuntimeEnvironment } = require("./services/runtimeEnvironmentService");
 const {
   accountsView,
   auditView,
@@ -29,6 +30,7 @@ const {
   profileView,
   recurrenceFormView,
   recurrencesListView,
+  runtimeEnvironmentView,
   settingsView,
 } = require("./services/viewEngine");
 
@@ -547,6 +549,16 @@ function createServer() {
       filters: result.filters,
       dates: result.dates,
     });
+  });
+
+  app.get("/runtime-environment", (req, res) => {
+    return sendHtml(
+      res,
+      runtimeEnvironmentView({
+        user: req.user,
+        environment: collectRuntimeEnvironment(req.user),
+      })
+    );
   });
 
   app.use((req, res) => {
