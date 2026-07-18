@@ -91,8 +91,8 @@ function buildOverdueReminderMessage(entry, daysOverdue) {
     `EmDia: ${entry.description} está vencida há ${daysOverdue} dia(s).`,
     `Vencimento: ${entry.due_date}.`,
     `Valor previsto: ${formatMoney(entry.expected_amount_cents)}.`,
-    `Abrir: /entries/${entry.id}`,
-  ].join("\n");
+    entryLinkLine(entry.id),
+  ].filter(Boolean).join("\n");
 }
 
 function generateDailySummary(user, preferences) {
@@ -195,8 +195,28 @@ function buildEntryReminderMessage(entry, offset) {
     `Vencimento: ${entry.due_date}.`,
     `Valor previsto: ${formatMoney(entry.expected_amount_cents)}.`,
     `Status: ${entry.status}.`,
-    `Abrir: /entries/${entry.id}`,
-  ].join("\n");
+    entryLinkLine(entry.id),
+  ].filter(Boolean).join("\n");
+}
+
+function entryLinkLine(entryId) {
+  const baseUrl = normalizeAppBaseUrl(process.env.APP_BASE_URL);
+  return baseUrl ? `Abrir: ${baseUrl}/entries/${encodeURIComponent(entryId)}` : "";
+}
+
+function normalizeAppBaseUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  try {
+    const url = new URL(raw);
+    if (!new Set(["http:", "https:"]).has(url.protocol)) return "";
+    if (url.username || url.password || url.search || url.hash) return "";
+    if (url.pathname !== "/") return "";
+    return url.toString().replace(/\/$/, "");
+  } catch (error) {
+    return "";
+  }
 }
 
 function addDaysIso(isoDate, days) {
@@ -232,6 +252,8 @@ function parsePayload(payloadJson) {
 }
 
 module.exports = {
+  entryLinkLine,
   getWhatsAppStatus,
+  normalizeAppBaseUrl,
   runNotificationCycle,
 };

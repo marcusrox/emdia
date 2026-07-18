@@ -53,6 +53,8 @@ histórico e cancelar itens ainda processáveis.
 - criadas rotas administrativas de listagem, reenvio e cancelamento;
 - criada a view `notificationQueueView.js` e seus estilos responsivos;
 - atualizado o agregador de views, o menu, o script de check e o release.
+- configurada `APP_BASE_URL` para gerar links absolutos nas mensagens de
+  vencimento e atraso, omitindo a linha quando a URL estiver ausente ou inválida.
 
 ---
 
@@ -62,3 +64,12 @@ histórico e cancelar itens ainda processáveis.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Assinatura da LLM
+
+- Data: 17/07/2026 22:10
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualizacao

@@ -8,6 +8,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
 const SAFE_ENV_VALUES = new Set([
   "NODE_ENV",
   "PORT",
+  "APP_BASE_URL",
   "TZ",
   "WHATSAPP_PROVIDER",
   "EVOLUTION_REQUEST_TIMEOUT_MS",
@@ -18,6 +19,7 @@ const SAFE_ENV_VALUES = new Set([
 const ENV_ALLOWLIST = [
   "NODE_ENV",
   "PORT",
+  "APP_BASE_URL",
   "TZ",
   "EMDIA_DEFAULT_PASSWORD",
   "EMDIA_DB_PATH",
@@ -161,6 +163,7 @@ function collectConfigurations(user) {
 
   return [
     configuration("Porta HTTP", safeEnvironmentValue("PORT", "3000"), "server"),
+    configuration("URL pública", process.env.APP_BASE_URL ? "Configurada" : "Não configurada", "globe-2"),
     configuration("Fuso horário do usuário", user.timezone || "America/Sao_Paulo", "clock-3"),
     configuration("Locale da interface", user.locale || "pt-BR", "languages"),
     configuration("Persistência", "SQLite local", "database"),

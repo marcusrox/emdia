@@ -195,6 +195,11 @@ O envio de notificações aceita `mock`, `evolution-api` ou `waha` em
 conforme o `.env.example`; as chaves nunca devem ser versionadas ou exibidas em
 logs.
 
+Configure `APP_BASE_URL` com a origem pública do EmDia, sem caminho adicional,
+para que lembretes de vencimento incluam links absolutos para os lançamentos.
+Em produção, use `https://emdia.idevs.com.br`. Quando a variável estiver vazia
+ou inválida, a linha de acesso é omitida da mensagem.
+
 Consultar o estado configurado, exibindo somente dados operacionais
 sanitizados:
 
