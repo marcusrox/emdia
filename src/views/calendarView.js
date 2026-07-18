@@ -1,6 +1,6 @@
 const { currentCompetence, todayIso } = require("../services/dateService");
 const { formatMoney } = require("../services/moneyService");
-const { entryTypeLabel, escapeHtml, lucideIcon } = require("../services/viewHelpers");
+const { buttonLink, entryTypeLabel, escapeHtml, lucideIcon } = require("../services/viewHelpers");
 const { layout, monthSwitcher } = require("./layout");
 
 const STATUS_LABELS = {
@@ -39,7 +39,20 @@ function calendarView({ user, competence, calendar }) {
   const firstDayOffset = new Date(`${competence}-01T12:00:00Z`).getUTCDay();
   return layout({
     title: "Agenda financeira", user, active: "/calendar",
-    body: `${monthSwitcher({ pathname: "/calendar", competence, current: currentCompetence(user.timezone), title: "Agenda financeira", eyebrow: "Vencimentos", icon: "calendar-days" })}
+    body: `${monthSwitcher({
+      pathname: "/calendar",
+      competence,
+      current: currentCompetence(user.timezone),
+      title: "Agenda financeira",
+      eyebrow: "Vencimentos",
+      icon: "calendar-days",
+      additionalActions: buttonLink({
+        href: `/entries/new?competence=${competence}`,
+        label: "Novo lançamento",
+        icon: "plus",
+        tone: "primary",
+      }),
+    })}
       ${calendar.entryCount === 0 ? '<div class="empty-state calendar-month-empty" role="status"><strong>Nenhum lançamento neste mês.</strong><p>Todos os dias estão livres de movimentações previstas.</p></div>' : ""}
       <section class="financial-calendar" aria-label="Agenda cronológica do mês">
         <div class="calendar-weekdays" aria-hidden="true"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>

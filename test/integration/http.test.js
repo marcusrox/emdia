@@ -64,6 +64,8 @@ describe("integração HTTP Express", () => {
     const calendar = await agent.get("/calendar?competence=2026-07").expect(200);
     assert.match(calendar.text, /Agenda financeira/);
     assert.match(calendar.text, /Competência: julho de 2026/);
+    assert.match(calendar.text, /href="\/entries\/new\?competence=2026-07"/);
+    assert.match(calendar.text, /Novo lançamento/);
     assert.doesNotMatch(calendar.text, /Segredo/);
     await agent.get("/entries/secret").expect(404);
   });
