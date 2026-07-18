@@ -4,7 +4,7 @@
   "description": "MVP web local para controle de contas, receitas e vencimentos.",
   "main": "app.js",
   "scripts": {
-    "precheck": "node --check src/database/migrations/005_add_settlement_reversals.js",
+    "precheck": "node --check src/database/migrations/005_add_settlement_reversals.js && node --check src/services/csvService.js",
     "start": "node app.js",
     "dev": "node scripts/dev.js",
     "seed": "node src/database/seed.js",

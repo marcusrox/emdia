@@ -54,7 +54,11 @@ function list(user, filters = {}) {
         c.color AS category_color,
         p.name AS party_name,
         a.name AS financial_account_name,
-        r.description AS recurrence_description
+        r.description AS recurrence_description,
+        (SELECT count(*) FROM settlements s
+          LEFT JOIN settlement_reversals sr ON sr.settlement_id = s.id
+          WHERE s.user_id = e.user_id AND s.financial_entry_id = e.id AND sr.id IS NULL
+        ) AS active_settlement_count
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id

@@ -15,6 +15,7 @@ const { getWhatsAppStatus } = require("./services/notificationService");
 const { listOperationalLogs } = require("./services/operationalLogReader");
 const { logError, logInfo, logWarn } = require("./services/operationalLogger");
 const { collectRuntimeEnvironment } = require("./services/runtimeEnvironmentService");
+const { entriesCsv } = require("./services/csvService");
 const {
   accountsView,
   auditView,
@@ -111,6 +112,30 @@ function createServer() {
         notifications: entriesNotifications(req),
       })
     );
+  });
+
+  app.get("/entries/export.csv", (req, res) => {
+    const user = req.user;
+    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    const filters = {
+      competence,
+      q: queryValue(req, "q"),
+      entry_type: queryValue(req, "entry_type"),
+      status: queryValue(req, "status"),
+      category_id: queryValue(req, "category_id"),
+      account_id: queryValue(req, "account_id"),
+    };
+    Recurrence.generateForCompetence(user, competence);
+    const entries = Entry.list(user, filters);
+    AuditLog.record(user.id, "financial_entries", `${user.id}:${competence}`, "exported_csv", {
+      competence,
+      filters: { q: filters.q, entry_type: filters.entry_type, status: filters.status,
+        category_id: filters.category_id, account_id: filters.account_id },
+      record_count: entries.length,
+    });
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.set("Content-Disposition", `attachment; filename="emdia-lancamentos-${competence}.csv"`);
+    return res.status(200).send(entriesCsv(entries));
   });
 
   app.get("/entries/new", (req, res) => {

@@ -67,4 +67,22 @@ describe("integração HTTP Express", () => {
     assert.doesNotMatch(calendar.text, /Segredo/);
     await agent.get("/entries/secret").expect(404);
   });
+
+  it("exporta CSV filtrado, com nome previsível e auditoria", async () => {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent);
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get("usuario@emdia.local");
+    const now = new Date().toISOString();
+    db.prepare(`INSERT INTO financial_entries (id,user_id,entry_type,description,expected_amount_cents,realized_amount_cents,
+      competence_month,due_date,status,origin,created_at,updated_at) VALUES ('csv-entry',?,'EXPENSE','=FÓRMULA',12345,0,
+      '2026-07','2026-07-10','PENDING','MANUAL',?,?)`).run(user.id, now, now);
+    const response = await agent.get("/entries/export.csv?competence=2026-07&q=FÓRMULA").expect(200);
+    assert.match(response.headers["content-type"], /text\/csv/);
+    assert.match(response.headers["content-disposition"], /emdia-lancamentos-2026-07\.csv/);
+    assert.match(response.text, /'=FÓRMULA/);
+    const audit = db.prepare("SELECT * FROM audit_logs WHERE action = 'exported_csv'").get();
+    assert.ok(audit);
+    assert.equal(JSON.parse(audit.payload_json).record_count, 1);
+  });
 });

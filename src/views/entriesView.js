@@ -27,6 +27,7 @@ const ACTION_ICONS = {
 const TOOLBAR_ICONS = {
   filter: lucideIcon("filter"),
   clear: lucideIcon("eraser"),
+  download: lucideIcon("download"),
 };
 
 function recordActionLink({ href, icon, label, tone = "" }) {
@@ -223,6 +224,10 @@ function entriesListView({
   deleteMonthOpen = false,
 }) {
   const current = currentCompetence(user.timezone);
+  const exportParams = new URLSearchParams({ competence });
+  for (const name of ["q", "entry_type", "status", "category_id", "account_id"]) {
+    if (filters[name]) exportParams.set(name, filters[name]);
+  }
 
   return layout({
     title: "Lançamentos",
@@ -237,12 +242,16 @@ function entriesListView({
         title: "Lançamentos",
         eyebrow: "Financeiro",
         icon: "receipt-text",
-        additionalActions: buttonLink({
+        additionalActions: `${toolbarIconLink({
+          href: `/entries/export.csv?${exportParams.toString()}`,
+          label: `Exportar CSV (${competence})`,
+          icon: "download",
+        })}${buttonLink({
           href: `/entries/new?competence=${competence}`,
           label: "Novo lançamento",
           icon: "plus",
           tone: "primary",
-        }),
+        })}`,
       })}
       <section class="toolbar entries-toolbar">
         <details class="entries-filter-details" data-persistent-details open>

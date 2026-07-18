@@ -3,8 +3,19 @@ const assert = require("node:assert/strict");
 const { addMonths, dueDateFromCompetence, isCompetence, normalizeCompetence } = require("../../src/services/dateService");
 const { formatMoney, toCents } = require("../../src/services/moneyService");
 const { deriveStatus, settlementEligibility } = require("../../src/services/statusService");
+const { csvCell, entriesCsv, neutralizeFormula } = require("../../src/services/csvService");
 
 describe("serviços financeiros", () => {
+  it("serializa CSV em UTF-8 e neutraliza fórmulas", () => {
+    assert.equal(neutralizeFormula("=1+1"), "'=1+1");
+    assert.equal(neutralizeFormula("  @comando"), "'  @comando");
+    assert.equal(csvCell('texto; "citado"'), '"texto; ""citado"""');
+    const csv = entriesCsv([{ id: "ent_1", description: "+Fórmula", competence_month: "2026-07" }]);
+    assert.equal(csv.charCodeAt(0), 0xfeff);
+    assert.match(csv, /Quantidade de baixas vigentes/);
+    assert.match(csv, /'\+Fórmula/);
+  });
+
   it("valida competência e usa o mês corrente como fallback", () => {
     assert.equal(isCompetence("2026-07"), true);
     assert.equal(isCompetence("2026-7"), false);
