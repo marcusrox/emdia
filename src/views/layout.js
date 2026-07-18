@@ -15,6 +15,7 @@ const { RELEASE_LABEL } = require("../config/release");
 function layout({ title, user, active, body, notifications = [] }) {
   const nav = [
     ["/dashboard", "Dashboard"],
+    ["/calendar", "Agenda"],
     ["/entries", "Lançamentos"],
     ["/entries/new", "Novo lançamento"],
     ["/recurrences", "Recorrências"],

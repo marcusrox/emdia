@@ -18,6 +18,7 @@ const { collectRuntimeEnvironment } = require("./services/runtimeEnvironmentServ
 const {
   accountsView,
   auditView,
+  calendarView,
   categoriesView,
   dashboardView,
   deletedAccountsView,
@@ -78,6 +79,13 @@ function createServer() {
     return sendHtml(res, dashboardView({ user, competence, dashboard: Entry.dashboard(user, competence) }));
   });
 
+  app.get("/calendar", (req, res) => {
+    const user = req.user;
+    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    Recurrence.generateForCompetence(user, competence);
+    return sendHtml(res, calendarView({ user, competence, calendar: Entry.calendar(user, competence) }));
+  });
+
   app.get("/entries", (req, res) => {
     const user = req.user;
     const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
@@ -124,7 +132,10 @@ function createServer() {
     const entry = Entry.getById(user.id, req.params.id);
     if (!entry) return sendHtml(res, notFoundView(user), 404);
 
-    return sendHtml(res, entryDetail(user, entry));
+    return sendHtml(res, entryDetail(user, entry, {
+      competence: queryValue(req, "competence"),
+      returnTo: queryValue(req, "return_to"),
+    }));
   });
 
   app.get("/entries/:id/edit", (req, res) => {
@@ -1010,10 +1021,12 @@ function entryForm(user, { entry = null, competence, action, errors = {} }) {
   });
 }
 
-function entryDetail(user, entry, { settlementErrors = {}, settlementValues = null } = {}) {
+function entryDetail(user, entry, { competence = entry.competence_month, returnTo = "", settlementErrors = {}, settlementValues = null } = {}) {
   return entryDetailView({
     user,
     entry,
+    competence: normalizeCompetence(competence, user.timezone),
+    returnTo,
     settlements: Settlement.listByEntry(entry.id),
     accounts: Account.active(user.id),
     auditEvents: AuditLog.listEntityHistory(user.id, "financial_entry", entry.id),

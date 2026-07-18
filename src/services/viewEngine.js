@@ -2,6 +2,7 @@ const { accountsView, deletedAccountsView } = require("../views/accountsView");
 const { auditView } = require("../views/auditView");
 const { categoriesView, deletedCategoriesView } = require("../views/categoriesView");
 const { dashboardView } = require("../views/dashboardView");
+const { calendarView } = require("../views/calendarView");
 const { entriesListView, entryDetailView, entryFormView } = require("../views/entriesView");
 const { loginView } = require("../views/authView");
 const { notFoundView } = require("../views/errorsView");
@@ -17,6 +18,7 @@ const { escapeHtml } = require("./viewHelpers");
 module.exports = {
   accountsView,
   auditView,
+  calendarView,
   categoriesView,
   dashboardView,
   deletedAccountsView,

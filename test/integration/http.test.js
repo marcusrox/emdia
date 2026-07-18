@@ -61,6 +61,10 @@ describe("integração HTTP Express", () => {
       '2026-07','2026-07-10','PENDING','MANUAL',?,?)`).run(now, now);
     const entries = await agent.get("/entries").expect(200);
     assert.match(entries.text, /Competência/);
+    const calendar = await agent.get("/calendar?competence=2026-07").expect(200);
+    assert.match(calendar.text, /Agenda financeira/);
+    assert.match(calendar.text, /Competência: julho de 2026/);
+    assert.doesNotMatch(calendar.text, /Segredo/);
     await agent.get("/entries/secret").expect(404);
   });
 });

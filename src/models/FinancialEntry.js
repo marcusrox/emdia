@@ -441,7 +441,37 @@ function dashboard(user, competence) {
   };
 }
 
+function calendar(user, competence) {
+  const normalizedCompetence = normalizeCompetence(competence, user.timezone);
+  const entries = list(user, { competence: normalizedCompetence });
+  const [year, month] = normalizedCompetence.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const entriesByDate = new Map();
+  const undated = [];
+
+  for (const entry of entries) {
+    if (!entry.due_date) {
+      undated.push(entry);
+      continue;
+    }
+
+    const dayEntries = entriesByDate.get(entry.due_date) || [];
+    dayEntries.push(entry);
+    entriesByDate.set(entry.due_date, dayEntries);
+  }
+
+  return {
+    days: Array.from({ length: daysInMonth }, (_, index) => {
+      const date = `${normalizedCompetence}-${String(index + 1).padStart(2, "0")}`;
+      return { date, day: index + 1, entries: entriesByDate.get(date) || [] };
+    }),
+    undated,
+    entryCount: entries.length,
+  };
+}
+
 module.exports = {
+  calendar,
   cancel,
   create,
   dashboard,

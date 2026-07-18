@@ -428,7 +428,7 @@ function entryHistoryList(auditEvents) {
   </ol>`;
 }
 
-function entryDetailView({ user, entry, settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null }) {
+function entryDetailView({ user, entry, competence = entry.competence_month, returnTo = "", settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null }) {
   const eligibility = settlementEligibility(entry);
   const settlementValue = (field, fallback = "") => settlementValues?.[field] ?? fallback;
   const principalValue = settlementValue("principal", moneyInput(entry.expected_amount_cents - entry.realized_amount_cents));
@@ -451,7 +451,7 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
         className: "entry-detail-header",
         actions: `<span class="${statusClass}">${escapeHtml(statusLabel(entry.status))}</span>
         <div class="entry-detail-actions">
-          ${buttonLink({ href: `/entries?competence=${entry.competence_month}`, label: "Voltar", icon: "arrow-left" })}
+          ${buttonLink({ href: `${returnTo === "calendar" ? "/calendar" : "/entries"}?competence=${competence}`, label: "Voltar", icon: "arrow-left" })}
           ${buttonLink({ href: `/entries/${entry.id}/edit`, label: "Editar", icon: "pencil", tone: "primary" })}
         </div>`,
       })}
