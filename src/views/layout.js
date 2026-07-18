@@ -25,6 +25,7 @@ function layout({ title, user, active, body, notifications = [] }) {
   const fontScale = normalizeFontScale(user?.font_scale);
   const listDensity = normalizeListDensity(user?.list_density);
   const systemDateTime = formatSystemDateTime(user?.timezone);
+  const adminMenu = user?.is_admin ? adminMenuItems(active) : "";
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -63,10 +64,7 @@ function layout({ title, user, active, body, notifications = [] }) {
           <a href="/profile">Perfil</a>
           <a href="/settings">Configurações</a>
           <a href="/audit">Auditoria</a>
-          ${user.is_admin ? `<a href="/admin/notifications" class="${active === "/admin/notifications" ? "active" : ""}">Fila de notificações</a>` : ""}
-          <a href="/operational-logs">Logs operacionais</a>
-          <a href="/runtime-environment" class="${active === "/runtime-environment" ? "active" : ""}">Ambiente de execução</a>
-          ${user.is_admin ? `<a href="/admin/users" class="${active === "/admin/users" ? "active" : ""}">Usuários</a>` : ""}
+          ${adminMenu}
           <form method="post" action="/logout">
             ${csrfInput(user)}
             <button type="submit">${buttonContent("Sair", "log-out")}</button>
@@ -95,10 +93,7 @@ function layout({ title, user, active, body, notifications = [] }) {
         <a href="/profile">Perfil</a>
         <a href="/settings">Configurações</a>
         <a href="/audit">Auditoria</a>
-        ${user.is_admin ? `<a href="/admin/notifications" class="${active === "/admin/notifications" ? "active" : ""}">Fila de notificações</a>` : ""}
-        <a href="/operational-logs">Logs operacionais</a>
-        <a href="/runtime-environment" class="${active === "/runtime-environment" ? "active" : ""}">Ambiente de execução</a>
-        ${user.is_admin ? `<a href="/admin/users" class="${active === "/admin/users" ? "active" : ""}">Usuários</a>` : ""}
+        ${adminMenu}
         <form method="post" action="/logout">
           ${csrfInput(user)}
           <button type="submit">${buttonContent("Sair", "log-out")}</button>
@@ -116,6 +111,16 @@ function layout({ title, user, active, body, notifications = [] }) {
   <script src="/public/js/app.js"></script>
 </body>
 </html>`;
+}
+
+function adminMenuItems(active) {
+  return `<div class="admin-menu-group" aria-label="Administração">
+    <span class="admin-menu-label">${lucideIcon("shield-check")} Administração</span>
+    <a class="admin-menu-link ${active === "/admin/users" ? "active" : ""}" href="/admin/users">Usuários</a>
+    <a class="admin-menu-link ${active === "/admin/notifications" ? "active" : ""}" href="/admin/notifications">Fila de notificações</a>
+    <a class="admin-menu-link ${active === "/operational-logs" ? "active" : ""}" href="/operational-logs">Logs operacionais</a>
+    <a class="admin-menu-link ${active === "/runtime-environment" ? "active" : ""}" href="/runtime-environment">Ambiente de execução</a>
+  </div>`;
 }
 
 function monthSwitcher({ pathname, competence, current = currentCompetence(), title, eyebrow, additionalActions = "" }) {

@@ -683,7 +683,7 @@ function createServer() {
     return redirect(res, "/admin/notifications?notice=cancelled");
   });
 
-  app.get("/operational-logs", (req, res) => {
+  app.get("/operational-logs", requireAdmin, (req, res) => {
     const result = listOperationalLogs(operationalLogFilters(req));
 
     return sendHtml(
@@ -697,7 +697,7 @@ function createServer() {
     );
   });
 
-  app.get("/operational-logs/events", (req, res) => {
+  app.get("/operational-logs/events", requireAdmin, (req, res) => {
     const result = listOperationalLogs(operationalLogFilters(req));
 
     return sendJson(res, {
@@ -707,7 +707,7 @@ function createServer() {
     });
   });
 
-  app.get("/runtime-environment", (req, res) => {
+  app.get("/runtime-environment", requireAdmin, (req, res) => {
     return sendHtml(
       res,
       runtimeEnvironmentView({

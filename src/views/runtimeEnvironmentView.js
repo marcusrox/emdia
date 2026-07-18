@@ -11,6 +11,7 @@ function runtimeEnvironmentView({ user, environment }) {
         eyebrow: "Diagnóstico técnico",
         title: "Ambiente de execução",
         description: "Informações do processo atual para suporte e diagnóstico.",
+        actions: `<span class="queue-admin-chip">${lucideIcon("shield-check")} Acesso administrativo</span>`,
       })}
       <section class="runtime-summary" aria-label="Resumo do ambiente">
         ${environment.summary.map(summaryCard).join("")}

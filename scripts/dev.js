@@ -5,7 +5,7 @@ const url = `http://localhost:${port}`;
 
 const server = spawn(
   process.execPath,
-  ["--disable-warning=ExperimentalWarning", "--watch", "app.js"],
+  ["--disable-warning=ExperimentalWarning", "--watch", "--watch-preserve-output", "app.js"],
   {
     cwd: process.cwd(),
     env: {

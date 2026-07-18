@@ -411,6 +411,28 @@ td small {
   margin: 0;
 }
 
+.admin-menu-group {
+  border-top: 1px solid var(--line);
+  display: grid;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.admin-menu-label {
+  align-items: center;
+  color: var(--primary-dark);
+  display: flex;
+  font-size: 10px;
+  font-weight: 850;
+  gap: 6px;
+  letter-spacing: .08em;
+  padding: 8px 10px 5px;
+  text-transform: uppercase;
+}
+
+.admin-menu-label svg { height: 14px; width: 14px; }
+.user-menu-panel .admin-menu-link { padding-left: 30px; }
+
 .mobile-user-menu {
   display: none;
 }

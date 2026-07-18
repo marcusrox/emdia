@@ -1,5 +1,5 @@
 const { layout } = require("./layout");
-const { buttonContent, escapeHtml, option, pageHeading } = require("../services/viewHelpers");
+const { buttonContent, escapeHtml, lucideIcon, option, pageHeading } = require("../services/viewHelpers");
 const { detailsSummary } = require("../services/operationalLogReader");
 
 const LEVEL_OPTIONS = [
@@ -26,7 +26,8 @@ function operationalLogsView({ user, entries, filters, dates }) {
         title: "Logs operacionais",
         description: "Visualize eventos gravados em arquivo texto e acompanhe novos registros automaticamente.",
         className: "operational-log-heading",
-        actions: `<div class="live-log-status" data-operational-log-status>
+        actions: `<span class="queue-admin-chip">${lucideIcon("shield-check")} Acesso administrativo</span>
+        <div class="live-log-status" data-operational-log-status>
           <span class="live-dot" aria-hidden="true"></span>
           <strong>Leitura automática ativa</strong>
           <small>Atualizando a cada 5 segundos</small>
