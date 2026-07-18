@@ -78,6 +78,22 @@ describe("integração HTTP Express", () => {
     await adminAgent.get("/admin/users").expect(200);
   });
 
+  it("renderiza Gravatar no topo, perfil e cadastro de usuários", async () => {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent);
+
+    const profile = await agent.get("/profile").expect(200);
+    assert.match(profile.text, /https:\/\/gravatar\.com\/avatar\/322ce3d79ee9a260904bf719ed85257720a335ee044e9fef95ad5255dc5684ae\?/);
+    assert.match(profile.text, /d=initials&amp;r=g&amp;s=128&amp;name=Usu%C3%A1rio\+EmDia/);
+    assert.match(profile.text, /href="https:\/\/gravatar\.com\/profile\/avatars"/);
+    assert.match(profile.text, /referrerpolicy="no-referrer"/);
+
+    const users = await agent.get("/admin/users").expect(200);
+    assert.match(users.text, /class="user-admin-identity"/);
+    assert.match(users.text, /img class="gravatar-avatar"/);
+  });
+
   it("aplica competência corrente e não expõe lançamento de outro usuário", async () => {
     const app = createServer();
     const agent = request.agent(app);

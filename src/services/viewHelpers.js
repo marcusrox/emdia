@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { createHash } = require("node:crypto");
 
 const LUCIDE_ICONS_PATH = path.join(path.dirname(require.resolve("lucide-static/package.json")), "icons");
 const LUCIDE_ICON_CACHE = new Map();
@@ -11,6 +12,22 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function gravatarUrl(email, { size = 80, name = "" } = {}) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const hash = createHash("sha256").update(normalizedEmail).digest("hex");
+  const normalizedSize = Math.min(2048, Math.max(1, Number.parseInt(size, 10) || 80));
+  const params = new URLSearchParams({ d: "initials", r: "g", s: String(normalizedSize) });
+
+  if (String(name || "").trim()) params.set("name", String(name).trim());
+
+  return `https://gravatar.com/avatar/${hash}?${params.toString()}`;
+}
+
+function gravatarAvatar({ email, name, size = 80, className = "", loading = "lazy" }) {
+  const classes = ["gravatar-avatar", className].filter(Boolean).join(" ");
+  return `<img class="${escapeHtml(classes)}" src="${escapeHtml(gravatarUrl(email, { size, name }))}" alt="Avatar de ${escapeHtml(name || "usuário")}" width="${escapeHtml(size)}" height="${escapeHtml(size)}" loading="${loading === "eager" ? "eager" : "lazy"}" referrerpolicy="no-referrer">`;
 }
 
 function option(value, label, selected) {
@@ -202,6 +219,8 @@ module.exports = {
   fieldError,
   fieldErrorAttributes,
   fieldLabel,
+  gravatarAvatar,
+  gravatarUrl,
   lucideIcon,
   moneyInput,
   normalizeFontScale,

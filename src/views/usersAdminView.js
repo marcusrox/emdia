@@ -7,6 +7,7 @@ const {
   fieldError,
   fieldErrorAttributes,
   fieldLabel,
+  gravatarAvatar,
   lucideIcon,
   option,
   pageHeading,
@@ -57,6 +58,10 @@ function userAdminFormView({ user, target = {}, action, isNew = false, errors = 
       })}
       <form method="post" action="${escapeHtml(action)}" class="form-grid form-compact panel user-admin-form" data-validate-form>
         ${csrfInput(user)}
+        <div class="user-admin-avatar wide">
+          ${gravatarAvatar({ email: target.email, name: target.name || "Novo usuário", size: 72 })}
+          <div><strong>Avatar do Gravatar</strong><small>Vinculado ao e-mail do cadastro.</small></div>
+        </div>
         <h2 class="wide">Dados cadastrais</h2>
         <label>${fieldLabel("Nome")}<input name="name" value="${escapeHtml(target.name)}" required${fieldErrorAttributes(errors, "name")}>${fieldError(errors, "name")}</label>
         <label>${fieldLabel("E-mail")}<input type="email" name="email" value="${escapeHtml(target.email)}" required autocomplete="off"${fieldErrorAttributes(errors, "email")}>${fieldError(errors, "email")}</label>
@@ -95,7 +100,7 @@ function usersTable(user, users) {
   if (!users.length) return `<div class="empty-state">Nenhum usuário corresponde aos filtros.</div>`;
   return `<div class="table-wrap"><table class="users-admin-table"><thead><tr><th>Usuário</th><th>Contato</th><th>Perfil</th><th>Estado</th><th>Cadastro</th><th class="record-actions-cell">Ações</th></tr></thead>
     <tbody>${users.map((target) => `<tr>
-      <td><strong>${escapeHtml(target.name)}</strong><small>${escapeHtml(target.id)}</small></td>
+      <td><div class="user-admin-identity">${gravatarAvatar({ email: target.email, name: target.name, size: 40 })}<div><strong>${escapeHtml(target.name)}</strong><small>${escapeHtml(target.id)}</small></div></div></td>
       <td>${escapeHtml(target.email)}${target.phone_e164 ? `<small>${escapeHtml(target.phone_e164)}</small>` : ""}</td>
       <td><span class="user-role user-role-${target.is_admin ? "admin" : "normal"}">${target.is_admin ? "Administrador" : "Usuário"}</span></td>
       <td>${statusBadge(target)}</td>

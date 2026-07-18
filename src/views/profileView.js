@@ -1,4 +1,4 @@
-const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, lucideIcon, pageHeading } = require("../services/viewHelpers");
+const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, gravatarAvatar, lucideIcon, pageHeading } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function profileView({ user, profile = user, saved = false, errors = [] }) {
@@ -19,6 +19,14 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
       })}
       <form method="post" action="/profile" class="panel profile-form">
         ${csrfInput(user)}
+        <section class="profile-avatar-section" aria-labelledby="profile-avatar-title">
+          ${gravatarAvatar({ email: profile.email, name: profile.name, size: 128, className: "profile-avatar" })}
+          <div>
+            <h2 id="profile-avatar-title">Foto do perfil</h2>
+            <p>O avatar é carregado do Gravatar usando o e-mail cadastrado no EmDia.</p>
+            <a class="ghost-button" href="https://gravatar.com/profile/avatars" target="_blank" rel="noopener noreferrer">${buttonContent("Definir avatar no Gravatar", "external-link")}</a>
+          </div>
+        </section>
         <div class="profile-form-section">
           <div class="profile-section-heading">
             <span class="profile-section-icon">${lucideIcon("user-round")}</span>

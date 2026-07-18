@@ -4,6 +4,7 @@ const {
   buttonLink,
   csrfInput,
   escapeHtml,
+  gravatarAvatar,
   lucideIcon,
   normalizeFontScale,
   normalizeListDensity,
@@ -58,7 +59,7 @@ function layout({ title, user, active, body, notifications = [] }) {
       </a>
       <details class="user-menu mobile-user-menu" name="mobile-top-menu">
         <summary class="user-chip user-icon-button" aria-label="Abrir menu do usuário">
-          <span aria-hidden="true"></span>
+          ${gravatarAvatar({ email: user.email, name: user.name, size: 40, className: "topbar-avatar", loading: "eager" })}
         </summary>
         <div class="user-menu-panel">
           ${userMenu}
@@ -79,7 +80,7 @@ function layout({ title, user, active, body, notifications = [] }) {
     </nav>
     <details class="user-menu desktop-user-menu">
       <summary class="user-chip desktop-user-chip">
-        <span class="user-icon-small" aria-hidden="true"></span>
+        ${gravatarAvatar({ email: user.email, name: user.name, size: 32, className: "topbar-avatar", loading: "eager" })}
         <span>${escapeHtml(user.name)}</span>
       </summary>
       <div class="user-menu-panel">

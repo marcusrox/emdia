@@ -319,6 +319,20 @@ td small {
   gap: 8px;
 }
 
+.gravatar-avatar {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: block;
+  flex: 0 0 auto;
+  object-fit: cover;
+}
+
+.topbar-avatar {
+  height: 32px;
+  width: 32px;
+}
+
 .user-icon-small {
   border: 2px solid var(--primary);
   border-radius: 999px;
@@ -461,6 +475,11 @@ td small {
   justify-content: center;
   min-height: 40px;
   padding: 0;
+  width: 40px;
+}
+
+.user-icon-button .topbar-avatar {
+  height: 40px;
   width: 40px;
 }
 
@@ -1943,6 +1962,18 @@ tbody tr:hover {
   width: 100%;
 }
 
+.profile-avatar-section {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 20px;
+  padding-bottom: 22px;
+}
+
+.profile-avatar-section h2 { font-size: 18px; margin: 0 0 5px; }
+.profile-avatar-section p { color: var(--muted); margin: 0 0 12px; }
+.profile-avatar { height: 128px; width: 128px; }
+
 .profile-form-section {
   display: grid;
   gap: 28px;
@@ -2386,6 +2417,11 @@ textarea[aria-invalid="true"] {
 .users-admin-filters .toolbar-actions { align-self: end; }
 .users-admin-table td strong, .users-admin-table td small { display: block; }
 .users-admin-table td small { color: var(--muted); margin-top: 3px; }
+.user-admin-identity, .user-admin-avatar { align-items: center; display: flex; gap: 10px; }
+.user-admin-identity .gravatar-avatar { height: 40px; width: 40px; }
+.user-admin-avatar { border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.user-admin-avatar .gravatar-avatar { height: 72px; width: 72px; }
+.user-admin-avatar small { color: var(--muted); display: block; margin-top: 3px; }
 .user-role, .user-status { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 800; padding: var(--status-padding-block) var(--status-padding-inline); white-space: nowrap; }
 .user-role-admin { background: #ede9fe; color: #6d28d9; }
 .user-role-normal { background: #e0f2fe; color: #075985; }
@@ -2922,6 +2958,8 @@ textarea {
     grid-template-columns: 1fr;
     padding: 22px 18px;
   }
+
+  .profile-avatar-section { align-items: flex-start; }
 
   .profile-fields {
     grid-template-columns: 1fr;
