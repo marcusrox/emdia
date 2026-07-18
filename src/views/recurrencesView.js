@@ -39,6 +39,7 @@ function recurrencesListView({ user, recurrences }) {
       ${pageHeading({
         eyebrow: "Regras mensais",
         title: "Recorrências",
+        icon: "repeat-2",
         actions: buttonLink({ href: "/recurrences/new", label: "Nova recorrência", icon: "plus", tone: "primary" }),
       })}
       ${recurrencesTable(recurrences, user)}
@@ -60,6 +61,7 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action, er
       ${pageHeading({
         eyebrow: isEdit ? "Editar" : "Nova",
         title: isEdit ? recurrence.description : "Recorrência mensal",
+        icon: "repeat-2",
       })}
       <form method="post" action="${escapeHtml(action)}" class="form-grid form-compact panel" data-validate-form>
         ${csrfInput(user)}

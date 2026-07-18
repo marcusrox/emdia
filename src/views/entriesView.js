@@ -236,6 +236,7 @@ function entriesListView({
         current,
         title: "Lançamentos",
         eyebrow: "Financeiro",
+        icon: "receipt-text",
         additionalActions: buttonLink({
           href: `/entries/new?competence=${competence}`,
           label: "Novo lançamento",
@@ -311,6 +312,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
       ${pageHeading({
         eyebrow: isEdit ? "Editar" : "Novo",
         title: isEdit ? entry.description : "Lançamento financeiro",
+        icon: "receipt-text",
       })}
       <form method="post" action="${action}" class="form-grid form-compact panel" data-validate-form>
         ${csrfInput(user)}
@@ -445,6 +447,7 @@ function entryDetailView({ user, entry, settlements, accounts, auditEvents = [],
       ${pageHeading({
         eyebrow: `${entry.entry_type === "INCOME" ? "Receita" : "Despesa"} · ${entry.competence_month}`,
         title: entry.description,
+        icon: "receipt-text",
         className: "entry-detail-header",
         actions: `<span class="${statusClass}">${escapeHtml(statusLabel(entry.status))}</span>
         <div class="entry-detail-actions">

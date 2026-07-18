@@ -16,7 +16,7 @@ function dashboardView({ user, competence, dashboard }) {
     user,
     active: "/dashboard",
     body: `
-      ${monthSwitcher({ pathname: "/dashboard", competence, current, title: "Dashboard", eyebrow: "Visão geral" })}
+      ${monthSwitcher({ pathname: "/dashboard", competence, current, title: "Dashboard", eyebrow: "Visão geral", icon: "layout-dashboard" })}
       <section class="metrics-grid">
         ${card("Saldo previsto", formatMoney(dashboard.cards.expectedBalance), dashboard.cards.expectedBalance >= 0 ? "balance good" : "balance bad", "wallet-cards")}
         ${card("Receitas previstas", formatMoney(dashboard.cards.incomeExpected), "income good", "trending-up")}

@@ -26,6 +26,7 @@ function settingsView({ user, saved = false, notificationPreferences, whatsappSt
       ${pageHeading({
         eyebrow: "Preferências",
         title: "Configurações",
+        icon: "settings",
         description: "Ajustes individuais da sua interface no EmDia.",
       })}
       <form method="post" action="/settings" class="panel form-stack form-compact settings-form">

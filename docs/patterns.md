@@ -467,6 +467,9 @@ Regras:
 
 - usar o `h1` para identificar a página, não apenas o mês ou filtro atual;
 - informar contexto curto em `eyebrow` e descrição opcional;
+- informar em `icon` um nome válido do `lucide-static` que represente a tela;
+- reutilizar o mesmo ícone da navegação quando a tela já estiver presente no
+  menu;
 - construir ações com helpers internos e passá-las em `actions`;
 - usar `page-heading-with-actions` somente por meio do helper;
 - manter a competência explícita nas páginas mensais e os controles em
@@ -479,6 +482,7 @@ Regras:
 helpers internos. A opção deve ser usada para ações primárias relacionadas à
 página, sem introduzir rotas ou regras de domínio no helper mensal. Quando não
 for informada, o cabeçalho mantém apenas os controles de competência.
+`monthSwitcher` também deve receber e repassar `icon` ao `pageHeading`.
 
 ## 21. Diagnóstico seguro do ambiente
 

@@ -24,6 +24,7 @@ function operationalLogsView({ user, entries, filters, dates }) {
       ${pageHeading({
         eyebrow: "Eventos técnicos",
         title: "Logs operacionais",
+        icon: "file-text",
         description: "Visualize eventos gravados em arquivo texto e acompanhe novos registros automaticamente.",
         className: "operational-log-heading",
         actions: `<span class="queue-admin-chip">${lucideIcon("shield-check")} Acesso administrativo</span>

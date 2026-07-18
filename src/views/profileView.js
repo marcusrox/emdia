@@ -14,6 +14,7 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
       ${pageHeading({
         eyebrow: "Conta do usuário",
         title: "Perfil",
+        icon: "user-round",
         description: "Dados de acesso e identificação usados na sua conta EmDia.",
       })}
       <form method="post" action="/profile" class="panel profile-form">

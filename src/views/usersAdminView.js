@@ -22,6 +22,7 @@ function usersAdminListView({ user, users, filters, notifications = [] }) {
       ${pageHeading({
         eyebrow: "Administração · Controle de acesso",
         title: "Usuários",
+        icon: "users",
         description: "Gerencie cadastros, perfis administrativos e acesso ao EmDia.",
         actions: `<span class="queue-admin-chip">${lucideIcon("shield-check")} Acesso administrativo</span>${buttonLink({ href: "/admin/users/new", label: "Novo usuário", icon: "user-plus", tone: "primary" })}`,
       })}
@@ -51,6 +52,7 @@ function userAdminFormView({ user, target = {}, action, isNew = false, errors = 
       ${pageHeading({
         eyebrow: isNew ? "Administração · Novo cadastro" : "Administração · Editar cadastro",
         title: isNew ? "Novo usuário" : target.name,
+        icon: "users",
         description: isNew ? "Crie uma credencial e defina o acesso inicial." : "Atualize dados e permissões sem alterar o histórico do usuário.",
       })}
       <form method="post" action="${escapeHtml(action)}" class="form-grid form-compact panel user-admin-form" data-validate-form>

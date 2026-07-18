@@ -55,7 +55,7 @@ function categoriesView({ user, categories, category = null, action = "/categori
     user,
     active: "/categories",
     body: `
-      ${pageHeading({ eyebrow: "Cadastros", title: isEdit ? "Editar categoria" : "Categorias" })}
+      ${pageHeading({ eyebrow: "Cadastros", title: isEdit ? "Editar categoria" : "Categorias", icon: "tags" })}
       <section class="split compact-crud">
         <form method="post" action="${escapeHtml(action)}" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
@@ -113,6 +113,7 @@ function deletedCategoriesView({ user, categories }) {
       ${pageHeading({
         eyebrow: "Cadastros",
         title: "Categorias arquivadas",
+        icon: "tags",
         actions: buttonLink({ href: "/categories", label: "Voltar para categorias ativas", icon: "arrow-left" }),
       })}
       <article class="panel">${deletedCategoriesTable(categories, user)}</article>

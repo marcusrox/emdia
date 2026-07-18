@@ -26,6 +26,7 @@ function notificationQueueView({ user, entries, users, filters, notifications = 
       ${pageHeading({
         eyebrow: "Administração · WhatsApp outbound",
         title: "Fila de notificações",
+        icon: "bell",
         description: "Consulte eventos gerados, acompanhe tentativas e controle o reenvio sem perder o histórico.",
         className: "notification-queue-heading",
         actions: `<span class="queue-admin-chip">${lucideIcon("shield-check")} Acesso administrativo</span>`,

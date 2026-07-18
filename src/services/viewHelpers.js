@@ -131,17 +131,21 @@ function buttonLink({ href, label, icon = "", tone = "secondary", className = ""
   return `<a class="${classes}" href="${escapeHtml(href)}">${buttonContent(label, icon)}</a>`;
 }
 
-function pageHeading({ eyebrow = "", title, description = "", actions = "", className = "" }) {
+function pageHeading({ eyebrow = "", title, description = "", icon = "", actions = "", className = "" }) {
   const actionHtml = String(actions || "").trim();
+  const iconHtml = icon ? `<span class="page-heading-icon" aria-hidden="true">${lucideIcon(icon)}</span>` : "";
   const classes = ["page-heading", actionHtml ? "page-heading-with-actions" : "", className]
     .filter(Boolean)
     .join(" ");
 
   return `<section class="${escapeHtml(classes)}">
-    <div class="page-heading-content">
-      ${eyebrow ? `<span class="eyebrow">${escapeHtml(eyebrow)}</span>` : ""}
-      <h1>${escapeHtml(title)}</h1>
-      ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+    <div class="page-heading-main">
+      ${iconHtml}
+      <div class="page-heading-content">
+        ${eyebrow ? `<span class="eyebrow">${escapeHtml(eyebrow)}</span>` : ""}
+        <h1>${escapeHtml(title)}</h1>
+        ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+      </div>
     </div>
     ${actionHtml ? `<div class="page-heading-actions">${actionHtml}</div>` : ""}
   </section>`;

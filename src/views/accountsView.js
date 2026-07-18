@@ -44,7 +44,7 @@ function accountsView({ user, accounts, account = null, action = "/accounts" }) 
     user,
     active: "/accounts",
     body: `
-      ${pageHeading({ eyebrow: "Cadastros", title: isEdit ? "Editar conta" : "Contas" })}
+      ${pageHeading({ eyebrow: "Cadastros", title: isEdit ? "Editar conta" : "Contas", icon: "wallet-cards" })}
       <section class="split compact-crud">
         <form method="post" action="${escapeHtml(action)}" class="panel form-grid form-compact form-short">
           ${csrfInput(user)}
@@ -82,6 +82,7 @@ function deletedAccountsView({ user, accounts }) {
       ${pageHeading({
         eyebrow: "Cadastros",
         title: "Contas arquivadas",
+        icon: "wallet-cards",
         actions: buttonLink({ href: "/accounts", label: "Voltar para contas ativas", icon: "arrow-left" }),
       })}
       <article class="panel">${deletedAccountsTable(accounts, user)}</article>

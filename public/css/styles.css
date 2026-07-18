@@ -382,17 +382,27 @@ td small {
 
 .user-menu-panel a,
 .user-menu-panel button {
+  align-items: center;
   background: transparent;
   border: 0;
   border-radius: 6px;
   box-shadow: none;
   color: var(--text);
+  display: flex;
+  gap: 8px;
   justify-content: flex-start;
   min-height: 36px;
   padding: 8px 10px;
   text-align: left;
   transform: none;
   width: 100%;
+}
+
+.user-menu-panel a svg,
+.user-menu-panel button svg {
+  flex: 0 0 auto;
+  height: 17px;
+  width: 17px;
 }
 
 .user-menu-panel a:hover,
@@ -431,7 +441,15 @@ td small {
 }
 
 .admin-menu-label svg { height: 14px; width: 14px; }
-.user-menu-panel .admin-menu-link { padding-left: 30px; }
+.user-menu-panel .admin-menu-link {
+  font-size: .875em;
+  padding-left: 10px;
+}
+
+.user-menu-panel .admin-menu-link svg {
+  height: 15px;
+  width: 15px;
+}
 
 .mobile-user-menu {
   display: none;
@@ -678,8 +696,32 @@ td small {
   padding: 0 0 16px;
 }
 
+.page-heading-main {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
 .page-heading-content {
   min-width: 0;
+}
+
+.page-heading-icon {
+  align-items: center;
+  background: var(--surface-2);
+  border-radius: 8px;
+  color: var(--primary);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.page-heading-icon svg {
+  height: 28px;
+  width: 28px;
 }
 
 .page-heading-with-actions {

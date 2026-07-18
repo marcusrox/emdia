@@ -25,7 +25,7 @@ function layout({ title, user, active, body, notifications = [] }) {
   const fontScale = normalizeFontScale(user?.font_scale);
   const listDensity = normalizeListDensity(user?.list_density);
   const systemDateTime = formatSystemDateTime(user?.timezone);
-  const adminMenu = user?.is_admin ? adminMenuItems(active) : "";
+  const userMenu = userMenuItems(user, active);
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -61,14 +61,7 @@ function layout({ title, user, active, body, notifications = [] }) {
           <span aria-hidden="true"></span>
         </summary>
         <div class="user-menu-panel">
-          <a href="/profile">Perfil</a>
-          <a href="/settings">Configurações</a>
-          <a href="/audit">Auditoria</a>
-          ${adminMenu}
-          <form method="post" action="/logout">
-            ${csrfInput(user)}
-            <button type="submit">${buttonContent("Sair", "log-out")}</button>
-          </form>
+          ${userMenu}
         </div>
       </details>
     </div>
@@ -90,14 +83,7 @@ function layout({ title, user, active, body, notifications = [] }) {
         <span>${escapeHtml(user.name)}</span>
       </summary>
       <div class="user-menu-panel">
-        <a href="/profile">Perfil</a>
-        <a href="/settings">Configurações</a>
-        <a href="/audit">Auditoria</a>
-        ${adminMenu}
-        <form method="post" action="/logout">
-          ${csrfInput(user)}
-          <button type="submit">${buttonContent("Sair", "log-out")}</button>
-        </form>
+        ${userMenu}
       </div>
     </details>
   </header>
@@ -113,17 +99,30 @@ function layout({ title, user, active, body, notifications = [] }) {
 </html>`;
 }
 
+function userMenuItems(user, active) {
+  const adminMenu = user?.is_admin ? adminMenuItems(active) : "";
+
+  return `<a href="/profile">${buttonContent("Perfil", "user-round")}</a>
+    <a href="/settings">${buttonContent("Configurações", "settings")}</a>
+    <a href="/audit">${buttonContent("Auditoria", "clipboard-list")}</a>
+    ${adminMenu}
+    <form method="post" action="/logout">
+      ${csrfInput(user)}
+      <button type="submit">${buttonContent("Sair", "log-out")}</button>
+    </form>`;
+}
+
 function adminMenuItems(active) {
   return `<div class="admin-menu-group" aria-label="Administração">
     <span class="admin-menu-label">${lucideIcon("shield-check")} Administração</span>
-    <a class="admin-menu-link ${active === "/admin/users" ? "active" : ""}" href="/admin/users">Usuários</a>
-    <a class="admin-menu-link ${active === "/admin/notifications" ? "active" : ""}" href="/admin/notifications">Fila de notificações</a>
-    <a class="admin-menu-link ${active === "/operational-logs" ? "active" : ""}" href="/operational-logs">Logs operacionais</a>
-    <a class="admin-menu-link ${active === "/runtime-environment" ? "active" : ""}" href="/runtime-environment">Ambiente de execução</a>
+    <a class="admin-menu-link ${active === "/admin/users" ? "active" : ""}" href="/admin/users">${buttonContent("Usuários", "users")}</a>
+    <a class="admin-menu-link ${active === "/admin/notifications" ? "active" : ""}" href="/admin/notifications">${buttonContent("Fila de notificações", "bell")}</a>
+    <a class="admin-menu-link ${active === "/operational-logs" ? "active" : ""}" href="/operational-logs">${buttonContent("Logs operacionais", "file-text")}</a>
+    <a class="admin-menu-link ${active === "/runtime-environment" ? "active" : ""}" href="/runtime-environment">${buttonContent("Ambiente de execução", "server")}</a>
   </div>`;
 }
 
-function monthSwitcher({ pathname, competence, current = currentCompetence(), title, eyebrow, additionalActions = "" }) {
+function monthSwitcher({ pathname, competence, current = currentCompetence(), title, eyebrow, icon = "", additionalActions = "" }) {
   const actions = `<div class="month-actions">
       <a class="icon-button" title="Mês anterior" href="${pathname}?competence=${addMonths(competence, -1)}">‹</a>
       <form action="${pathname}" method="get" class="month-form" data-auto-submit-on-change>
@@ -136,6 +135,7 @@ function monthSwitcher({ pathname, competence, current = currentCompetence(), ti
   return pageHeading({
     eyebrow,
     title,
+    icon,
     description: `Competência: ${monthLabel(competence)}`,
     actions,
     className: "page-heading-monthly",

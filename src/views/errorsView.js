@@ -9,6 +9,7 @@ function notFoundView(user) {
     body: pageHeading({
       eyebrow: "404",
       title: "Página não encontrada",
+      icon: "circle-alert",
       description: "O caminho solicitado não existe no MVP atual.",
     }),
   });

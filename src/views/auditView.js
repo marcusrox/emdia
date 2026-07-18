@@ -40,6 +40,7 @@ function auditView({ user, entries, filters }) {
       ${pageHeading({
         eyebrow: "Histórico funcional",
         title: "Auditoria",
+        icon: "clipboard-list",
         description: "A auditoria mostra ações relevantes registradas no sistema.",
       })}
       <section class="toolbar">
