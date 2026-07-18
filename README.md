@@ -95,6 +95,15 @@ Para checar a sintaxe dos principais arquivos JavaScript:
 npm run check
 ```
 
+Para executar os testes unitários e de integração em banco SQLite isolado:
+
+```bash
+npm test
+```
+
+A suíte usa `node:test` e Supertest, não acessa `data/emdia.sqlite` e não abre
+porta HTTP. Os testes de rotas exercitam diretamente a aplicação Express.
+
 Rotas úteis para validação manual:
 
 ```text
@@ -112,6 +121,7 @@ npm start      # inicia a aplicação
 npm run dev    # inicia com watch do Node
 npm run seed   # cria dados iniciais
 npm run check  # valida sintaxe dos arquivos principais
+npm test       # executa testes unitários e de integração
 ```
 
 ---
