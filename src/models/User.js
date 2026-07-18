@@ -27,6 +27,10 @@ function listActive() {
   return getDatabase().prepare("SELECT * FROM users WHERE is_active = 1 ORDER BY created_at").all();
 }
 
+function listAll() {
+  return getDatabase().prepare("SELECT id, name, email, is_active FROM users ORDER BY name, email").all();
+}
+
 function ensureDefaultUser() {
   const existing = getDefaultUser();
   if (existing) {
@@ -55,8 +59,8 @@ function ensureDefaultUser() {
   getDatabase()
     .prepare(`
       INSERT INTO users (
-        id, name, email, password_hash, timezone, locale, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        id, name, email, password_hash, timezone, locale, is_admin, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
     `)
     .run(
       user.id,
@@ -227,6 +231,7 @@ module.exports = {
   getById,
   getDefaultUser,
   listActive,
+  listAll,
   normalizeFontScale,
   normalizeListDensity,
   updateFontScale,

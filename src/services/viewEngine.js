@@ -6,6 +6,7 @@ const { entriesListView, entryDetailView, entryFormView } = require("../views/en
 const { loginView } = require("../views/authView");
 const { notFoundView } = require("../views/errorsView");
 const { operationalLogsView } = require("../views/operationalLogsView");
+const { notificationQueueView } = require("../views/notificationQueueView");
 const { profileView } = require("../views/profileView");
 const { recurrenceFormView, recurrencesListView } = require("../views/recurrencesView");
 const { runtimeEnvironmentView } = require("../views/runtimeEnvironmentView");
@@ -26,6 +27,7 @@ module.exports = {
   loginView,
   notFoundView,
   operationalLogsView,
+  notificationQueueView,
   profileView,
   recurrenceFormView,
   recurrencesListView,

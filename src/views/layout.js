@@ -63,6 +63,7 @@ function layout({ title, user, active, body, notifications = [] }) {
           <a href="/profile">Perfil</a>
           <a href="/settings">Configurações</a>
           <a href="/audit">Auditoria</a>
+          ${user.is_admin ? `<a href="/admin/notifications" class="${active === "/admin/notifications" ? "active" : ""}">Fila de notificações</a>` : ""}
           <a href="/operational-logs">Logs operacionais</a>
           <a href="/runtime-environment" class="${active === "/runtime-environment" ? "active" : ""}">Ambiente de execução</a>
           <form method="post" action="/logout">
@@ -93,6 +94,7 @@ function layout({ title, user, active, body, notifications = [] }) {
         <a href="/profile">Perfil</a>
         <a href="/settings">Configurações</a>
         <a href="/audit">Auditoria</a>
+        ${user.is_admin ? `<a href="/admin/notifications" class="${active === "/admin/notifications" ? "active" : ""}">Fila de notificações</a>` : ""}
         <a href="/operational-logs">Logs operacionais</a>
         <a href="/runtime-environment" class="${active === "/runtime-environment" ? "active" : ""}">Ambiente de execução</a>
         <form method="post" action="/logout">

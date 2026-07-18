@@ -751,6 +751,88 @@ textarea {
   width: 100%;
 }
 
+.queue-admin-chip {
+  align-items: center;
+  background: #e8f3f1;
+  border: 1px solid #c8dfda;
+  border-radius: 999px;
+  color: #11635c;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 750;
+  gap: 6px;
+  padding: 7px 10px;
+}
+
+.queue-admin-chip svg,
+.queue-summary-icon svg,
+.queue-error svg { height: 16px; width: 16px; }
+
+.queue-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.queue-summary-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.queue-summary-icon {
+  align-items: center;
+  background: #eef4f3;
+  border-radius: 8px;
+  color: #356a65;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+
+.queue-summary-card span:last-child { display: grid; }
+.queue-summary-card small { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.queue-summary-card strong { font-family: Georgia, "Times New Roman", serif; font-size: 21px; line-height: 1; }
+.queue-summary-failed .queue-summary-icon { background: #fee9e7; color: #b42318; }
+.queue-summary-pending .queue-summary-icon { background: #fff3d8; color: #a15c07; }
+.queue-summary-sent .queue-summary-icon { background: #e4f5e9; color: #18753b; }
+
+.queue-toolbar { margin-bottom: 12px; }
+.queue-filters { grid-template-columns: minmax(190px, 1.4fr) repeat(2, minmax(125px, .75fr)) minmax(180px, 1.1fr) 74px auto; }
+.notification-queue-table { font-size: 12px; }
+.notification-queue-table th { white-space: nowrap; }
+.notification-queue-table td { vertical-align: top; }
+.notification-queue-table td small { color: var(--muted); display: block; font-size: 10px; margin-top: 3px; }
+.queue-event { color: #214c48; font-size: 11px; letter-spacing: .035em; text-transform: uppercase; }
+.queue-id { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.queue-user-email { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.queue-status { border-radius: 999px; display: inline-flex; font-size: 10px; font-weight: 800; letter-spacing: .045em; padding: 4px 7px; text-transform: uppercase; }
+.queue-status-pending { background: #fff2d6; color: #92530a; }
+.queue-status-failed { background: #fee8e6; color: #a92920; }
+.queue-status-sent { background: #e3f4e8; color: #18713a; }
+.queue-status-cancelled { background: #edf0f2; color: #58636d; }
+.queue-date { font-weight: 700; white-space: nowrap; }
+.queue-attempts { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; white-space: nowrap; }
+.queue-message { max-width: 340px; min-width: 220px; }
+.queue-message > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: pre-line; }
+.notification-queue-table td .queue-error { align-items: center; color: #a92920; display: flex; font-weight: 700; gap: 4px; }
+
+@media (max-width: 1300px) {
+  .queue-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .queue-filters .toolbar-actions { align-self: end; }
+}
+
+@media (max-width: 900px) {
+  .queue-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .queue-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .metrics-grid {
   display: grid;
   gap: 12px;

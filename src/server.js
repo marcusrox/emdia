@@ -4,6 +4,7 @@ const Account = require("./models/FinancialAccount");
 const AuditLog = require("./models/AuditLog");
 const Category = require("./models/Category");
 const Entry = require("./models/FinancialEntry");
+const Notification = require("./models/Notification");
 const NotificationPreference = require("./models/NotificationPreference");
 const Recurrence = require("./models/Recurrence");
 const Settlement = require("./models/Settlement");
@@ -27,6 +28,7 @@ const {
   loginView,
   notFoundView,
   operationalLogsView,
+  notificationQueueView,
   profileView,
   recurrenceFormView,
   recurrencesListView,
@@ -527,6 +529,38 @@ function createServer() {
     return sendHtml(res, auditView({ user: req.user, entries: AuditLog.list(req.user.id, filters), filters }));
   });
 
+  app.get("/admin/notifications", requireAdmin, (req, res) => {
+    const filters = notificationQueueFilters(req);
+    return sendHtml(res, notificationQueueView({
+      user: req.user,
+      entries: Notification.listForAdmin(filters),
+      users: User.listAll(),
+      filters,
+      notifications: notificationQueueMessages(req),
+    }));
+  });
+
+  app.post("/admin/notifications/:id/resend", requireAdmin, requireCsrf, (req, res) => {
+    const resent = Notification.resend(req.params.id);
+    if (!resent) return redirect(res, "/admin/notifications?notice=not-found");
+
+    AuditLog.record(req.user.id, "notification", resent.id, "resent", {
+      source_notification_id: req.params.id,
+      target_user_id: resent.user_id,
+    });
+    return redirect(res, "/admin/notifications?notice=resent");
+  });
+
+  app.post("/admin/notifications/:id/cancel", requireAdmin, requireCsrf, (req, res) => {
+    const cancelled = Notification.cancel(req.params.id);
+    if (!cancelled) return redirect(res, "/admin/notifications?notice=not-cancellable");
+
+    AuditLog.record(req.user.id, "notification", req.params.id, "cancelled", {
+      target_user_id: cancelled.user_id,
+    });
+    return redirect(res, "/admin/notifications?notice=cancelled");
+  });
+
   app.get("/operational-logs", (req, res) => {
     const result = listOperationalLogs(operationalLogFilters(req));
 
@@ -634,6 +668,15 @@ function requireCsrf(req, res, next) {
   return sendHtml(res, "<h1>Requisição inválida</h1><p>Atualize a página e tente novamente.</p>", 403);
 }
 
+function requireAdmin(req, res, next) {
+  if (req.user?.is_admin) return next();
+  logWarn("auth.admin_access.denied", "Acesso administrativo negado.", {
+    user: req.user,
+    details: requestDetails(req),
+  });
+  return sendHtml(res, "<h1>Acesso negado</h1><p>Esta página é exclusiva para administradores.</p>", 403);
+}
+
 function sessionUser(session) {
   return {
     id: session.user_id,
@@ -643,6 +686,7 @@ function sessionUser(session) {
     timezone: session.timezone,
     locale: session.locale,
     is_active: session.is_active,
+    is_admin: Boolean(session.is_admin),
     font_scale: User.normalizeFontScale(session.font_scale),
     list_density: User.normalizeListDensity(session.list_density),
   };
@@ -740,6 +784,26 @@ function operationalLogFilters(req) {
     since: queryValue(req, "since"),
     limit: queryValue(req, "limit"),
   };
+}
+
+function notificationQueueFilters(req) {
+  return {
+    user_id: queryValue(req, "user_id"),
+    status: queryValue(req, "status"),
+    event_type: queryValue(req, "event_type"),
+    q: queryValue(req, "q"),
+    limit: queryValue(req, "limit"),
+  };
+}
+
+function notificationQueueMessages(req) {
+  const messages = {
+    resent: { type: "success", message: "Notificação adicionada novamente à fila." },
+    cancelled: { type: "success", message: "Notificação cancelada com sucesso." },
+    "not-found": { type: "error", message: "Notificação não encontrada." },
+    "not-cancellable": { type: "warning", message: "Somente notificações pendentes ou com falha podem ser canceladas." },
+  };
+  return [messages[queryValue(req, "notice")]].filter(Boolean);
 }
 
 function recurrenceForm(user, { recurrence = null, action, errors = {} }) {
