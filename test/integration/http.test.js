@@ -35,6 +35,36 @@ describe("integração HTTP Express", () => {
     await agent.get("/dashboard").expect(303).expect("Location", "/login");
   });
 
+  it("não ativa login automático apenas por NODE_ENV=development", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousAutoLogin = process.env.EMDIA_AUTO_LOGIN;
+    process.env.NODE_ENV = "development";
+    delete process.env.EMDIA_AUTO_LOGIN;
+
+    try {
+      const app = createServer();
+      await request(app).get("/dashboard").set("Host", "localhost").expect(303).expect("Location", "/login");
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      restoreEnvironmentVariable("EMDIA_AUTO_LOGIN", previousAutoLogin);
+    }
+  });
+
+  it("ativa login automático local quando EMDIA_AUTO_LOGIN=true", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousAutoLogin = process.env.EMDIA_AUTO_LOGIN;
+    process.env.NODE_ENV = "test";
+    process.env.EMDIA_AUTO_LOGIN = "true";
+
+    try {
+      const app = createServer();
+      await request(app).get("/login").set("Host", "localhost").expect(303).expect("Location", "/dashboard");
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      restoreEnvironmentVariable("EMDIA_AUTO_LOGIN", previousAutoLogin);
+    }
+  });
+
   it("bloqueia POST sem CSRF e restringe páginas administrativas", async () => {
     const app = createServer();
     const agent = request.agent(app);
@@ -88,3 +118,12 @@ describe("integração HTTP Express", () => {
     assert.equal(JSON.parse(audit.payload_json).record_count, 1);
   });
 });
+
+function restoreEnvironmentVariable(name, value) {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}

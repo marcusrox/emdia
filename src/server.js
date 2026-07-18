@@ -920,7 +920,7 @@ function handleLogin(req, res, body) {
 }
 
 function canUseDevelopmentLogin(req) {
-  return process.env.NODE_ENV === "development" && req.method === "GET" && isLocalhostRequest(req);
+  return process.env.EMDIA_AUTO_LOGIN === "true" && req.method === "GET" && isLocalhostRequest(req);
 }
 
 function isLocalhostRequest(req) {

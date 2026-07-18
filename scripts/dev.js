@@ -11,6 +11,7 @@ const server = spawn(
     env: {
       ...process.env,
       NODE_ENV: "development",
+      EMDIA_AUTO_LOGIN: "true",
       PORT: String(port),
     },
     stdio: "inherit",
