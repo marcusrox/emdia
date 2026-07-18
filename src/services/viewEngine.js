@@ -11,6 +11,7 @@ const { profileView } = require("../views/profileView");
 const { recurrenceFormView, recurrencesListView } = require("../views/recurrencesView");
 const { runtimeEnvironmentView } = require("../views/runtimeEnvironmentView");
 const { settingsView } = require("../views/settingsView");
+const { userAdminFormView, usersAdminListView } = require("../views/usersAdminView");
 const { escapeHtml } = require("./viewHelpers");
 
 module.exports = {
@@ -33,4 +34,6 @@ module.exports = {
   recurrencesListView,
   runtimeEnvironmentView,
   settingsView,
+  userAdminFormView,
+  usersAdminListView,
 };

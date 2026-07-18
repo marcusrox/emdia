@@ -2219,6 +2219,27 @@ textarea[aria-invalid="true"] {
   padding: 12px;
 }
 
+.users-admin-toolbar { margin-bottom: 14px; }
+.users-admin-filters { align-items: end; grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(150px, 1fr)) auto; }
+.users-admin-filters .toolbar-actions { align-self: end; }
+.users-admin-table td strong, .users-admin-table td small { display: block; }
+.users-admin-table td small { color: var(--muted); margin-top: 3px; }
+.user-role, .user-status { border-radius: 999px; display: inline-flex; font-size: 11px; font-weight: 800; padding: var(--status-padding-block) var(--status-padding-inline); white-space: nowrap; }
+.user-role-admin { background: #ede9fe; color: #6d28d9; }
+.user-role-normal { background: #e0f2fe; color: #075985; }
+.user-status-active { background: #dcfce7; color: #166534; }
+.user-status-blocked { background: #fee2e2; color: #991b1b; }
+.user-admin-form { margin-bottom: 16px; }
+.user-admin-form h2, .user-password-panel h2 { font-size: 16px; margin: 0; }
+.user-admin-current-state { align-content: center; display: grid; gap: 6px; }
+.user-admin-current-state > span { color: var(--muted); font-size: 13px; font-weight: 700; }
+.user-password-panel { display: grid; gap: 14px; }
+.user-password-panel > div p { color: var(--muted); margin: 4px 0 0; }
+
+@media (max-width: 980px) {
+  .users-admin-filters { grid-template-columns: 1fr; }
+}
+
 .choice-card:has(input:checked) {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
