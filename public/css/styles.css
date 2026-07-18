@@ -1967,7 +1967,7 @@ tbody tr:hover {
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 20px;
-  padding-bottom: 22px;
+  padding: 28px 30px;
 }
 
 .profile-avatar-section h2 { font-size: 18px; margin: 0 0 5px; }
@@ -2959,7 +2959,10 @@ textarea {
     padding: 22px 18px;
   }
 
-  .profile-avatar-section { align-items: flex-start; }
+  .profile-avatar-section {
+    align-items: flex-start;
+    padding: 22px 18px;
+  }
 
   .profile-fields {
     grid-template-columns: 1fr;
