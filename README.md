@@ -15,12 +15,20 @@ baixas financeiras. O projeto foi implementado a partir do PRD técnico
 - 📅 Filtro padrão por competência do mês corrente (`YYYY-MM`).
 - ⏮️ Navegação para mês anterior, próximo mês e retorno ao mês atual.
 - 🧾 Cadastro, edição, duplicação e cancelamento de lançamentos.
-- ✅ Registro de baixas em tabela própria de `settlements`.
-- 🏦 Cadastro básico de contas financeiras.
-- 🏷️ Cadastro básico de categorias.
+- ✅ Registro de baixas parciais ou totais, com histórico e estorno auditável.
+- 🔁 Cadastro de recorrências mensais e geração idempotente de ocorrências.
+- 🗓️ Agenda mensal de vencimentos.
+- 🏦 Cadastro, edição, arquivamento e restauração de contas financeiras.
+- 🏷️ Cadastro, edição, arquivamento e restauração de categorias.
+- 🔎 Busca e filtros de lançamentos por tipo, status, categoria e conta.
+- 📤 Exportação CSV conforme a competência e os filtros ativos.
+- 💬 Notificações por WhatsApp com `mock`, Evolution API ou WAHA.
+- 🛡️ Login por sessão, proteção CSRF e administração de usuários.
+- 📜 Auditoria funcional, fila de notificações e logs operacionais.
+- 🧪 Testes unitários e de integração com banco SQLite isolado.
 - 🌱 Seed automático com usuário local e dados de exemplo.
 - 🧠 Regras de status para pendente, vencido, pago e recebido.
-- 🗃️ Persistência local em SQLite.
+- 🗃️ Persistência local em SQLite com migrações incrementais.
 
 ---
 
@@ -137,9 +145,16 @@ emdia/
   public/
     css/
       styles.css
+    js/
+      app.js
   src/
+    config/
+      env.js
+      release.js
     database/
       connection.js
+      migrations/
+      migrator.js
       schema.js
       seed.js
     models/
@@ -147,17 +162,30 @@ emdia/
       Category.js
       FinancialAccount.js
       FinancialEntry.js
+      Notification.js
+      NotificationPreference.js
       Party.js
+      Recurrence.js
       Settlement.js
       User.js
     services/
+      authService.js
+      csvService.js
       dateService.js
-      http.js
+      formValidation.js
       id.js
       moneyService.js
+      notificationService.js
       statusService.js
       viewEngine.js
+      viewHelpers.js
+      whatsappClient.js
+    views/
+      *View.js
     server.js
+  test/
+    integration/
+    unit/
 ```
 
 ---
@@ -171,6 +199,7 @@ competência do mês corrente do usuário:
 
 - 📊 dashboard;
 - 🧾 listagem de lançamentos;
+- 🗓️ agenda de vencimentos;
 - 🔎 filtros e buscas;
 - 📈 relatórios mensais futuros.
 
@@ -221,13 +250,13 @@ node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { get
 
 ## 🛣️ Próximos passos sugeridos
 
-- 🔑 Autenticação real.
-- 🔁 Recorrências e geração automática de ocorrências.
+- 💾 Backup e restauração verificável do banco local.
+- 🧾 Parcelamento básico com geração transacional das parcelas.
+- 👥 Cadastro e manutenção de favorecidos e pagadores.
+- 📈 Relatórios mensais e históricos.
 - 📎 Upload de comprovantes, boletos e recibos.
-- 🤖 OCR com confirmação humana antes da gravação.
-
-- 📈 Relatórios avançados.
-- 🧪 Testes automatizados.
+- 🤖 OCR com revisão humana antes da gravação.
+- 📲 Recebimento de documentos pelo WhatsApp.
 
 ---
 
