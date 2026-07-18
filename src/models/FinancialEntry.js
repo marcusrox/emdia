@@ -379,6 +379,61 @@ function settlementNotAllowedError(data, eligibility) {
   return error;
 }
 
+function reverseSettlement(user, settlementId, data = {}) {
+  const reason = String(data.reason || "").trim();
+  const errors = {};
+  if (!reason) errors.reason = "Informe o motivo do estorno.";
+  else if (reason.length > 500) errors.reason = "O motivo deve ter no máximo 500 caracteres.";
+  if (data.confirm_reversal !== "yes") errors.confirm_reversal = "Confirme que deseja estornar esta baixa.";
+  if (Object.keys(errors).length) {
+    const error = validationError({ errors, values: { reason } }, errors.reason || errors.confirm_reversal);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const db = getDatabase();
+  db.exec("BEGIN IMMEDIATE");
+  let transactionActive = true;
+  try {
+    const settlement = Settlement.getActiveForUser(user.id, settlementId);
+    if (!settlement) {
+      db.exec("ROLLBACK");
+      transactionActive = false;
+      return null;
+    }
+    const entry = getById(user.id, settlement.financial_entry_id);
+    if (!entry) {
+      db.exec("ROLLBACK");
+      transactionActive = false;
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    db.prepare(`INSERT INTO settlement_reversals
+      (id, user_id, financial_entry_id, settlement_id, reason, reversed_at)
+      VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(newId("rev"), user.id, entry.id, settlement.id, reason, now);
+
+    const realized = Settlement.activeTotalByEntry(user.id, entry.id);
+    const updated = { ...entry, realized_amount_cents: realized };
+    updated.status = deriveStatus(updated, user.timezone);
+    db.prepare(`UPDATE financial_entries
+      SET realized_amount_cents = ?, settled_at = ?, status = ?, updated_at = ?
+      WHERE user_id = ? AND id = ?`)
+      .run(realized, realized > 0 ? entry.settled_at : null, updated.status, now, user.id, entry.id);
+
+    AuditLog.record(user.id, "financial_entry", entry.id, "settlement_reversed", {
+      settlement_id: settlement.id, total_cents: settlement.total_cents, reason,
+    });
+    db.exec("COMMIT");
+    transactionActive = false;
+    return getById(user.id, entry.id);
+  } catch (error) {
+    if (transactionActive) db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 function formatCentsForMessage(cents) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -479,6 +534,7 @@ module.exports = {
   duplicate,
   getById,
   list,
+  reverseSettlement,
   settle,
   update,
 };

@@ -56,6 +56,42 @@ describe("models financeiros", () => {
     db.exec("DROP TRIGGER fail_settlement_audit;");
   });
 
+  it("estorna baixa, recalcula total e preserva histórico", () => {
+    const fixture = createFinancialFixture();
+    const entry = createEntry(fixture);
+    Entry.settle(fixture.user, entry.id, settlement(fixture));
+    Entry.settle(fixture.user, entry.id, settlement(fixture, { principal: "60,00" }));
+    const settlements = db.prepare("SELECT * FROM settlements WHERE financial_entry_id = ? ORDER BY principal_cents").all(entry.id);
+
+    const reversed = Entry.reverseSettlement(fixture.user, settlements[1].id, {
+      reason: "Baixa registrada em duplicidade", confirm_reversal: "yes",
+    });
+
+    assert.equal(reversed.realized_amount_cents, 4000);
+    assert.equal(reversed.status, "PARTIALLY_PAID");
+    assert.equal(db.prepare("SELECT COUNT(*) total FROM settlements WHERE financial_entry_id = ?").get(entry.id).total, 2);
+    assert.equal(db.prepare("SELECT reason FROM settlement_reversals WHERE settlement_id = ?").get(settlements[1].id).reason, "Baixa registrada em duplicidade");
+    assert.equal(db.prepare("SELECT COUNT(*) total FROM audit_logs WHERE entity_id = ? AND action = 'settlement_reversed'").get(entry.id).total, 1);
+    assert.equal(Entry.reverseSettlement(fixture.user, settlements[1].id, { reason: "Repetido", confirm_reversal: "yes" }), null);
+  });
+
+  it("valida estorno, isola usuário e reverte tudo quando auditoria falha", () => {
+    const fixture = createFinancialFixture();
+    const other = createFinancialFixture();
+    const entry = createEntry(fixture);
+    Entry.settle(fixture.user, entry.id, settlement(fixture, { principal: "100,00" }));
+    const item = db.prepare("SELECT * FROM settlements WHERE financial_entry_id = ?").get(entry.id);
+
+    assert.throws(() => Entry.reverseSettlement(fixture.user, item.id, { reason: "" }), /motivo/i);
+    assert.equal(Entry.reverseSettlement(other.user, item.id, { reason: "Tentativa", confirm_reversal: "yes" }), null);
+
+    db.exec("CREATE TRIGGER fail_reversal_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'settlement_reversed' BEGIN SELECT RAISE(ABORT, 'audit reversal failure'); END;");
+    assert.throws(() => Entry.reverseSettlement(fixture.user, item.id, { reason: "Teste rollback", confirm_reversal: "yes" }), /audit reversal failure/);
+    assert.equal(db.prepare("SELECT COUNT(*) total FROM settlement_reversals WHERE settlement_id = ?").get(item.id).total, 0);
+    assert.equal(Entry.getById(fixture.user, entry.id).realized_amount_cents, 10000);
+    db.exec("DROP TRIGGER fail_reversal_audit;");
+  });
+
   it("isola lançamentos e baixas por usuário", () => {
     const first = createFinancialFixture();
     const second = createFinancialFixture();

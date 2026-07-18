@@ -16,6 +16,8 @@ Permitir que o usuário estorne uma baixa individual, informando um motivo,
 preservando o registro original e recalculando de forma consistente o valor
 realizado e o status do lançamento.
 
+**Status:** implementada em 18/07/2026.
+
 ## Decisão de modelagem
 
 O estorno não deve excluir nem editar silenciosamente a baixa original. A
@@ -148,3 +150,12 @@ o número sequencial em 1 e usando a data/hora atual do ambiente.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Assinatura da LLM
+
+- Data: 18/07/2026 00:32
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

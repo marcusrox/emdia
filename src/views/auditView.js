@@ -18,6 +18,7 @@ const ACTION_OPTIONS = [
   ["restored", "Restaurado"],
   ["cancelled", "Cancelado"],
   ["settled", "Baixado"],
+  ["settlement_reversed", "Baixa estornada"],
   ["reversed", "Estornado"],
   ["paused", "Pausado"],
   ["activated", "Ativado"],

@@ -2,16 +2,37 @@ const { getDatabase } = require("../database/connection");
 const { newId } = require("../services/id");
 const { toCents } = require("../services/moneyService");
 
-function listByEntry(entryId) {
+function listByEntry(userId, entryId) {
   return getDatabase()
     .prepare(`
-      SELECT s.*, a.name AS account_name
+      SELECT s.*, a.name AS account_name,
+        r.id AS reversal_id, r.reason AS reversal_reason, r.reversed_at AS reversal_at
       FROM settlements s
       JOIN financial_accounts a ON a.id = s.financial_account_id
-      WHERE s.financial_entry_id = ? AND s.reversed_at IS NULL
+      LEFT JOIN settlement_reversals r ON r.settlement_id = s.id
+      WHERE s.user_id = ? AND s.financial_entry_id = ?
       ORDER BY s.settled_at DESC
     `)
-    .all(entryId);
+    .all(userId, entryId);
+}
+
+function getActiveForUser(userId, settlementId) {
+  return getDatabase().prepare(`
+    SELECT s.* FROM settlements s
+    LEFT JOIN settlement_reversals r ON r.settlement_id = s.id
+    WHERE s.user_id = ? AND s.id = ? AND s.reversed_at IS NULL AND r.id IS NULL
+  `).get(userId, settlementId);
+}
+
+function activeTotalByEntry(userId, entryId) {
+  const row = getDatabase().prepare(`
+    SELECT COALESCE(SUM(s.total_cents), 0) AS total_cents
+    FROM settlements s
+    LEFT JOIN settlement_reversals r ON r.settlement_id = s.id
+    WHERE s.user_id = ? AND s.financial_entry_id = ?
+      AND s.reversed_at IS NULL AND r.id IS NULL
+  `).get(userId, entryId);
+  return Number(row?.total_cents || 0);
 }
 
 function create(userId, entryId, data) {
@@ -53,6 +74,8 @@ function create(userId, entryId, data) {
 }
 
 module.exports = {
+  activeTotalByEntry,
   create,
+  getActiveForUser,
   listByEntry,
 };

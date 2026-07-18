@@ -312,6 +312,29 @@ function createServer() {
     }
   });
 
+  app.post("/settlements/:id/reverse", requireCsrf, (req, res) => {
+    try {
+      const entry = Entry.reverseSettlement(req.user, req.params.id, req.body);
+      if (!entry) return sendHtml(res, notFoundView(req.user), 404);
+      return redirect(res, `/entries/${entry.id}`);
+    } catch (error) {
+      if (isValidationError(error)) {
+        const settlement = Settlement.getActiveForUser(req.user.id, req.params.id);
+        if (!settlement) return sendHtml(res, notFoundView(req.user), 404);
+        const entry = Entry.getById(req.user, settlement.financial_entry_id);
+        if (!entry) return sendHtml(res, notFoundView(req.user), 404);
+        return sendHtml(res, entryDetail(req.user, entry, {
+          reversalErrors: { [req.params.id]: error.errors },
+          reversalValues: { [req.params.id]: error.values },
+        }), error.statusCode || 400);
+      }
+      logBusinessError(req, "business.settlement.reverse_failed", "Falha ao estornar baixa.", error, {
+        entity: "settlement", entityId: req.params.id,
+      });
+      throw error;
+    }
+  });
+
   app.get("/recurrences", (req, res) => {
     return sendHtml(res, recurrencesListView({ user: req.user, recurrences: Recurrence.list(req.user.id) }));
   });
@@ -1021,17 +1044,19 @@ function entryForm(user, { entry = null, competence, action, errors = {} }) {
   });
 }
 
-function entryDetail(user, entry, { competence = entry.competence_month, returnTo = "", settlementErrors = {}, settlementValues = null } = {}) {
+function entryDetail(user, entry, { competence = entry.competence_month, returnTo = "", settlementErrors = {}, settlementValues = null, reversalErrors = {}, reversalValues = {} } = {}) {
   return entryDetailView({
     user,
     entry,
     competence: normalizeCompetence(competence, user.timezone),
     returnTo,
-    settlements: Settlement.listByEntry(entry.id),
+    settlements: Settlement.listByEntry(user.id, entry.id),
     accounts: Account.active(user.id),
     auditEvents: AuditLog.listEntityHistory(user.id, "financial_entry", entry.id),
     settlementErrors,
     settlementValues,
+    reversalErrors,
+    reversalValues,
   });
 }
 

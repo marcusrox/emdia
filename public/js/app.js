@@ -25,6 +25,21 @@
     }
   }
 
+  function closeParentDetails(event) {
+    var button = event.target.closest("[data-close-details]");
+
+    if (!button) {
+      return;
+    }
+
+    var details = button.closest("details");
+
+    if (details) {
+      details.removeAttribute("open");
+      details.querySelector("summary")?.focus();
+    }
+  }
+
   function validateForms(event) {
     var form = event.target;
 
@@ -400,6 +415,7 @@
 
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
+  document.addEventListener("click", closeParentDetails);
   document.addEventListener("change", autoSubmitOnChange);
   document.addEventListener("submit", validateForms);
   restoreSettingsSections();

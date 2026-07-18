@@ -13,7 +13,7 @@ const db = getDatabase();
 function resetDatabase() {
   db.exec(`
     DELETE FROM notifications; DELETE FROM notification_preferences;
-    DELETE FROM audit_logs; DELETE FROM settlements; DELETE FROM financial_entries;
+    DELETE FROM audit_logs; DELETE FROM settlement_reversals; DELETE FROM settlements; DELETE FROM financial_entries;
     DELETE FROM recurrences; DELETE FROM parties; DELETE FROM categories;
     DELETE FROM financial_accounts; DELETE FROM sessions; DELETE FROM users;
   `);

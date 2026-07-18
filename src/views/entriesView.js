@@ -428,7 +428,7 @@ function entryHistoryList(auditEvents) {
   </ol>`;
 }
 
-function entryDetailView({ user, entry, competence = entry.competence_month, returnTo = "", settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null }) {
+function entryDetailView({ user, entry, competence = entry.competence_month, returnTo = "", settlements, accounts, auditEvents = [], settlementErrors = {}, settlementValues = null, reversalErrors = {}, reversalValues = {} }) {
   const eligibility = settlementEligibility(entry);
   const settlementValue = (field, fallback = "") => settlementValues?.[field] ?? fallback;
   const principalValue = settlementValue("principal", moneyInput(entry.expected_amount_cents - entry.realized_amount_cents));
@@ -476,12 +476,43 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
           <ul class="entry-settlement-list">
             ${
               settlements.length
-                ? settlements.map((item) => `<li>
-                    <div>
-                      <strong>${formatMoney(item.total_cents)}</strong>
-                      <span>${escapeHtml(item.settled_at)} · ${escapeHtml(item.account_name)}</span>
-                    </div>
-                  </li>`).join("")
+                ? settlements.map((item) => {
+                    const reversed = Boolean(item.reversal_id || item.reversed_at);
+                    const errors = reversalErrors[item.id] || {};
+                    const values = reversalValues[item.id] || {};
+                    const hasReversalErrors = Object.keys(errors).length > 0;
+                    return `<li class="${reversed ? "settlement-reversed" : ""}">
+                      <div class="settlement-summary">
+                        <strong>${formatMoney(item.total_cents)}</strong>
+                        <span>${escapeHtml(item.settled_at)} · ${escapeHtml(item.account_name)}</span>
+                        <span class="settlement-state${reversed ? " settlement-state-reversed" : ""}">${reversed ? "Estornada" : "Vigente"}</span>
+                      </div>
+                      ${reversed
+                        ? `<div class="settlement-reversal-details">
+                            <span>Estornada em ${escapeHtml(formatAuditDateTime(item.reversal_at || item.reversed_at))}</span>
+                            <span>Motivo: ${escapeHtml(item.reversal_reason || "Registro legado sem motivo informado")}</span>
+                          </div>`
+                        : `<details class="settlement-reversal" data-persistent-details${hasReversalErrors ? " open" : ""}>
+                            <summary>${buttonContent("Estornar", "undo-2")}</summary>
+                            <form method="post" action="/settlements/${item.id}/reverse" class="settlement-reversal-form" data-validate-form>
+                              ${csrfInput(user)}
+                              <label>Motivo do estorno
+                                <textarea name="reason" maxlength="500" rows="3" required${fieldErrorAttributes(errors, "reason")}>${escapeHtml(values.reason || "")}</textarea>
+                                ${fieldError(errors, "reason")}
+                              </label>
+                              <label class="settlement-reversal-confirm">
+                                <input type="checkbox" name="confirm_reversal" value="yes" required${fieldErrorAttributes(errors, "confirm_reversal")}>
+                                <span>Confirmo o estorno e entendo que a baixa continuará visível no histórico.</span>
+                              </label>
+                              ${fieldError(errors, "confirm_reversal")}
+                              <div class="settlement-reversal-actions">
+                                <button type="button" class="ghost-button" data-close-details>${buttonContent("Cancelar", "x")}</button>
+                                <button type="submit" class="settlement-reversal-submit">${buttonContent("Confirmar estorno", "undo-2")}</button>
+                              </div>
+                            </form>
+                          </details>`}
+                    </li>`;
+                  }).join("")
                 : "<li><div><strong>-</strong><span>Nenhuma baixa registrada</span></div></li>"
             }
           </ul>

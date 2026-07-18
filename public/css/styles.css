@@ -1223,6 +1223,52 @@ textarea {
   text-align: right;
 }
 
+.entry-settlement-list li.settlement-reversed { background: #f6f4f1; border-style: dashed; }
+.settlement-summary .settlement-state {
+  border: 1px solid var(--line); border-radius: 999px; color: var(--ink);
+  font-size: 12px; font-weight: 800; padding: 3px 8px;
+}
+.settlement-summary .settlement-state-reversed {
+  background: #fff1f0; border-color: #f5aaa3; color: #b42318;
+}
+.settlement-reversal { margin-top: 8px; }
+.settlement-reversal > summary {
+  align-items: center; color: var(--muted); cursor: pointer; display: inline-flex;
+  font-size: 13px; font-weight: 800; gap: 6px; list-style: none; padding: 4px 0;
+}
+.settlement-reversal > summary::-webkit-details-marker { display: none; }
+.settlement-reversal > summary:hover, .settlement-reversal > summary:focus-visible { color: var(--primary-dark); }
+.settlement-reversal > summary svg { height: 15px; width: 15px; }
+.settlement-reversal[open] > summary { margin-bottom: 8px; }
+.settlement-reversal-form, .settlement-reversal-details {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  display: grid; gap: 10px; padding: 12px;
+}
+.settlement-reversal-form textarea { min-height: 68px; resize: vertical; }
+.settlement-reversal-form .settlement-reversal-confirm {
+  align-items: center; display: grid; gap: 8px; grid-template-columns: auto minmax(0, 1fr);
+  margin: 0; padding: 2px 0;
+}
+.settlement-reversal-confirm input {
+  height: 16px; margin: 0; min-height: 0; padding: 0; width: 16px;
+}
+.settlement-reversal-confirm span { color: var(--text); text-align: left; }
+.entry-settlement-list .settlement-reversal-actions {
+  align-items: center; display: flex; gap: 8px; justify-content: flex-end;
+}
+.settlement-reversal-actions button { min-height: 36px; }
+.entry-settlement-list .settlement-reversal-actions .ghost-button:hover,
+.entry-settlement-list .settlement-reversal-actions .ghost-button:focus-visible,
+.entry-settlement-list .settlement-reversal-actions .ghost-button:hover span,
+.entry-settlement-list .settlement-reversal-actions .ghost-button:focus-visible span {
+  color: #fff;
+}
+.settlement-reversal-submit { background: #b42318; border-color: #b42318; box-shadow: none; color: #fff; }
+.entry-settlement-list .settlement-reversal-submit span { color: #fff; }
+.settlement-reversal-submit:hover, .settlement-reversal-submit:focus-visible {
+  background: #8f1c13 !important; border-color: #8f1c13 !important;
+}
+
 .entry-history-list {
   border-left: 2px solid var(--line);
   display: grid;
