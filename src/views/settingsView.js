@@ -11,7 +11,7 @@ const {
 } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
-function settingsView({ user, saved = false, notificationPreferences, whatsappStatus }) {
+function settingsView({ user, saved = false, notificationPreferences }) {
   const preferences = notificationPreferences || {};
   const offsets = parseOffsets(preferences.due_reminder_offsets_json);
   const whatsappEnabled = Boolean(preferences.whatsapp_enabled);
@@ -89,10 +89,13 @@ function settingsView({ user, saved = false, notificationPreferences, whatsappSt
             <label>Repetir vencidas a cada
               <input name="overdue_reminder_interval_days" value="${escapeHtml(preferences.overdue_reminder_interval_days || 3)}" inputmode="numeric">
             </label>
-            <div class="settings-status-card">
+            <div class="settings-status-card is-loading" data-whatsapp-status data-status-url="/settings/whatsapp-status" aria-live="polite" aria-busy="true">
               <span>Status da integração</span>
-              <strong>${escapeHtml(whatsappStatus?.state || "UNKNOWN")}</strong>
-              <small>${escapeHtml(whatsappStatus?.message || whatsappStatus?.provider || "WhatsApp outbound")}</small>
+              <div class="settings-status-loading" data-whatsapp-status-loading>
+                <span class="settings-status-spinner" aria-hidden="true"></span>
+                <strong data-whatsapp-status-state>Verificando integração...</strong>
+              </div>
+              <small data-whatsapp-status-message>Aguarde enquanto consultamos o WhatsApp.</small>
             </div>
           </div>
         </details>

@@ -2195,6 +2195,7 @@ textarea[aria-invalid="true"] {
   border-radius: 8px;
   display: grid;
   gap: 3px;
+  min-height: 86px;
   padding: 10px 12px;
 }
 
@@ -2210,6 +2211,57 @@ textarea[aria-invalid="true"] {
 
 .settings-status-card strong {
   color: var(--primary-dark);
+}
+
+.settings-status-card.is-loading {
+  align-content: center;
+  text-align: center;
+}
+
+.settings-status-loading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.settings-status-spinner {
+  animation: settings-status-spin 0.8s linear infinite;
+  border: 3px solid rgba(37, 99, 235, 0.18);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 18px;
+  width: 18px;
+}
+
+.settings-status-card.is-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.settings-status-card.is-success strong {
+  color: #166534;
+}
+
+.settings-status-card.is-error {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.settings-status-card.is-error strong {
+  color: #9a3412;
+}
+
+@keyframes settings-status-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-status-spinner {
+    animation: none;
+  }
 }
 
 .runtime-summary { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }

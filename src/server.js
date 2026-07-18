@@ -488,18 +488,43 @@ function createServer() {
     return redirect(res, "/profile?saved=1");
   });
 
-  app.get("/settings", async (req, res) => {
+  app.get("/settings", (req, res) => {
     const notificationPreferences = NotificationPreference.getOrCreate(req.user.id);
-    const whatsappStatus = await getWhatsAppStatus();
     return sendHtml(
       res,
       settingsView({
         user: req.user,
         saved: queryValue(req, "saved") === "1",
         notificationPreferences,
-        whatsappStatus,
       })
     );
+  });
+
+  app.get("/settings/whatsapp-status", async (req, res) => {
+    try {
+      const status = await getWhatsAppStatus();
+      return sendJson(res, {
+        ok: Boolean(status?.ok),
+        state: String(status?.state || "UNKNOWN"),
+        message: String(status?.message || status?.provider || "WhatsApp outbound"),
+      });
+    } catch (error) {
+      logBusinessError(
+        req,
+        "whatsapp.connection_state_failed",
+        "Falha inesperada ao consultar o estado do WhatsApp.",
+        error
+      );
+      return sendJson(
+        res,
+        {
+          ok: false,
+          state: "ERROR",
+          message: "Não foi possível consultar a integração com o WhatsApp.",
+        },
+        503
+      );
+    }
   });
 
   app.post("/settings", requireCsrf, (req, res) => {

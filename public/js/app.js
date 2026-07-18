@@ -329,6 +329,75 @@
     }
   }
 
+  function loadWhatsAppStatus() {
+    var card = document.querySelector("[data-whatsapp-status]");
+
+    if (!card) {
+      return;
+    }
+
+    var state = card.querySelector("[data-whatsapp-status-state]");
+    var message = card.querySelector("[data-whatsapp-status-message]");
+    var url = card.getAttribute("data-status-url");
+
+    if (!window.fetch || !url) {
+      finishWhatsAppStatus(card, state, message, {
+        ok: false,
+        state: "INDISPONÍVEL",
+        message: "Não foi possível verificar a integração neste navegador.",
+      });
+      return;
+    }
+
+    fetch(url, { headers: { Accept: "application/json" } })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("Falha ao consultar o status do WhatsApp.");
+        }
+
+        return response.json();
+      })
+      .then(function (payload) {
+        if (!payload || typeof payload !== "object" || typeof payload.state !== "string") {
+          throw new Error("Resposta inválida ao consultar o status do WhatsApp.");
+        }
+
+        finishWhatsAppStatus(card, state, message, payload);
+      })
+      .catch(function () {
+        finishWhatsAppStatus(card, state, message, {
+          ok: false,
+          state: "ERROR",
+          message: "Não foi possível consultar a integração com o WhatsApp.",
+        });
+      });
+  }
+
+  function finishWhatsAppStatus(card, state, message, payload) {
+    var loading = card.querySelector("[data-whatsapp-status-loading]");
+    var spinner = card.querySelector(".settings-status-spinner");
+
+    card.classList.remove("is-loading", "is-success", "is-error");
+    card.classList.add(payload.ok ? "is-success" : "is-error");
+    card.setAttribute("aria-busy", "false");
+
+    if (spinner) {
+      spinner.remove();
+    }
+
+    if (loading) {
+      loading.classList.remove("settings-status-loading");
+    }
+
+    if (state) {
+      state.textContent = payload.state || "UNKNOWN";
+    }
+
+    if (message) {
+      message.textContent = payload.message || (payload.ok ? "Integração disponível." : "Integração indisponível.");
+    }
+  }
+
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
   document.addEventListener("change", autoSubmitOnChange);
@@ -336,4 +405,5 @@
   restoreSettingsSections();
   collapseMobileEntryFilters();
   startOperationalLogPolling();
+  loadWhatsAppStatus();
 })();
