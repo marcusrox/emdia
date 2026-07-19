@@ -4,3 +4,15 @@ data/*.sqlite-*
 .env
 .DS_Store
 *.log
+.deploy-commit*
+
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-wal
+*.sqlite-shm
+
+uploads/
+backups/
+logs/
+*.log

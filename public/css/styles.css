@@ -2583,9 +2583,18 @@ textarea {
   text-align: left;
 }
 
-.footer-release {
+.footer-version {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   justify-self: end;
   text-align: right;
+}
+
+.footer-release,
+.footer-commit {
+  display: block;
 }
 
 .footer-heart {
@@ -3002,9 +3011,13 @@ textarea {
 
   .footer-system-time,
   .footer-message,
-  .footer-release {
+  .footer-version {
     justify-self: center;
     text-align: center;
+  }
+
+  .footer-version {
+    align-items: center;
   }
 }
 

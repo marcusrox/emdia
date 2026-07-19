@@ -12,6 +12,7 @@ const {
   renderNotifications,
 } = require("../services/viewHelpers");
 const { RELEASE_LABEL } = require("../config/release");
+const { readPublishedCommit } = require("../services/deploymentInfoService");
 
 function layout({ title, user, active, body, notifications = [] }) {
   const nav = [
@@ -27,6 +28,7 @@ function layout({ title, user, active, body, notifications = [] }) {
   const listDensity = normalizeListDensity(user?.list_density);
   const systemDateTime = formatSystemDateTime(user?.timezone);
   const userMenu = userMenuItems(user, active);
+  const publishedCommit = readPublishedCommit();
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -93,7 +95,10 @@ function layout({ title, user, active, body, notifications = [] }) {
   <footer class="app-footer">
     <small class="footer-system-time">Sistema: ${escapeHtml(systemDateTime)}</small>
     <p class="footer-message"><strong>EmDia</strong> Desenvolvido com <span class="footer-heart" aria-label="coração vermelho"></span> para você ficar sempre dentro do planejamento</p>
-    <small class="footer-release">${escapeHtml(RELEASE_LABEL)}</small>
+    <div class="footer-version">
+      <small class="footer-release">${escapeHtml(RELEASE_LABEL)}</small>
+      ${publishedCommit ? `<small class="footer-commit">${escapeHtml(publishedCommit)}</small>` : ""}
+    </div>
   </footer>
   <script src="/public/js/app.js"></script>
 </body>

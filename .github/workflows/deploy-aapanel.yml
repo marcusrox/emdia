@@ -1,0 +1,52 @@
+name: CI e deploy no aaPanel
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emdia-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Validar aplicação
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Validar sintaxe
+        run: npm run check
+
+      - name: Executar testes
+        run: npm test
+
+  deploy:
+    name: Acionar webhook de produção
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Acionar webhook nativo do aaPanel
+        env:
+          AAPANEL_WEBHOOK_URL: ${{ secrets.AAPANEL_WEBHOOK_URL }}
+        run: |
+          test -n "$AAPANEL_WEBHOOK_URL"
+          curl --fail --silent --show-error --request POST \
+            --retry 2 --retry-all-errors \
+            "$AAPANEL_WEBHOOK_URL"
