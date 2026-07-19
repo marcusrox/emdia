@@ -96,8 +96,8 @@ function layout({ title, user, active, body, notifications = [] }) {
     <small class="footer-system-time">Sistema: ${escapeHtml(systemDateTime)}</small>
     <p class="footer-message"><strong>EmDia</strong> Desenvolvido com <span class="footer-heart" aria-label="coração vermelho"></span> para você ficar sempre dentro do planejamento</p>
     <div class="footer-version">
-      <small class="footer-release">${escapeHtml(RELEASE_LABEL)}</small>
-      ${publishedCommit ? `<small class="footer-commit">${escapeHtml(publishedCommit)}</small>` : ""}
+      <div><small class="footer-release">${escapeHtml(RELEASE_LABEL)}</small></div>
+      ${publishedCommit ? `<div><small class="footer-commit">${escapeHtml(publishedCommit)}</small></div>` : ""}
     </div>
   </footer>
   <script src="/public/js/app.js"></script>
