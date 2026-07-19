@@ -43,6 +43,7 @@ const {
 function createServer() {
   const app = express();
 
+  app.set("trust proxy", "loopback");
   app.use("/public", express.static(path.join(__dirname, "..", "public")));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
