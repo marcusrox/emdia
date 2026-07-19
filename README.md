@@ -34,15 +34,25 @@ baixas financeiras. O projeto foi implementado a partir do PRD técnico
 
 ## 🧰 Tecnologias
 
-- 🟩 Node.js 22+
+- 🟩 Node.js 24.15+ e menor que 25
 - 🗄️ SQLite via `node:sqlite`
 - 🌐 Express 5.x
 - 🎨 HTML renderizado no servidor
 - 💅 CSS puro
 - 🎯 Ícones SVG via `lucide-static`
 
-> ℹ️ O módulo `node:sqlite` pode exibir um aviso experimental no Node 22. Isso é
-> esperado nesta versão do MVP.
+> ℹ️ A partir do Node.js 24.15, o módulo `node:sqlite` usado pelo EmDia está em
+> estágio release candidate. O projeto não homologa outras linhas principais
+> do Node automaticamente.
+
+O requisito completo é `>=24.15.0 <25`. Com NVM, use a versão indicada pelo
+repositório antes de instalar dependências:
+
+```bash
+nvm use
+node --version
+npm ci
+```
 
 ---
 
@@ -107,6 +117,16 @@ Para executar os testes unitários e de integração em banco SQLite isolado:
 
 ```bash
 npm test
+```
+
+Em produção no aaPanel, confirme também o runtime efetivo do processo e o
+health check, sem exibir variáveis sensíveis:
+
+```bash
+node --version
+npm --version
+runuser -u www -- /usr/bin/pm2 describe emdia
+curl --fail http://127.0.0.1:3000/ready
 ```
 
 A suíte usa `node:test` e Supertest, não acessa `data/emdia.sqlite` e não abre

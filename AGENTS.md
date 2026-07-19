@@ -23,7 +23,7 @@ baixas financeiras, baseado no PRD técnico `PRD_sistema_financas_pessoais.md`.
 - Documentacao principal: `README.md`, `PRD_sistema_financas_pessoais.md`,
   `docs/patterns.md` e `docs/architecture.md`.
 
-O MVP atual usa CommonJS, Express, `node:sqlite` e `lucide-static` para ícones
+O MVP atual usa Node.js `>=24.15.0 <25`, CommonJS, Express, `node:sqlite` e `lucide-static` para ícones
 SVG. Não assuma EJS, Drizzle, TypeScript ou outras dependências externas apenas
 porque o PRD cita essas possibilidades futuras.
 
@@ -208,8 +208,8 @@ node --check src\server.js
 Observações:
 
 - `npm run check` faz validação sintatica dos principais arquivos JavaScript.
-- `node:sqlite` pode emitir aviso experimental no Node 22; isso e esperado no
-  MVP atual.
+- Use Node.js `>=24.15.0 <25`; outras linhas principais não são homologadas.
+- No Node.js 24.15+, `node:sqlite` está em estágio release candidate.
 - O banco local e criado automaticamente em `data/emdia.sqlite`.
 
 ## Validação esperada

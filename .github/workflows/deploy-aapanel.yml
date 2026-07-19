@@ -15,8 +15,14 @@ concurrency:
 
 jobs:
   ci:
-    name: Validar aplicação
+    name: Validar aplicação (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - "24.15.0"
+          - "24.x"
     steps:
       - name: Obter código
         uses: actions/checkout@v4
@@ -24,8 +30,11 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: npm
+
+      - name: Confirmar versão do Node.js
+        run: node --version
 
       - name: Instalar dependências
         run: npm ci

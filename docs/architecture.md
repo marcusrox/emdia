@@ -23,7 +23,7 @@ completa ao navegador.
 
 Stack vigente:
 
-- Node.js 22+;
+- Node.js `>=24.15.0 <25`;
 - CommonJS;
 - Express 5.x;
 - SQLite via `node:sqlite`;
@@ -31,6 +31,10 @@ Stack vigente:
 - `src/services/viewEngine.js` como agregador de views para o servidor;
 - CSS puro em `public/css/styles.css`;
 - ícones SVG do pacote `lucide-static`.
+
+A mesma linha principal do Node.js deve ser usada no desenvolvimento, no CI e
+no processo PM2 do aaPanel. O script de deploy valida o runtime do WebHook e o
+executável real do processo antes de atualizar o checkout.
 
 Decisões intencionais:
 

@@ -44,7 +44,7 @@ com `new Date().toISOString()`.
 
 O MVP atual usa:
 
-- Node.js 22+;
+- Node.js `>=24.15.0 <25`;
 - CommonJS;
 - Express 5.x;
 - SQLite via `node:sqlite`;
@@ -52,6 +52,10 @@ O MVP atual usa:
 - `src/services/viewEngine.js` como agregador de exports das views;
 - CSS puro em `public/css/styles.css`;
 - ícones SVG via `lucide-static`, renderizados por helper server-side.
+
+O runtime deve respeitar a linha 24 homologada no `package.json`. O CI valida
+tanto o piso 24.15.0 quanto o patch mais recente da linha 24; novas linhas
+principais exigem validação e migração explícitas.
 
 Não assuma EJS, TypeScript, Drizzle ou bibliotecas de UI no código atual. Essas
 tecnologias podem aparecer no PRD como evolução futura, mas não fazem parte da
