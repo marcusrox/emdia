@@ -63,7 +63,10 @@ function createServer() {
   app.use(requireAuth);
 
   app.post("/logout", requireCsrf, (req, res) => {
-    logInfo("auth.logout", "Logout realizado.", { user: req.user });
+    logInfo("auth.logout", "Logout realizado.", {
+      user: req.user,
+      details: requestDetails(req),
+    });
     Auth.invalidateSession(req);
     res.set("Set-Cookie", Auth.clearSessionCookie());
     return redirect(res, "/login");
@@ -250,6 +253,7 @@ function createServer() {
           entity: "financial_entry",
           entityId: req.params.id,
           competenceMonth: competence,
+          details: requestDetails(req),
         });
       }
       return redirect(res, `/entries?competence=${competence}`);
@@ -302,6 +306,7 @@ function createServer() {
           user: req.user,
           entity: "financial_entry",
           entityId: req.params.id,
+          details: requestDetails(req),
         });
       }
       return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
@@ -315,7 +320,7 @@ function createServer() {
             user: req.user,
             entity: "financial_entry",
             entityId: req.params.id,
-            details: { reason: error.reason || "unknown" },
+            details: requestDetails(req, { reason: error.reason || "unknown" }),
           });
         }
 
@@ -530,9 +535,9 @@ function createServer() {
         user: req.user,
         entity: "user",
         entityId: req.user.id,
-        details: {
+        details: requestDetails(req, {
           fields: Object.keys(result.errors || {}),
-        },
+        }),
       });
       const profile = { ...req.user, ...result.profile };
       return sendHtml(res, profileView({ user: req.user, profile, errors: result.errors }), 400);
@@ -599,6 +604,7 @@ function createServer() {
       user: req.user,
       entity: "user",
       entityId: req.user.id,
+      details: requestDetails(req),
     });
     return redirect(res, "/settings?saved=1");
   });
@@ -638,7 +644,7 @@ function createServer() {
     const result = User.createAdmin(req.body);
     if (!result.ok) {
       logWarn("admin.user.validation_failed", "Cadastro administrativo de usuário recusado.", {
-        user: req.user, entity: "user", details: { fields: Object.keys(result.errors) },
+        user: req.user, entity: "user", details: requestDetails(req, { fields: Object.keys(result.errors) }),
       });
       return sendHtml(res, userAdminFormView({
         user: req.user, target: result.values, action: "/admin/users", isNew: true, errors: result.errors,
@@ -649,7 +655,7 @@ function createServer() {
       is_admin: Boolean(result.user.is_admin), is_active: Boolean(result.user.is_active),
     });
     logInfo("admin.user.created", "Usuário criado por administrador.", {
-      user: req.user, entity: "user", entityId: result.user.id,
+      user: req.user, entity: "user", entityId: result.user.id, details: requestDetails(req),
     });
     return redirect(res, "/admin/users?notice=created");
   });
@@ -668,7 +674,8 @@ function createServer() {
     if (result.notFound) return sendHtml(res, notFoundView(req.user), 404);
     if (!result.ok) {
       logWarn("admin.user.validation_failed", "Alteração administrativa de usuário recusada.", {
-        user: req.user, entity: "user", entityId: req.params.id, details: { fields: Object.keys(result.errors) },
+        user: req.user, entity: "user", entityId: req.params.id,
+        details: requestDetails(req, { fields: Object.keys(result.errors) }),
       });
       return sendHtml(res, userAdminFormView({
         user: req.user, target: result.values, action: `/admin/users/${encodeURIComponent(req.params.id)}`, errors: result.errors,
@@ -684,7 +691,7 @@ function createServer() {
       before: adminUserAuditSnapshot(result.previous), after: adminUserAuditSnapshot(result.user),
     });
     logInfo("admin.user.updated", "Usuário alterado por administrador.", {
-      user: req.user, entity: "user", entityId: result.user.id,
+      user: req.user, entity: "user", entityId: result.user.id, details: requestDetails(req),
     });
     return redirect(res, `/admin/users/${encodeURIComponent(result.user.id)}/edit?notice=updated`);
   });
@@ -693,13 +700,14 @@ function createServer() {
     const result = User.setActiveAdmin(req.user.id, req.params.id, false);
     if (!result.ok) {
       logWarn("admin.user.block_refused", "Bloqueio administrativo de usuário recusado.", {
-        user: req.user, entity: "user", entityId: req.params.id, details: { reason: result.reason },
+        user: req.user, entity: "user", entityId: req.params.id,
+        details: requestDetails(req, { reason: result.reason }),
       });
       return redirect(res, `/admin/users?notice=${encodeURIComponent(result.reason)}`);
     }
     AuditLog.record(req.user.id, "user", result.user.id, "blocked", { target_user_id: result.user.id });
     logInfo("admin.user.blocked", "Usuário bloqueado e sessões revogadas.", {
-      user: req.user, entity: "user", entityId: result.user.id,
+      user: req.user, entity: "user", entityId: result.user.id, details: requestDetails(req),
     });
     return redirect(res, "/admin/users?notice=blocked");
   });
@@ -709,7 +717,7 @@ function createServer() {
     if (!result.ok) return redirect(res, `/admin/users?notice=${encodeURIComponent(result.reason)}`);
     AuditLog.record(req.user.id, "user", result.user.id, "unblocked", { target_user_id: result.user.id });
     logInfo("admin.user.unblocked", "Usuário desbloqueado por administrador.", {
-      user: req.user, entity: "user", entityId: result.user.id,
+      user: req.user, entity: "user", entityId: result.user.id, details: requestDetails(req),
     });
     return redirect(res, "/admin/users?notice=unblocked");
   });
@@ -720,7 +728,8 @@ function createServer() {
     if (!result.ok) {
       const target = User.getAdminById(req.params.id);
       logWarn("admin.user.password_validation_failed", "Redefinição administrativa de senha recusada.", {
-        user: req.user, entity: "user", entityId: req.params.id, details: { fields: Object.keys(result.errors) },
+        user: req.user, entity: "user", entityId: req.params.id,
+        details: requestDetails(req, { fields: Object.keys(result.errors) }),
       });
       return sendHtml(res, userAdminFormView({
         user: req.user, target, action: `/admin/users/${encodeURIComponent(req.params.id)}`, errors: result.errors,
@@ -730,7 +739,7 @@ function createServer() {
       target_user_id: result.user.id, credential_changed: true,
     });
     logInfo("admin.user.password_reset", "Senha redefinida por administrador e sessões revogadas.", {
-      user: req.user, entity: "user", entityId: result.user.id,
+      user: req.user, entity: "user", entityId: result.user.id, details: requestDetails(req),
     });
     return redirect(res, `/admin/users/${encodeURIComponent(result.user.id)}/edit?notice=password-reset`);
   });
@@ -914,7 +923,10 @@ function handleLogin(req, res, body) {
   }
 
   const session = Auth.createSession(user.id);
-  logInfo("auth.login.success", "Login realizado com sucesso.", { user });
+  logInfo("auth.login.success", "Login realizado com sucesso.", {
+    user,
+    details: requestDetails(req),
+  });
   res.set("Set-Cookie", session.cookie);
   return redirect(res, "/dashboard");
 }
@@ -949,10 +961,10 @@ function startDevelopmentSession(req, res) {
 
   logInfo("auth.login.success", "Login de desenvolvimento realizado.", {
     user: devUser,
-    details: {
+    details: requestDetails(req, {
       mode: "development",
       nextPath,
-    },
+    }),
   });
   res.set("Set-Cookie", session.cookie);
   return redirect(res, nextPath);
@@ -1101,12 +1113,18 @@ function sendJson(res, payload, statusCode = 200) {
   return res.status(statusCode).type("json").send(JSON.stringify(payload, null, 2));
 }
 
-function requestDetails(req) {
+function requestDetails(req, details = {}) {
   return {
     method: req.method,
     path: req.path,
     originalUrl: req.originalUrl,
+    clientIp: normalizeClientIp(req.ip || req.socket?.remoteAddress),
+    ...details,
   };
+}
+
+function normalizeClientIp(value) {
+  return String(value || "").trim().replace(/^::ffff:/i, "") || "unknown";
 }
 
 function logBusinessError(req, event, message, error, context = {}) {
