@@ -575,6 +575,9 @@ Na baixa, permitir:
 - acréscimos;
 - total pago.
 
+O total realizado pode superar o valor previsto. Nesse caso, o sistema deve
+informar a diferença e exigir confirmação explícita, sem bloquear a baixa.
+
 ### RF-013 — Favorecidos e pagadores
 
 Campos:

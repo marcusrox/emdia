@@ -33,7 +33,7 @@ describe("models financeiros", () => {
     assert.equal(db.prepare("SELECT COUNT(*) total FROM audit_logs WHERE entity_id = ? AND action = 'settled'").get(entry.id).total, 2);
   });
 
-  it("calcula ajustes e bloqueia principal acima do saldo", () => {
+  it("calcula ajustes e exige confirmação para valor realizado acima do previsto", () => {
     const fixture = createFinancialFixture();
     const entry = createEntry(fixture);
     const updated = Entry.settle(fixture.user, entry.id, settlement(fixture, {
@@ -42,8 +42,17 @@ describe("models financeiros", () => {
     assert.equal(updated.realized_amount_cents, 4275);
     assert.throws(
       () => Entry.settle(fixture.user, entry.id, settlement(fixture, { principal: "60,00" })),
-      (error) => /saldo em aberto/i.test(error.errors?.principal || ""),
+      (error) => /acima do valor previsto/i.test(error.errors?.confirm_excess || ""),
     );
+    assert.equal(db.prepare("SELECT COUNT(*) total FROM settlements WHERE financial_entry_id = ?").get(entry.id).total, 1);
+
+    const paid = Entry.settle(fixture.user, entry.id, settlement(fixture, {
+      principal: "60,00", confirm_excess: "yes",
+    }));
+    assert.equal(paid.realized_amount_cents, 10275);
+    assert.equal(paid.status, "PAID");
+    const audit = db.prepare("SELECT payload_json FROM audit_logs WHERE entity_id = ? AND action = 'settled' ORDER BY created_at DESC").get(entry.id);
+    assert.equal(JSON.parse(audit.payload_json).excess_cents, 275);
   });
 
   it("faz rollback completo quando a auditoria falha", () => {

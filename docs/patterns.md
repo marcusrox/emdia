@@ -212,7 +212,7 @@ Fluxo esperado:
 
 1. localizar lançamento;
 2. avaliar a elegibilidade da baixa com `settlementEligibility`;
-3. validar conta financeira, valor e saldo principal em aberto;
+3. validar conta financeira, valor e eventual confirmação de excedente;
 4. criar settlement;
 5. atualizar valor realizado e status do lançamento;
 6. registrar auditoria.
@@ -222,6 +222,11 @@ do lançamento e auditoria devem ocorrer na mesma transação. Lançamentos pago
 recebidos, cancelados, em rascunho, sem saldo ou com status incompatível não
 aceitam nova baixa. A interface deve orientar o usuário, mas o bloqueio no model
 é obrigatório.
+
+O saldo em aberto deve ser sugerido como principal da próxima baixa, sem atuar
+como limite máximo. Quando a soma realizada após a nova baixa superar o valor
+previsto, a interface deve informar o excedente e exigir confirmação explícita.
+Essa confirmação também deve ser validada no model, dentro da transação.
 
 ## 9. Status
 

@@ -314,8 +314,11 @@ function settle(user, id, data) {
       throw validationError(validation);
     }
 
-    if (validation.normalized.principalCents > eligibility.openAmountCents) {
-      validation.errors.principal = `O valor principal não pode superar o saldo em aberto de ${formatCentsForMessage(eligibility.openAmountCents)}.`;
+    const projectedRealizedCents = entry.realized_amount_cents + validation.normalized.totalCents;
+    const excessCents = Math.max(0, projectedRealizedCents - entry.expected_amount_cents);
+
+    if (excessCents > 0 && data.confirm_excess !== "yes") {
+      validation.errors.confirm_excess = `Confirme a baixa com ${formatCentsForMessage(excessCents)} acima do valor previsto.`;
       throw validationError(validation);
     }
 
@@ -358,6 +361,7 @@ function settle(user, id, data) {
     AuditLog.record(user.id, "financial_entry", id, "settled", {
       settlement_id: settlement.id,
       total_cents: settlement.total_cents,
+      excess_cents: excessCents,
     });
 
     db.exec("COMMIT");

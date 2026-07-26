@@ -1361,6 +1361,34 @@ textarea {
   font-size: 12px;
 }
 
+.settlement-excess-warning {
+  background: #fff7e6;
+  border: 1px solid #e6a23c;
+  border-radius: 8px;
+  color: #6b4700;
+  padding: 10px 12px;
+}
+
+.settlement-excess-warning[hidden] {
+  display: none;
+}
+
+.settlement-excess-warning p {
+  margin: 4px 0 8px;
+}
+
+.entry-settlement-panel .settlement-excess-confirm {
+  align-items: flex-start;
+  color: var(--text);
+  display: flex;
+  gap: 8px;
+}
+
+.settlement-excess-confirm input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
 .compact-crud {
   align-items: start;
   grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);

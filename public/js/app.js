@@ -47,6 +47,7 @@
       return;
     }
 
+    updateSettlementExcess(form);
     clearFieldErrors(form);
 
     var firstInvalid = null;
@@ -115,6 +116,65 @@
 
     var cleaned = raw.replace(/\s/g, "").replace(/^R\$/i, "");
     return /^\d+(,\d{1,2})?$/.test(cleaned) || /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(cleaned);
+  }
+
+  function moneyToCents(value) {
+    var raw = String(value || "").trim().replace(/\s/g, "").replace(/^R\$/i, "");
+
+    if (!raw) {
+      return 0;
+    }
+
+    var usesThousands = /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(raw);
+    var normalized = usesThousands || raw.includes(",")
+      ? raw.replace(/\./g, "").replace(",", ".")
+      : raw;
+    var amount = Number(normalized);
+    return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+  }
+
+  function formatCents(cents) {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(cents / 100);
+  }
+
+  function updateSettlementExcess(form) {
+    if (!form || !form.matches("[data-settlement-form]")) {
+      return;
+    }
+
+    var expectedCents = Number(form.getAttribute("data-expected-cents")) || 0;
+    var realizedCents = Number(form.getAttribute("data-realized-cents")) || 0;
+    var totalCents = 0;
+
+    form.querySelectorAll("[data-settlement-value]").forEach(function (field) {
+      var cents = moneyToCents(field.value);
+      totalCents += field.hasAttribute("data-settlement-discount") ? -cents : cents;
+    });
+
+    var excessCents = Math.max(0, realizedCents + totalCents - expectedCents);
+    var warning = form.querySelector("[data-settlement-excess-warning]");
+    var confirmation = form.elements.confirm_excess;
+
+    if (!warning || !confirmation) {
+      return;
+    }
+
+    warning.hidden = excessCents <= 0;
+    confirmation.required = excessCents > 0;
+
+    if (excessCents > 0) {
+      warning.querySelector("[data-settlement-excess-message]").textContent =
+        "O valor realizado ficará " + formatCents(excessCents) + " acima do valor previsto.";
+    } else {
+      confirmation.checked = false;
+    }
+  }
+
+  function updateSettlementExcessOnInput(event) {
+    updateSettlementExcess(event.target.closest("[data-settlement-form]"));
   }
 
   function storageGet(key) {
@@ -417,7 +477,9 @@
   document.addEventListener("click", closeNotification);
   document.addEventListener("click", closeParentDetails);
   document.addEventListener("change", autoSubmitOnChange);
+  document.addEventListener("input", updateSettlementExcessOnInput);
   document.addEventListener("submit", validateForms);
+  document.querySelectorAll("[data-settlement-form]").forEach(updateSettlementExcess);
   restoreSettingsSections();
   collapseMobileEntryFilters();
   startOperationalLogPolling();

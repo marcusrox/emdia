@@ -443,6 +443,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
   const principalValue = settlementValue("principal", moneyInput(entry.expected_amount_cents - entry.realized_amount_cents));
   const settledAtValue = settlementValue("settled_at", new Date().toISOString().slice(0, 10));
   const openAmountCents = Math.max(0, Number(entry.expected_amount_cents || 0) - Number(entry.realized_amount_cents || 0));
+  const excessAmountCents = Math.max(0, Number(entry.realized_amount_cents || 0) - Number(entry.expected_amount_cents || 0));
   const recurrenceLink = entry.recurrence_rule_id
     ? `<a class="strong-link" href="/recurrences/${entry.recurrence_rule_id}/edit">Recorrência: ${escapeHtml(entry.recurrence_description || entry.description)}</a>`
     : "-";
@@ -468,7 +469,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
       <section class="entry-summary-grid">
         ${entrySummaryItem("Valor previsto", formatMoney(entry.expected_amount_cents), "wallet", entry.entry_type === "INCOME" ? "good" : "bad")}
         ${entrySummaryItem("Valor realizado", formatMoney(entry.realized_amount_cents), "check-circle", entry.realized_amount_cents > 0 ? "good" : "")}
-        ${entrySummaryItem("Saldo em aberto", formatMoney(openAmountCents), "circle-dollar-sign", openAmountCents > 0 ? "warning" : "good")}
+        ${entrySummaryItem(excessAmountCents > 0 ? "Excedente ao previsto" : "Saldo em aberto", formatMoney(excessAmountCents || openAmountCents), "circle-dollar-sign", excessAmountCents > 0 || openAmountCents > 0 ? "warning" : "good")}
         ${entrySummaryItem("Vencimento", escapeHtml(entry.due_date), "calendar-days")}
       </section>
 
@@ -534,7 +535,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
           ${
             eligibility.allowed
               ? `
-          <form method="post" action="/entries/${entry.id}/settlements" class="settlement-form" data-validate-form>
+          <form method="post" action="/entries/${entry.id}/settlements" class="settlement-form" data-validate-form data-settlement-form data-expected-cents="${Number(entry.expected_amount_cents || 0)}" data-realized-cents="${Number(entry.realized_amount_cents || 0)}">
             ${csrfInput(user)}
             <label>Conta
               <select name="financial_account_id" required${fieldErrorAttributes(settlementErrors, "financial_account_id")}>
@@ -543,7 +544,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
               ${fieldError(settlementErrors, "financial_account_id")}
             </label>
             <label>Valor principal
-              <input name="principal" inputmode="decimal" value="${escapeHtml(principalValue)}" required data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "principal")}>
+              <input name="principal" inputmode="decimal" value="${escapeHtml(principalValue)}" required data-validate-money data-settlement-value data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "principal")}>
               ${fieldError(settlementErrors, "principal")}
             </label>
             <label>Data
@@ -551,17 +552,26 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
               ${fieldError(settlementErrors, "settled_at")}
             </label>
             <label>Juros
-              <input name="interest" inputmode="decimal" value="${escapeHtml(settlementValue("interest", "0,00"))}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "interest")}>
+              <input name="interest" inputmode="decimal" value="${escapeHtml(settlementValue("interest", "0,00"))}" data-validate-money data-settlement-value data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "interest")}>
               ${fieldError(settlementErrors, "interest")}
             </label>
             <label>Multa
-              <input name="penalty" inputmode="decimal" value="${escapeHtml(settlementValue("penalty", "0,00"))}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "penalty")}>
+              <input name="penalty" inputmode="decimal" value="${escapeHtml(settlementValue("penalty", "0,00"))}" data-validate-money data-settlement-value data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "penalty")}>
               ${fieldError(settlementErrors, "penalty")}
             </label>
             <label>Desconto
-              <input name="discount" inputmode="decimal" value="${escapeHtml(settlementValue("discount", "0,00"))}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "discount")}>
+              <input name="discount" inputmode="decimal" value="${escapeHtml(settlementValue("discount", "0,00"))}" data-validate-money data-settlement-value data-settlement-discount data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "discount")}>
               ${fieldError(settlementErrors, "discount")}
             </label>
+            <div class="settlement-excess-warning" data-settlement-excess-warning hidden role="status">
+              <strong>Valor acima do previsto</strong>
+              <p data-settlement-excess-message></p>
+              <label class="settlement-excess-confirm">
+                <input type="checkbox" name="confirm_excess" value="yes"${settlementValue("confirm_excess") === "yes" ? " checked" : ""}${fieldErrorAttributes(settlementErrors, "confirm_excess")}>
+                <span>Confirmo que o valor realizado pode superar o valor previsto.</span>
+              </label>
+              ${fieldError(settlementErrors, "confirm_excess")}
+            </div>
             <button type="submit">${buttonContent("Baixar", "check-circle")}</button>
           </form>
           `
