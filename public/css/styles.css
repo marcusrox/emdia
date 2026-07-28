@@ -1362,31 +1362,95 @@ textarea {
 }
 
 .settlement-excess-warning {
-  background: #fff7e6;
-  border: 1px solid #e6a23c;
-  border-radius: 8px;
-  color: #6b4700;
-  padding: 10px 12px;
+  background: linear-gradient(145deg, #fffaf0, #fff4dc);
+  border: 1px solid #e9a63a;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(146, 91, 8, 0.08);
+  color: #704600;
+  padding: 14px;
 }
 
 .settlement-excess-warning[hidden] {
   display: none;
 }
 
-.settlement-excess-warning p {
-  margin: 4px 0 8px;
-}
-
-.entry-settlement-panel .settlement-excess-confirm {
-  align-items: flex-start;
-  color: var(--text);
+.settlement-excess-heading {
+  align-items: center;
   display: flex;
   gap: 8px;
 }
 
-.settlement-excess-confirm input {
+.settlement-excess-heading svg {
   flex: 0 0 auto;
-  margin-top: 2px;
+  height: 18px;
+  stroke-width: 2.25;
+  width: 18px;
+}
+
+.settlement-excess-heading strong {
+  color: #664000;
+  font-size: 14px;
+}
+
+.settlement-excess-warning p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 7px 0 12px;
+}
+
+.entry-settlement-panel .settlement-excess-confirm {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid #e7c477;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 10px 11px;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  width: 100%;
+}
+
+.entry-settlement-panel .settlement-excess-confirm:hover {
+  background: #fff;
+  border-color: #d69a2d;
+}
+
+.entry-settlement-panel .settlement-excess-confirm:focus-within {
+  border-color: #b7791f;
+  box-shadow: 0 0 0 3px rgba(183, 121, 31, 0.14);
+}
+
+.settlement-excess-confirm input {
+  accent-color: var(--primary);
+  flex: 0 0 auto;
+  height: 18px;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  width: 18px;
+}
+
+.settlement-excess-confirm span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.settlement-excess-confirm span strong {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.settlement-excess-confirm span small {
+  color: #765c2d;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .compact-crud {

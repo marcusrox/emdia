@@ -564,11 +564,17 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
               ${fieldError(settlementErrors, "discount")}
             </label>
             <div class="settlement-excess-warning" data-settlement-excess-warning hidden role="status">
-              <strong>Valor acima do previsto</strong>
+              <div class="settlement-excess-heading">
+                ${lucideIcon("triangle-alert")}
+                <strong>Valor acima do previsto</strong>
+              </div>
               <p data-settlement-excess-message></p>
               <label class="settlement-excess-confirm">
                 <input type="checkbox" name="confirm_excess" value="yes"${settlementValue("confirm_excess") === "yes" ? " checked" : ""}${fieldErrorAttributes(settlementErrors, "confirm_excess")}>
-                <span>Confirmo que o valor realizado pode superar o valor previsto.</span>
+                <span>
+                  <strong>Confirmar valor excedente</strong>
+                  <small>Estou ciente de que o realizado ficará acima do previsto.</small>
+                </span>
               </label>
               ${fieldError(settlementErrors, "confirm_excess")}
             </div>
