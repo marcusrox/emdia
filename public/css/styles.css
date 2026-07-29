@@ -605,6 +605,97 @@ td small {
   min-height: 48px;
 }
 
+.system-error-panel {
+  max-width: 620px;
+}
+
+.system-error-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 22px;
+  justify-items: center;
+  margin: 40px auto;
+  max-width: 680px;
+  padding: clamp(28px, 6vw, 52px);
+  text-align: center;
+}
+
+.system-error-panel .system-error-card {
+  border: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
+.system-error-icon {
+  align-items: center;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 50%;
+  color: #c2410c;
+  display: inline-flex;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.system-error-icon svg {
+  height: 30px;
+  width: 30px;
+}
+
+.system-error-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.system-error-copy h1 {
+  font-size: clamp(24px, 5vw, 34px);
+  line-height: 1.12;
+  margin: 0;
+}
+
+.system-error-copy p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 520px;
+}
+
+.system-error-reference {
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: center;
+  padding: 10px 14px;
+}
+
+.system-error-reference span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.system-error-reference code {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.system-error-actions {
+  display: flex;
+  justify-content: center;
+}
+
 .notification-stack {
   display: grid;
   gap: 10px;

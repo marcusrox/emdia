@@ -133,11 +133,19 @@ Navegador
     -> User.ensureDefaultUser()
     -> model/service necessario
     -> view exportada pelo viewEngine ou JSON
+    -> em erro inesperado:
+       -> log operacional com requestId
+       -> resposta genérica HTML ou JSON com o mesmo código de diagnóstico
   -> resposta HTTP
 ```
 
 GETs renderizam telas ou retornam informação de leitura. POSTs alteram dados e
 redirecionam com status 303.
+
+O middleware global nunca devolve a mensagem técnica da exceção. A view
+`unexpectedErrorView`, em `src/views/errorsView.js`, funciona com ou sem usuário
+autenticado. Rotas com contrato JSON são identificadas antes do carregamento da
+sessão para que falhas precoces também preservem o formato da resposta.
 
 Rotas principais:
 

@@ -1,9 +1,12 @@
 const { beforeEach, describe, it } = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const request = require("supertest");
 const { db, resetDatabase } = require("../helpers/testDatabase");
 const { createServer } = require("../../src/server");
 const Entry = require("../../src/models/FinancialEntry");
+const User = require("../../src/models/User");
+const { getLogFilePath } = require("../../src/services/operationalLogger");
 
 beforeEach(resetDatabase);
 
@@ -189,6 +192,85 @@ describe("integração HTTP Express", () => {
     assert.match(settled.text, /Quitação final/);
     assert.match(settled.text, /Baixa indisponível/);
     assert.equal(db.prepare("SELECT closes_entry FROM settlements WHERE financial_entry_id = ?").get(entry.id).closes_entry, 1);
+  });
+
+  it("renderiza erro inesperado autenticado sem expor detalhes e relaciona o log", async () => {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent);
+    const originalDashboard = Entry.dashboard;
+    const technicalMessage = '<img src=x onerror=alert("TASK049_PRIVATE_ERROR")>';
+    const logPath = getLogFilePath();
+    const previousLogSize = fs.existsSync(logPath) ? fs.statSync(logPath).size : 0;
+
+    Entry.dashboard = () => {
+      throw new Error(technicalMessage);
+    };
+
+    try {
+      const response = await agent.get("/dashboard").expect(500).expect("Content-Type", /html/);
+      const errorId = response.text.match(/ERR-[A-F0-9]{12}/)?.[0];
+
+      assert.ok(errorId);
+      assert.match(response.text, /Não foi possível concluir a operação/);
+      assert.match(response.text, /Código de diagnóstico/);
+      assert.match(response.text, /href="\/dashboard"/);
+      assert.doesNotMatch(response.text, /TASK049_PRIVATE_ERROR/);
+      assert.doesNotMatch(response.text, /onerror=/);
+
+      const newLogContent = fs.readFileSync(logPath).subarray(previousLogSize).toString("utf8");
+      const loggedEvent = newLogContent
+        .trim()
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+        .find((event) => event.requestId === errorId);
+
+      assert.ok(loggedEvent);
+      assert.equal(loggedEvent.event, "app.unexpected_error");
+      assert.equal(loggedEvent.details.error.message, technicalMessage);
+      assert.match(loggedEvent.details.error.stack, /TASK049_PRIVATE_ERROR/);
+    } finally {
+      Entry.dashboard = originalDashboard;
+    }
+  });
+
+  it("renderiza erro seguro antes da autenticação", async () => {
+    const originalEnsureDefaultUser = User.ensureDefaultUser;
+    User.ensureDefaultUser = () => {
+      throw new Error("TASK049_LOGIN_PRIVATE_ERROR");
+    };
+
+    try {
+      const response = await request(createServer()).get("/login").expect(500).expect("Content-Type", /html/);
+
+      assert.match(response.text, /Não foi possível concluir a operação/);
+      assert.match(response.text, /ERR-[A-F0-9]{12}/);
+      assert.match(response.text, /href="\/login"/);
+      assert.doesNotMatch(response.text, /TASK049_LOGIN_PRIVATE_ERROR/);
+    } finally {
+      User.ensureDefaultUser = originalEnsureDefaultUser;
+    }
+  });
+
+  it("preserva resposta JSON genérica quando a falha ocorre antes da autenticação", async () => {
+    const originalEnsureDefaultUser = User.ensureDefaultUser;
+    User.ensureDefaultUser = () => {
+      throw new Error("TASK049_JSON_PRIVATE_ERROR");
+    };
+
+    try {
+      const response = await request(createServer())
+        .get("/operational-logs/events")
+        .expect(500)
+        .expect("Content-Type", /json/);
+
+      assert.equal(response.body.error, "Não foi possível concluir a operação.");
+      assert.match(response.body.error_id, /^ERR-[A-F0-9]{12}$/);
+      assert.doesNotMatch(JSON.stringify(response.body), /TASK049_JSON_PRIVATE_ERROR/);
+    } finally {
+      User.ensureDefaultUser = originalEnsureDefaultUser;
+    }
   });
 });
 

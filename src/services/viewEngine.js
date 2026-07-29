@@ -5,7 +5,7 @@ const { dashboardView } = require("../views/dashboardView");
 const { calendarView } = require("../views/calendarView");
 const { entriesListView, entryDetailView, entryFormView } = require("../views/entriesView");
 const { loginView } = require("../views/authView");
-const { notFoundView } = require("../views/errorsView");
+const { notFoundView, unexpectedErrorView } = require("../views/errorsView");
 const { operationalLogsView } = require("../views/operationalLogsView");
 const { notificationQueueView } = require("../views/notificationQueueView");
 const { profileView } = require("../views/profileView");
@@ -29,6 +29,7 @@ module.exports = {
   escapeHtml,
   loginView,
   notFoundView,
+  unexpectedErrorView,
   operationalLogsView,
   notificationQueueView,
   profileView,

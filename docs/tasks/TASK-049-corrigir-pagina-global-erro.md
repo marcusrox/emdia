@@ -17,7 +17,7 @@ demais telas do EmDia.
 Substituir a resposta atual por uma página de erro segura, consistente e útil,
 mantendo os detalhes técnicos somente nos logs operacionais.
 
-**Status:** planejada.
+**Status:** implementada em 28/07/2026.
 
 ## Decisão técnica
 
@@ -162,3 +162,31 @@ segurança pressupõe que erros inesperados já não sejam refletidos ao usuári
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+## Implementação
+
+- `src/views/errorsView.js` passou a renderizar uma página segura e consistente
+  com o EmDia, reutilizando o layout autenticado quando existe usuário e uma
+  estrutura autônoma antes do login.
+- Cada erro inesperado recebe um código aleatório no formato `ERR-...`.
+- O evento `app.unexpected_error` registra o mesmo código em `requestId`, junto
+  ao nome, à mensagem e ao stack técnico da exceção.
+- Respostas HTML não apresentam `err.message`, stack trace, SQL ou caminhos
+  internos.
+- Endpoints com contrato JSON são identificados antes do carregamento da
+  sessão e recebem mensagem genérica com `error_id`.
+- O `console.error` duplicado foi removido do middleware global; o logger
+  operacional permanece como destino técnico.
+- Foram adicionados testes para erro autenticado, erro anterior à autenticação,
+  conteúdo HTML malicioso, correlação com o log e resposta JSON.
+- A página foi validada visualmente em navegador, sem erros no console.
+- A release foi incrementada para `Release 28/07/2026 21:47 - 071`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 28/07/2026 21:47
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualizacao

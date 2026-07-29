@@ -1,4 +1,5 @@
 const express = require("express");
+const { randomBytes } = require("node:crypto");
 const path = require("node:path");
 const Account = require("./models/FinancialAccount");
 const AuditLog = require("./models/AuditLog");
@@ -29,6 +30,7 @@ const {
   entryFormView,
   loginView,
   notFoundView,
+  unexpectedErrorView,
   operationalLogsView,
   notificationQueueView,
   profileView,
@@ -40,12 +42,20 @@ const {
   usersAdminListView,
 } = require("./services/viewEngine");
 
+const JSON_RESPONSE_PATHS = new Set([
+  "/health",
+  "/ready",
+  "/settings/whatsapp-status",
+  "/operational-logs/events",
+]);
+
 function createServer() {
   const app = express();
 
   app.set("trust proxy", "loopback");
   app.use("/public", express.static(path.join(__dirname, "..", "public")));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
+  app.use(markResponseFormat);
 
   app.all(["/health", "/ready"], (req, res) => {
     return sendJson(res, { ok: true, service: "emdia" });
@@ -827,25 +837,55 @@ function createServer() {
     return sendJson(res, { error: "Método não permitido" }, 405);
   });
 
-  app.use((err, req, res, next) => {
-    logError("business.operation.rejected", "Operação rejeitada por erro funcional ou técnico.", {
-      user: req.user,
-      details: {
-        ...requestDetails(req),
-        error: errorDetails(err),
-      },
-    });
-    console.error(err);
-    if (res.headersSent) return next(err);
-
-    return sendHtml(
-      res,
-      `<h1>Erro no EmDia</h1><p>${String(err.message || err)}</p><p><a href="/dashboard">Voltar ao dashboard</a></p>`,
-      500
-    );
-  });
+  app.use(unexpectedErrorHandler);
 
   return app;
+}
+
+function markResponseFormat(req, res, next) {
+  if (JSON_RESPONSE_PATHS.has(req.path)) {
+    res.locals.responseFormat = "json";
+  }
+  return next();
+}
+
+function unexpectedErrorHandler(err, req, res, next) {
+  const errorId = createErrorId();
+
+  logError("app.unexpected_error", "Falha inesperada ao processar requisição.", {
+    user: req.user,
+    requestId: errorId,
+    details: {
+      ...requestDetails(req),
+      error: errorDetails(err),
+    },
+  });
+
+  if (res.headersSent) return next(err);
+
+  if (res.locals.responseFormat === "json") {
+    return sendJson(
+      res,
+      {
+        error: "Não foi possível concluir a operação.",
+        error_id: errorId,
+      },
+      500
+    );
+  }
+
+  return sendHtml(
+    res,
+    unexpectedErrorView({
+      user: req.user || null,
+      errorId,
+    }),
+    500
+  );
+}
+
+function createErrorId() {
+  return `ERR-${randomBytes(6).toString("hex").toUpperCase()}`;
 }
 
 function loadSession(req, res, next) {
@@ -1149,9 +1189,11 @@ function errorDetails(error) {
   return {
     name: error.name,
     message: error.message,
+    stack: error.stack,
   };
 }
 
 module.exports = {
   createServer,
+  unexpectedErrorHandler,
 };

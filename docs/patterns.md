@@ -275,6 +275,18 @@ Padrões:
 - Sirva assets com o prefixo `/public` por `express.static`.
 - Preserve URLs com `competence` quando a tela fizer parte do fluxo mensal.
 
+Erros inesperados devem ser tratados pelo middleware global com estas regras:
+
+- gerar um código de diagnóstico aleatório e não derivado da requisição;
+- registrar detalhes técnicos somente no log operacional, relacionando o
+  evento ao código por `requestId`;
+- devolver mensagem genérica ao usuário, sem `err.message`, stack trace, SQL ou
+  caminhos internos;
+- usar a view compartilhada de erro para HTML;
+- preservar resposta JSON nas rotas que já possuem esse contrato, inclusive
+  quando a falha ocorrer antes da autenticação;
+- delegar ao Express quando os headers já tiverem sido enviados.
+
 Rotas principais atuais:
 
 ```text
