@@ -18,7 +18,7 @@ Transformar o servidor em um monólito modular, extraindo rotas por domínio em
 etapas pequenas e verificáveis, sem alterar URLs, respostas ou regras de
 negócio.
 
-**Status:** planejada.
+**Status:** implementada em 28/07/2026.
 
 ## Padrão proposto
 
@@ -186,3 +186,37 @@ extração mecânica das rotas.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação
+
+- `src/server.js` foi reduzido ao papel de composition root, mantendo explícita
+  a ordem de assets, parsers, formato de resposta, health/readiness, sessão,
+  login, autenticação obrigatória, módulos protegidos, 404/405 e erro global.
+- Foi adotado um único padrão de módulos: funções
+  `register*Routes(app, dependencies)` em `src/routes/*.js`.
+- Rotas foram agrupadas nos domínios autenticação, operação, dashboard,
+  contas, categorias, perfil/configurações, recorrências, lançamentos, baixas e
+  administração.
+- Middlewares de sessão, autenticação, autorização administrativa e CSRF foram
+  centralizados em `src/middleware/auth.js`.
+- Identificação do formato de resposta e handlers finais de 404, 405 e erro
+  inesperado foram centralizados em `src/middleware/errors.js`.
+- Respostas HTTP e detalhes seguros da requisição foram compartilhados por
+  `src/services/http.js`; logging de erros e composição das views financeiras
+  também foram extraídos somente onde havia reutilização entre domínios.
+- O teste HTTP passou a verificar uma rota representativa de cada módulo
+  protegido; os testes existentes continuam cobrindo autenticação, operação,
+  competência mensal, lançamentos, baixa e tratamento de erro.
+- `npm run check` e `npm test` foram executados com sucesso.
+- A release foi incrementada para `Release 28/07/2026 22:21 - 073`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 28/07/2026 22:21
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualizacao

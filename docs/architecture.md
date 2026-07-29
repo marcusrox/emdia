@@ -28,7 +28,7 @@ Stack vigente:
 - Express 5.x;
 - SQLite via `node:sqlite`;
 - HTML renderizado por funções em `src/views/*.js`;
-- `src/services/viewEngine.js` como agregador de views para o servidor;
+- `src/services/viewEngine.js` como agregador de views para os módulos de rota;
 - CSS puro em `public/css/styles.css`;
 - ícones SVG do pacote `lucide-static`.
 
@@ -60,10 +60,18 @@ app.js
   cria servidor HTTP
 
 src/server.js
-  roteia requests
-  chama models
-  chama views exportadas pelo viewEngine
-  responde HTML/JSON/redirecionamentos
+  cria e configura o app Express
+  ordena middlewares e módulos de rota
+  instala handlers finais
+
+src/routes/
+  agrupa rotas por domínio
+  chama models e services
+  escolhe view, JSON ou redirect
+
+src/middleware/
+  auth.js: sessão, autenticação, autorização e CSRF
+  errors.js: formato de resposta e handlers 404/405/500
 
 src/database/
   connection.js
@@ -133,9 +141,12 @@ Fluxo geral:
 Navegador
   -> src/server.js
     -> middlewares Express
-    -> User.ensureDefaultUser()
-    -> model/service necessario
-    -> view exportada pelo viewEngine ou JSON
+    -> rotas públicas de operação
+    -> carregamento de sessão
+    -> login ou autenticação obrigatória
+    -> módulo de rota do domínio
+       -> model/service necessário
+       -> view exportada pelo viewEngine, JSON ou redirect
     -> em erro inesperado:
        -> log operacional com requestId
        -> resposta genérica HTML ou JSON com o mesmo código de diagnóstico
@@ -144,6 +155,11 @@ Navegador
 
 GETs renderizam telas ou retornam informação de leitura. POSTs alteram dados e
 redirecionam com status 303.
+
+Os módulos usam funções `register*Routes(app, dependencies)`. `createServer()`
+é o composition root e mantém explícita a ordem de middlewares. Rotas novas
+devem ser adicionadas ao arquivo do domínio correspondente em `src/routes/`;
+regras financeiras continuam em models/services.
 
 O middleware global nunca devolve a mensagem técnica da exceção. A view
 `unexpectedErrorView`, em `src/views/errorsView.js`, funciona com ou sem usuário
@@ -291,8 +307,8 @@ a representar um dominio ou conjunto de telas relacionado, por exemplo
 `recurrencesView.js`.
 
 O arquivo `src/services/viewEngine.js` funciona como agregador/exportador das
-views consumidas por `src/server.js`. Ele preserva um ponto central de import no
-servidor, mas não deve concentrar a implementação de novas telas.
+views consumidas pelos módulos de rota. Ele preserva um ponto central de
+importação, mas não deve concentrar a implementação de novas telas.
 
 Componentes principais:
 

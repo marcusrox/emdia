@@ -238,6 +238,11 @@ emdia/
       Recurrence.js
       Settlement.js
       User.js
+    middleware/
+      auth.js
+      errors.js
+    routes/
+      *Routes.js
     services/
       authService.js
       csvService.js

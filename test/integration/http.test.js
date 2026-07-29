@@ -39,6 +39,27 @@ describe("integração HTTP Express", () => {
     await agent.get("/dashboard").expect(303).expect("Location", "/login");
   });
 
+  it("monta uma rota representativa de cada módulo protegido", async () => {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent);
+
+    const routes = [
+      "/dashboard",
+      "/accounts",
+      "/categories",
+      "/profile",
+      "/recurrences",
+      "/entries",
+      "/admin/users",
+      "/runtime-environment",
+    ];
+
+    for (const route of routes) {
+      await agent.get(route).expect(200);
+    }
+  });
+
   it("não ativa login automático apenas por NODE_ENV=development", async () => {
     const previousNodeEnv = process.env.NODE_ENV;
     const previousAutoLogin = process.env.EMDIA_AUTO_LOGIN;

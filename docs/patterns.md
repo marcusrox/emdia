@@ -68,6 +68,8 @@ Estrutura principal:
 ```text
 app.js
 src/server.js
+src/routes/*.js
+src/middleware/*.js
 src/database/connection.js
 src/database/schema.js
 src/database/seed.js
@@ -80,7 +82,10 @@ public/css/styles.css
 Responsabilidades:
 
 - `app.js`: bootstrap da aplicação, inicialização do banco, seed e servidor.
-- `src/server.js`: app Express, middlewares, rotas HTTP e composição dos fluxos.
+- `src/server.js`: composition root do Express e ordem global do pipeline HTTP.
+- `src/routes/*.js`: registro de rotas agrupadas por domínio.
+- `src/middleware/auth.js`: sessão, autenticação, autorização e CSRF.
+- `src/middleware/errors.js`: formato de resposta e handlers finais 404/405/500.
 - `src/database/connection.js`: conexao SQLite e pragmas.
 - `src/database/schema.js`: schema, tabelas e indices.
 - `src/database/seed.js`: dados locais iniciais.
@@ -281,7 +286,28 @@ vigente para que uma quitação abaixo do previsto permaneça `PAID` ou
 
 ## 10. Rotas HTTP
 
-O roteamento atual fica em `src/server.js`.
+`src/server.js` cria o app e monta o pipeline. As rotas ficam agrupadas por
+domínio em `src/routes/*.js`, usando exclusivamente o padrão:
+
+```js
+function registerDomainRoutes(app, dependencies) {
+  app.get("/domain", handler);
+}
+```
+
+Para adicionar uma rota, use o módulo do domínio existente ou crie um novo
+`*Routes.js`; não registre regras de domínio diretamente em `server.js`.
+Dependências HTTP compartilhadas devem ser importadas de services ou recebidas
+explicitamente, sem criar ciclos entre módulos de rota.
+
+A ordem global deve permanecer visível no composition root:
+
+1. assets, parsers e identificação do formato de resposta;
+2. health e readiness sem autenticação;
+3. carregamento de sessão e login;
+4. autenticação obrigatória;
+5. módulos protegidos;
+6. handlers finais de 404/405 e erro inesperado.
 
 Padrões:
 
@@ -290,8 +316,8 @@ Padrões:
 - Redirecione após POST com status 303.
 - Use `express.urlencoded({ extended: false, limit: "1mb" })` para formulários
   URL encoded.
-- Use helpers locais de resposta para telas HTML, redirects 303 e JSON
-  pretty-print quando necessário.
+- Use `src/services/http.js` para respostas HTML, redirects 303, JSON
+  pretty-print, query string escalar e detalhes normalizados da requisição.
 - Sirva assets com o prefixo `/public` por `express.static`.
 - Preserve URLs com `competence` quando a tela fizer parte do fluxo mensal.
 
@@ -333,7 +359,7 @@ POST /categories
 
 A renderização atual fica em `src/views/*.js`. O arquivo
 `src/services/viewEngine.js` deve permanecer como agregador/exportador das views
-para uso em `src/server.js`, não como destino padrão para implementar telas
+para uso nos módulos de rota, não como destino padrão para implementar telas
 novas.
 
 Padrões:

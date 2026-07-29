@@ -27,6 +27,10 @@ function validationError(result, message = "Revise os campos destacados.") {
   return error;
 }
 
+function isValidationError(error) {
+  return error?.name === "ValidationError" && error.errors;
+}
+
 function validateRequired(result, field, message = REQUIRED_ERROR_MESSAGE) {
   if (!String(result.values[field] || "").trim()) {
     addError(result, field, message);
@@ -346,6 +350,7 @@ module.exports = {
   addError,
   createValidationResult,
   hasErrors,
+  isValidationError,
   parseMoney,
   validationError,
   validateEntryPayload,
