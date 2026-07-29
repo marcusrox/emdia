@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, randomBytes } = require("node:crypto");
 const { backup, DatabaseSync } = require("node:sqlite");
+const { BUSY_TIMEOUT_MS } = require("../database/connection");
 const { acquireDatabaseLock } = require("./databaseLockService");
 const { logError, logInfo } = require("./operationalLogger");
 
@@ -241,7 +242,7 @@ async function copyDatabase(sourcePath, destinationPath) {
   let sourceDatabase;
   try {
     sourceDatabase = new DatabaseSync(sourcePath, { readOnly: true });
-    sourceDatabase.exec("PRAGMA busy_timeout = 5000;");
+    sourceDatabase.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS};`);
     await backup(sourceDatabase, destinationPath);
   } finally {
     sourceDatabase?.close();
@@ -254,6 +255,7 @@ async function verifyDatabaseFile(databasePath) {
   let database;
   try {
     database = new DatabaseSync(databasePath, { readOnly: true });
+    database.exec(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS};`);
     database.exec("PRAGMA query_only = ON;");
 
     const integrityRows = database.prepare("PRAGMA integrity_check;").all();

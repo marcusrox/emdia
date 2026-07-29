@@ -1,4 +1,5 @@
 const { getDatabase } = require("../database/connection");
+const { withTransaction } = require("../database/transaction");
 const AuditLog = require("./AuditLog");
 const Account = require("./FinancialAccount");
 const Category = require("./Category");
@@ -136,18 +137,13 @@ function generateForCompetence(user, competenceValue) {
   let generated = 0;
 
   const db = getDatabase();
-  db.exec("BEGIN");
-  try {
+  withTransaction(db, () => {
     recurrences.forEach((recurrence) => {
       if (hasEntry(user.id, recurrence.id, competence)) return;
       createEntryFromRecurrence(user, recurrence, competence);
       generated += 1;
     });
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+  });
 
   return generated;
 }

@@ -7,7 +7,7 @@
     "start": "node app.js",
     "dev": "node scripts/dev.js",
     "seed": "node src/database/seed.js",
-    "test": "node --test --test-isolation=none --test-concurrency=1 test/unit/financialServices.test.js test/unit/deploymentInfoService.test.js test/integration/financialModels.test.js test/integration/databaseBackup.test.js test/integration/http.test.js",
+    "test": "node --test --test-isolation=none --test-concurrency=1 test/unit/financialServices.test.js test/unit/deploymentInfoService.test.js test/unit/transaction.test.js test/integration/financialModels.test.js test/integration/databaseBackup.test.js test/integration/http.test.js",
     "check": "node scripts/check.js",
     "backup": "node scripts/backup.js",
     "backup:list": "node scripts/list-backups.js",

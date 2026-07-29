@@ -75,6 +75,7 @@ src/middleware/
 
 src/database/
   connection.js
+  transaction.js
   migrator.js
   migrations/
   schema.js
@@ -119,6 +120,8 @@ Responsabilidades:
 
 - `initializeDatabase`: ponto público de inicialização do banco; delega para o
   migrator.
+- `transaction`: delimita transações síncronas `DEFERRED` ou `IMMEDIATE`,
+  rejeita aninhamento e preserva a causa original em falhas.
 - `databaseLockService`: impede duas instâncias oficiais da aplicação e bloqueia
   restauração enquanto o processo está ativo.
 - `runMigrations`: cria `schema_migrations`, carrega migrations versionadas em
@@ -341,6 +344,18 @@ O SQLite usa:
 
 - `PRAGMA foreign_keys = ON`;
 - `PRAGMA journal_mode = WAL`.
+- `PRAGMA busy_timeout = 5000`.
+
+Operações atômicas usam `withTransaction` ou `withImmediateTransaction` de
+`src/database/transaction.js`. Baixa, estorno e proteção do último
+administrador adquirem lock `IMMEDIATE` antes de ler condições e gravar.
+Resultados funcionais retornam pelo callback e são commitados sem exigir flags
+locais; exceções revertem a unidade completa. Não há retry automático nem
+suporte implícito a transações aninhadas.
+
+O teste de disponibilidade anterior à restauração é uma exceção deliberada:
+usa `busy_timeout = 0` e `BEGIN EXCLUSIVE` diretamente para falhar
+imediatamente quando o banco está em uso.
 
 Mudanças de schema são controladas por migrations JavaScript versionadas. O
 histórico aplicado fica em:

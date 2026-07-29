@@ -1,4 +1,5 @@
 const { getDatabase } = require("../database/connection");
+const { withImmediateTransaction } = require("../database/transaction");
 const { hashPassword, verifyPassword } = require("../services/authService");
 const { newId } = require("../services/id");
 
@@ -76,39 +77,37 @@ function createAdmin(data) {
 
 function updateAdmin(actorId, userId, data) {
   const db = getDatabase();
-  db.exec("BEGIN IMMEDIATE");
-  try {
+  return withImmediateTransaction(db, () => {
     const current = getAdminById(userId);
-    if (!current) { db.exec("ROLLBACK"); return { ok: false, notFound: true }; }
+    if (!current) return { ok: false, notFound: true };
     const values = normalizeAdminData(data, { current });
     const errors = validateAdminData(values, { current, actorId });
-    if (Object.keys(errors).length) { db.exec("ROLLBACK"); return { ok: false, errors, values: { ...current, ...values } }; }
+    if (Object.keys(errors).length) {
+      return { ok: false, errors, values: { ...current, ...values } };
+    }
     db.prepare(`
       UPDATE users SET name = ?, email = ?, phone_e164 = ?, timezone = ?, locale = ?, is_admin = ?, updated_at = ?
       WHERE id = ?
     `).run(values.name, values.email, values.phone_e164 || null, values.timezone, values.locale,
       values.is_admin, new Date().toISOString(), userId);
-    db.exec("COMMIT");
     return { ok: true, user: getAdminById(userId), previous: current };
-  } catch (error) { db.exec("ROLLBACK"); throw error; }
+  });
 }
 
 function setActiveAdmin(actorId, userId, isActive) {
   const db = getDatabase();
-  db.exec("BEGIN IMMEDIATE");
-  try {
+  return withImmediateTransaction(db, () => {
     const current = getAdminById(userId);
-    if (!current) { db.exec("ROLLBACK"); return { ok: false, reason: "not-found" }; }
-    if (!isActive && actorId === userId) { db.exec("ROLLBACK"); return { ok: false, reason: "self-block" }; }
+    if (!current) return { ok: false, reason: "not-found" };
+    if (!isActive && actorId === userId) return { ok: false, reason: "self-block" };
     if (!isActive && current.is_admin && current.is_active && countActiveAdmins() <= 1) {
-      db.exec("ROLLBACK"); return { ok: false, reason: "last-admin" };
+      return { ok: false, reason: "last-admin" };
     }
     const now = new Date().toISOString();
     db.prepare("UPDATE users SET is_active = ?, updated_at = ? WHERE id = ?").run(isActive ? 1 : 0, now, userId);
     if (!isActive) db.prepare("UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL").run(now, userId);
-    db.exec("COMMIT");
     return { ok: true, user: getAdminById(userId), previous: current };
-  } catch (error) { db.exec("ROLLBACK"); throw error; }
+  });
 }
 
 function resetPasswordAdmin(userId, data) {
@@ -122,13 +121,11 @@ function resetPasswordAdmin(userId, data) {
   if (Object.keys(errors).length) return { ok: false, errors };
   const db = getDatabase();
   const now = new Date().toISOString();
-  db.exec("BEGIN IMMEDIATE");
-  try {
+  withImmediateTransaction(db, () => {
     db.prepare("UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?")
       .run(hashPassword(newPassword), now, userId);
     db.prepare("UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL").run(now, userId);
-    db.exec("COMMIT");
-  } catch (error) { db.exec("ROLLBACK"); throw error; }
+  });
   return { ok: true, user: getAdminById(userId) };
 }
 

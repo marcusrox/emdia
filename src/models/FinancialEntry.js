@@ -1,4 +1,8 @@
 const { getDatabase } = require("../database/connection");
+const {
+  withImmediateTransaction,
+  withTransaction,
+} = require("../database/transaction");
 const Account = require("./FinancialAccount");
 const AuditLog = require("./AuditLog");
 const Category = require("./Category");
@@ -259,8 +263,7 @@ function deleteMonth(user, data) {
     .get(user.id, competence);
   const deletedCount = Number(countRow?.count || 0);
 
-  db.exec("BEGIN");
-  try {
+  withTransaction(db, () => {
     db.prepare(
       `UPDATE financial_entries
        SET deleted_at = ?, updated_at = ?
@@ -271,12 +274,7 @@ function deleteMonth(user, data) {
       competence_month: competence,
       deleted_count: deletedCount,
     });
-
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+  });
 
   return {
     competence,
@@ -304,16 +302,9 @@ function duplicate(user, id) {
 
 function settle(user, id, data) {
   const db = getDatabase();
-  db.exec("BEGIN IMMEDIATE");
-  let transactionActive = true;
-
-  try {
+  return withImmediateTransaction(db, () => {
     const entry = getById(user.id, id);
-    if (!entry) {
-      db.exec("ROLLBACK");
-      transactionActive = false;
-      return null;
-    }
+    if (!entry) return null;
 
     const eligibility = settlementEligibility(entry);
     if (!eligibility.allowed) {
@@ -386,13 +377,8 @@ function settle(user, id, data) {
       excess_cents: excessCents,
     });
 
-    db.exec("COMMIT");
-    transactionActive = false;
     return getById(user.id, id);
-  } catch (error) {
-    if (transactionActive) db.exec("ROLLBACK");
-    throw error;
-  }
+  });
 }
 
 function settlementNotAllowedError(data, eligibility) {
@@ -422,21 +408,11 @@ function reverseSettlement(user, settlementId, data = {}) {
   }
 
   const db = getDatabase();
-  db.exec("BEGIN IMMEDIATE");
-  let transactionActive = true;
-  try {
+  return withImmediateTransaction(db, () => {
     const settlement = Settlement.getActiveForUser(user.id, settlementId);
-    if (!settlement) {
-      db.exec("ROLLBACK");
-      transactionActive = false;
-      return null;
-    }
+    if (!settlement) return null;
     const entry = getById(user.id, settlement.financial_entry_id);
-    if (!entry) {
-      db.exec("ROLLBACK");
-      transactionActive = false;
-      return null;
-    }
+    if (!entry) return null;
 
     const now = new Date().toISOString();
     db.prepare(`INSERT INTO settlement_reversals
@@ -460,13 +436,8 @@ function reverseSettlement(user, settlementId, data = {}) {
     AuditLog.record(user.id, "financial_entry", entry.id, "settlement_reversed", {
       settlement_id: settlement.id, total_cents: settlement.total_cents, reason,
     });
-    db.exec("COMMIT");
-    transactionActive = false;
     return getById(user.id, entry.id);
-  } catch (error) {
-    if (transactionActive) db.exec("ROLLBACK");
-    throw error;
-  }
+  });
 }
 
 function formatCentsForMessage(cents) {

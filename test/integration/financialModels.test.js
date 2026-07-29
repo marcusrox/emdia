@@ -4,6 +4,7 @@ const { DatabaseSync } = require("node:sqlite");
 const { createFinancialFixture, db, resetDatabase } = require("../helpers/testDatabase");
 const Entry = require("../../src/models/FinancialEntry");
 const Recurrence = require("../../src/models/Recurrence");
+const User = require("../../src/models/User");
 const settlementClosureMigration = require("../../src/database/migrations/006_add_settlement_closure");
 
 beforeEach(resetDatabase);
@@ -242,6 +243,37 @@ describe("models financeiros", () => {
     assert.equal(db.prepare("SELECT COUNT(*) total FROM settlements").get().total, 0);
   });
 
+  it("reverte exclusão mensal quando a auditoria falha", () => {
+    const fixture = createFinancialFixture();
+    const entry = createEntry(fixture);
+    db.exec("CREATE TRIGGER fail_month_delete_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'month_deleted' BEGIN SELECT RAISE(ABORT, 'month audit failure'); END;");
+
+    assert.throws(
+      () => Entry.deleteMonth(fixture.user, {
+        competence_month: "2026-07",
+        confirmation: "2026-07",
+        acknowledge_impact: "on",
+      }),
+      /month audit failure/
+    );
+    assert.equal(db.isTransaction, false);
+    assert.equal(db.prepare("SELECT deleted_at FROM financial_entries WHERE id = ?").get(entry.id).deleted_at, null);
+    db.exec("DROP TRIGGER fail_month_delete_audit;");
+  });
+
+  it("preserva o último administrador e encerra retornos funcionais", () => {
+    const fixture = createFinancialFixture({ user: { isAdmin: true } });
+
+    const blocked = User.setActiveAdmin("outro-ator", fixture.user.id, false);
+    assert.deepEqual(blocked, { ok: false, reason: "last-admin" });
+    assert.equal(db.isTransaction, false);
+    assert.equal(db.prepare("SELECT is_active FROM users WHERE id = ?").get(fixture.user.id).is_active, 1);
+
+    const missing = User.updateAdmin(fixture.user.id, "usuario-inexistente", {});
+    assert.deepEqual(missing, { ok: false, notFound: true });
+    assert.equal(db.isTransaction, false);
+  });
+
   it("gera recorrência uma única vez e aplica LAST_VALID_DAY", () => {
     const fixture = createFinancialFixture();
     const recurrence = Recurrence.create(fixture.user, {
@@ -254,6 +286,24 @@ describe("models financeiros", () => {
     const generated = db.prepare("SELECT * FROM financial_entries WHERE recurrence_rule_id = ?").get(recurrence.id);
     assert.equal(generated.due_date, "2024-02-29");
     assert.equal(generated.origin, "RECURRENCE");
+  });
+
+  it("reverte geração recorrente quando a auditoria falha", () => {
+    const fixture = createFinancialFixture();
+    Recurrence.create(fixture.user, {
+      description: "Recorrência com falha", category_id: fixture.categoryId,
+      financial_account_id: fixture.accountId, expected_amount: "50,00", due_day: "10",
+      start_competence_month: "2026-07", end_competence_month: "2026-07", status: "ACTIVE",
+    });
+    db.exec("CREATE TRIGGER fail_recurrence_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'recurrence_generated' BEGIN SELECT RAISE(ABORT, 'recurrence audit failure'); END;");
+
+    assert.throws(
+      () => Recurrence.generateForCompetence(fixture.user, "2026-07"),
+      /recurrence audit failure/
+    );
+    assert.equal(db.isTransaction, false);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries").get().total, 0);
+    db.exec("DROP TRIGGER fail_recurrence_audit;");
   });
 
   it("respeita pausa, início, término e usuário", () => {

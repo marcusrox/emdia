@@ -227,6 +227,7 @@ emdia/
       migrator.js
       schema.js
       seed.js
+      transaction.js
     models/
       AuditLog.js
       Category.js

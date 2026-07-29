@@ -15,7 +15,7 @@ vezes ou introduzir comportamentos diferentes entre serviços.
 Criar um helper transacional pequeno e explícito para padronizar atomicidade e
 migrar primeiro as operações de maior risco.
 
-**Status:** planejada.
+**Status:** implementada em 28/07/2026.
 
 ## Padrão proposto
 
@@ -182,3 +182,36 @@ devem servir de base para a TASK-053.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação
+
+- Criado `src/database/transaction.js` com `withTransaction` e
+  `withImmediateTransaction`, callbacks síncronos, retorno transparente,
+  commit único e rollback com preservação do erro original.
+- Aninhamento iniciado pelo helper ou manualmente na mesma conexão é rejeitado
+  com `SQLITE_NESTED_TRANSACTION`.
+- Falhas do rollback são associadas a `error.rollbackError`, sem substituir a
+  exceção que causou o abort.
+- `PRAGMA busy_timeout = 5000` passou a ser aplicado à conexão principal e às
+  conexões de leitura do fluxo de backup. O probe exclusivo de restauração
+  mantém timeout zero por decisão operacional explícita.
+- Baixa, estorno, exclusão mensal, administração de usuários, geração de
+  recorrências e execução de migrations foram migrados para o helper.
+- Resultados funcionais passaram a retornar pelo callback; flags locais de
+  transação e rollbacks antecipados foram removidos.
+- Testes cobrem commit, retorno funcional, falhas antes e depois de gravações,
+  aninhamento, falha de rollback, callback assíncrono, concorrência
+  `IMMEDIATE`, busy timeout e rollbacks de negócio/auditoria.
+- `npm run check` e `npm test` foram executados com sucesso.
+- A release foi incrementada para `Release 28/07/2026 22:42 - 074`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 28/07/2026 22:42
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualizacao

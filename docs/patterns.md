@@ -162,6 +162,38 @@ Quando uma mudanca precisar de dados iniciais, atualize também
 `src/database/seed.js`. Migrations cuidam de estrutura e transformações
 necessárias de dados; seed cuida dos dados locais iniciais.
 
+### Transações SQLite
+
+Toda nova unidade transacional deve usar `src/database/transaction.js`:
+
+```js
+withTransaction(db, (connection) => {
+  // leituras e gravações atômicas
+});
+
+withImmediateTransaction(db, (connection) => {
+  // leitura de condição seguida de gravação
+});
+```
+
+- callbacks são exclusivamente síncronos e seu retorno é devolvido pelo helper;
+- sucesso produz um único `COMMIT`;
+- exceção produz `ROLLBACK` e o mesmo erro original é relançado;
+- falha do rollback fica disponível em `error.rollbackError`, sem substituir a
+  causa original;
+- resultados funcionais como `not-found` ou `last-admin` devem ser retornados
+  pelo callback, permitindo que a transação termine normalmente;
+- transações aninhadas na mesma conexão são rejeitadas com
+  `SQLITE_NESTED_TRANSACTION`; não use `SAVEPOINT` sem um caso real;
+- baixa, estorno e proteção do último administrador usam
+  `withImmediateTransaction`;
+- não adicione retry automático a operações financeiras.
+
+As conexões operacionais usam `PRAGMA busy_timeout = 5000`. O probe de
+restauração em `databaseBackupService` mantém `busy_timeout = 0` e
+`BEGIN EXCLUSIVE` explícitos porque sua finalidade é detectar imediatamente se
+o banco ativo está em uso, não executar uma unidade de negócio.
+
 ### Backup e restauração
 
 - Use `databaseBackupService`; não copie somente `emdia.sqlite` com o banco em

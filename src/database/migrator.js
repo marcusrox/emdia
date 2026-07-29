@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { getDatabase } = require("./connection");
+const { withTransaction } = require("./transaction");
 const { logError, logInfo } = require("../services/operationalLogger");
 
 const migrationsDir = path.join(__dirname, "migrations");
@@ -65,16 +66,15 @@ function applyMigration(db, migration) {
   });
 
   try {
-    db.exec("BEGIN;");
-    migration.up(db);
-    db.prepare("INSERT INTO schema_migrations (id, description, applied_at) VALUES (?, ?, ?)").run(
-      migration.id,
-      migration.description || null,
-      new Date().toISOString(),
-    );
-    db.exec("COMMIT;");
+    withTransaction(db, () => {
+      migration.up(db);
+      db.prepare("INSERT INTO schema_migrations (id, description, applied_at) VALUES (?, ?, ?)").run(
+        migration.id,
+        migration.description || null,
+        new Date().toISOString(),
+      );
+    });
   } catch (error) {
-    db.exec("ROLLBACK;");
     logError("database.migration.failed", "Falha ao aplicar migration de banco.", {
       details: {
         migration: migration.id,
