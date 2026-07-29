@@ -129,6 +129,11 @@ runuser -u www -- /usr/bin/pm2 describe emdia
 curl --fail http://127.0.0.1:3000/ready
 ```
 
+`/health` verifica somente se o processo HTTP está vivo. `/ready` também
+consulta o SQLite e confirma que todas as migrations esperadas foram aplicadas;
+retorna `503` quando a aplicação ainda não pode receber tráfego. A integração
+WhatsApp não participa do readiness.
+
 A suíte usa `node:test` e Supertest, não acessa `data/emdia.sqlite` e não abre
 porta HTTP. Os testes de rotas exercitam diretamente a aplicação Express.
 `npm test` descobre automaticamente arquivos `test/**/*.test.js`; helpers e
@@ -319,6 +324,17 @@ Exemplo:
 - ✅ SQL deve usar placeholders `?`.
 - ✅ Dados exibidos em HTML devem ser escapados.
 - ✅ Backups e locks operacionais devem permanecer fora do versionamento.
+- ✅ Novas senhas devem ter ao menos 12 caracteres; hashes antigos continuam
+  válidos até a próxima troca.
+- ✅ O login possui limite em memória por IP confiável e e-mail normalizado.
+  Em múltiplas instâncias, substitua-o por armazenamento compartilhado.
+- ✅ Sessões duram 8 horas, usam cookie `Secure` em produção e são removidas
+  periodicamente quando expiradas ou revogadas.
+- ✅ A CSP permite apenas assets locais e imagens do Gravatar. HSTS só é
+  enviado em produção quando `EMDIA_HTTPS_ENABLED=1`.
+
+Os limites, janelas de login, limpeza de sessões e timeout de readiness são
+configuráveis pelas variáveis documentadas em `.env.example`.
 
 ---
 

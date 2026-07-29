@@ -4,7 +4,7 @@ const { logInfo, logWarn } = require("../services/operationalLogger");
 const { redirect, requestDetails, sendHtml } = require("../services/http");
 const { loginView } = require("../services/viewEngine");
 
-function registerPublicAuthRoutes(app) {
+function registerPublicAuthRoutes(app, { loginRateLimiter }) {
   app.get("/login", (req, res) => {
     return req.user ? redirect(res, "/dashboard") : sendHtml(res, loginView({ email: "" }));
   });
@@ -12,9 +12,15 @@ function registerPublicAuthRoutes(app) {
   app.post("/login", (req, res) => {
     const email = String(req.body.email || "").trim();
     const password = String(req.body.password || "");
+    const currentLimit = loginRateLimiter.inspect(req, email);
+    if (currentLimit.blocked) return blockedLogin(req, res, email, currentLimit);
+
     const user = User.findByEmail(email);
 
     if (!user || !Auth.verifyPassword(password, user.password_hash)) {
+      const updatedLimit = loginRateLimiter.recordFailure(req, email);
+      if (updatedLimit.blocked) return blockedLogin(req, res, email, updatedLimit);
+
       logWarn("auth.login.failed", "Falha de login.", {
         details: {
           emailProvided: Boolean(email),
@@ -24,6 +30,7 @@ function registerPublicAuthRoutes(app) {
       return sendHtml(res, loginView({ email, error: "E-mail ou senha inválidos." }), 401);
     }
 
+    loginRateLimiter.reset(req, email);
     const session = Auth.createSession(user.id);
     logInfo("auth.login.success", "Login realizado com sucesso.", {
       user,
@@ -32,6 +39,22 @@ function registerPublicAuthRoutes(app) {
     res.set("Set-Cookie", session.cookie);
     return redirect(res, "/dashboard");
   });
+}
+
+function blockedLogin(req, res, email, limit) {
+  logWarn("auth.login.blocked", "Login bloqueado temporariamente por excesso de tentativas.", {
+    details: {
+      emailFingerprint: limit.emailFingerprint,
+      retryAfterSeconds: limit.retryAfterSeconds,
+      ...requestDetails(req),
+    },
+  });
+  res.set("Retry-After", String(limit.retryAfterSeconds));
+  return sendHtml(
+    res,
+    loginView({ email, error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." }),
+    429,
+  );
 }
 
 function registerProtectedAuthRoutes(app, { requireCsrf }) {

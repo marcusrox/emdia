@@ -1,14 +1,25 @@
 const { listOperationalLogs } = require("../services/operationalLogReader");
 const { collectRuntimeEnvironment } = require("../services/runtimeEnvironmentService");
+const { logWarn } = require("../services/operationalLogger");
 const { queryValue, sendHtml, sendJson } = require("../services/http");
 const {
   operationalLogsView,
   runtimeEnvironmentView,
 } = require("../services/viewEngine");
 
-function registerPublicOperationalRoutes(app) {
-  app.all(["/health", "/ready"], (req, res) => {
+function registerPublicOperationalRoutes(app, { readinessCheck }) {
+  app.all("/health", (req, res) => {
     return sendJson(res, { ok: true, service: "emdia" });
+  });
+
+  app.all("/ready", (req, res) => {
+    const result = readinessCheck();
+    if (!result.ok) {
+      logWarn("app.readiness.failed", "Readiness da aplicação falhou.", {
+        details: { reason: result.reason },
+      });
+    }
+    return sendJson(res, result.payload, result.ok ? 200 : 503);
   });
 }
 

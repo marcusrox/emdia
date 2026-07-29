@@ -26,9 +26,9 @@ function calendarEntry(entry, competence) {
 
 function calendarDay(day, competence, today, firstDayOffset) {
   const isToday = day.date === today;
-  const classes = ["calendar-day", isToday ? "calendar-day-today" : "", day.entries.length ? "" : "calendar-day-empty"].filter(Boolean).join(" ");
-  const style = day.day === 1 ? ` style="--calendar-start: ${firstDayOffset + 1}"` : "";
-  return `<article class="${classes}"${style}${isToday ? ' aria-current="date"' : ""}>
+  const startClass = day.day === 1 ? `calendar-start-${firstDayOffset + 1}` : "";
+  const classes = ["calendar-day", startClass, isToday ? "calendar-day-today" : "", day.entries.length ? "" : "calendar-day-empty"].filter(Boolean).join(" ");
+  return `<article class="${classes}"${isToday ? ' aria-current="date"' : ""}>
     <header class="calendar-day-heading"><span class="calendar-day-number">${day.day}</span><span>${escapeHtml(weekdayLabel(day.date))}${isToday ? " · Hoje" : ""}</span></header>
     ${day.entries.length ? `<ul class="calendar-entry-list">${day.entries.map((entry) => calendarEntry(entry, competence)).join("")}</ul>` : '<p class="calendar-day-no-entries">Sem movimentação</p>'}
   </article>`;

@@ -28,7 +28,7 @@ function recordActionLink({ href, icon, label, tone = "" }) {
 }
 
 function recordActionForm({ action, icon, label, tone = "", user, confirmMessage = "" }) {
-  const confirmAttribute = confirmMessage ? ` onsubmit="return confirm('${escapeHtml(confirmMessage)}')"` : "";
+  const confirmAttribute = confirmMessage ? ` data-confirm="${escapeHtml(confirmMessage)}"` : "";
 
   return `<form class="record-action-form" method="post" action="${escapeHtml(action)}"${confirmAttribute}>
     ${csrfInput(user)}

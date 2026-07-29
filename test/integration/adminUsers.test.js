@@ -66,14 +66,14 @@ describe("administração de usuários", () => {
     const resetUser = createUser({ email: "redefinido@example.test", password: "senha-antiga" });
     const resetSession = Auth.createSession(resetUser.id);
     const reset = User.resetPasswordAdmin(resetUser.id, {
-      new_password: "senha-nova",
-      confirm_password: "senha-nova",
+      new_password: "senha-nova-segura",
+      confirm_password: "senha-nova-segura",
     });
     assert.equal(reset.ok, true);
     assert.equal(Boolean(Auth.getSession(requestWithSession(resetSession.token))), false);
     const stored = db.prepare("SELECT password_hash FROM users WHERE id = ?").get(resetUser.id);
     assert.equal(Auth.verifyPassword("senha-antiga", stored.password_hash), false);
-    assert.equal(Auth.verifyPassword("senha-nova", stored.password_hash), true);
+    assert.equal(Auth.verifyPassword("senha-nova-segura", stored.password_hash), true);
   });
 });
 
@@ -86,8 +86,8 @@ function adminPayload(overrides = {}) {
     locale: "pt-BR",
     role: "user",
     status: "active",
-    new_password: "senha123",
-    confirm_password: "senha123",
+    new_password: "senha-segura-123",
+    confirm_password: "senha-segura-123",
     ...overrides,
   };
 }

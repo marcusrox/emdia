@@ -61,7 +61,7 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
               <input type="password" name="current_password" autocomplete="current-password" placeholder="Digite sua senha atual">
             </label>
             <label>Nova senha
-              <input type="password" name="new_password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres">
+              <input type="password" name="new_password" autocomplete="new-password" minlength="12" placeholder="Mínimo de 12 caracteres">
             </label>
             <label>Confirmar nova senha
               <input type="password" name="confirm_password" autocomplete="new-password" placeholder="Repita a nova senha">

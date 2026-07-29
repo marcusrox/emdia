@@ -11,6 +11,7 @@ const {
   notFoundOrMethodNotAllowed,
   unexpectedErrorHandler,
 } = require("./middleware/errors");
+const { securityHeaders } = require("./middleware/securityHeaders");
 const { registerAccountRoutes } = require("./routes/accountRoutes");
 const { registerAdminRoutes } = require("./routes/adminRoutes");
 const {
@@ -27,19 +28,25 @@ const {
 const { registerProfileRoutes } = require("./routes/profileRoutes");
 const { registerRecurrenceRoutes } = require("./routes/recurrenceRoutes");
 const { registerSettlementRoutes } = require("./routes/settlementRoutes");
+const { createLoginRateLimiter } = require("./services/loginRateLimitService");
+const { checkReadiness } = require("./services/readinessService");
 
-function createServer() {
+function createServer(options = {}) {
   const app = express();
+  const loginRateLimiter = options.loginRateLimiter || createLoginRateLimiter();
+  const readinessCheck = options.readinessCheck || checkReadiness;
 
+  app.disable("x-powered-by");
   app.set("trust proxy", "loopback");
+  app.use(securityHeaders);
   app.use("/public", express.static(path.join(__dirname, "..", "public")));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
   app.use(markResponseFormat);
 
-  registerPublicOperationalRoutes(app);
+  registerPublicOperationalRoutes(app, { readinessCheck });
 
   app.use(loadSession);
-  registerPublicAuthRoutes(app);
+  registerPublicAuthRoutes(app, { loginRateLimiter });
 
   app.use(requireAuth);
 

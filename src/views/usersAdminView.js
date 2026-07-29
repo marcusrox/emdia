@@ -80,7 +80,7 @@ function userAdminFormView({ user, target = {}, action, isNew = false, errors = 
 
 function passwordFields(errors) {
   return `<h2 class="wide">Acesso inicial</h2>
-    <label>${fieldLabel("Senha inicial")}<input type="password" name="new_password" required autocomplete="new-password"${fieldErrorAttributes(errors, "new_password")}>${fieldError(errors, "new_password")}</label>
+    <label>${fieldLabel("Senha inicial", "Use pelo menos 12 caracteres; frases-senha são permitidas.")}<input type="password" name="new_password" required minlength="12" autocomplete="new-password"${fieldErrorAttributes(errors, "new_password")}>${fieldError(errors, "new_password")}</label>
     <label>${fieldLabel("Confirmar senha")}<input type="password" name="confirm_password" required autocomplete="new-password"${fieldErrorAttributes(errors, "confirm_password")}>${fieldError(errors, "confirm_password")}</label>`;
 }
 
@@ -89,7 +89,7 @@ function passwordResetPanel(user, target, errors) {
     <div><h2>Redefinir senha</h2><p>A troca encerra todas as sessões deste usuário.</p></div>
     <form method="post" action="/admin/users/${encodeURIComponent(target.id)}/reset-password" class="form-grid form-short" data-validate-form>
       ${csrfInput(user)}
-      <label>Nova senha<input type="password" name="new_password" required autocomplete="new-password"${fieldErrorAttributes(errors, "new_password")}>${fieldError(errors, "new_password")}</label>
+      <label>Nova senha<input type="password" name="new_password" required minlength="12" autocomplete="new-password"${fieldErrorAttributes(errors, "new_password")}>${fieldError(errors, "new_password")}</label>
       <label>Confirmar nova senha<input type="password" name="confirm_password" required autocomplete="new-password"${fieldErrorAttributes(errors, "confirm_password")}>${fieldError(errors, "confirm_password")}</label>
       <div class="form-actions wide"><button type="submit">${buttonContent("Redefinir senha", "key-round")}</button></div>
     </form>

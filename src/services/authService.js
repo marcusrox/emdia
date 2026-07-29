@@ -4,6 +4,9 @@ const { getDatabase } = require("../database/connection");
 const COOKIE_NAME = "emdia_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const SCRYPT_KEY_LENGTH = 64;
+const MIN_PASSWORD_LENGTH = 12;
+const DEFAULT_SESSION_CLEANUP_LIMIT = 500;
+const DEFAULT_REVOKED_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("base64url");
@@ -18,6 +21,12 @@ function verifyPassword(password, passwordHash) {
   const expected = Buffer.from(storedHash, "base64url");
   const actual = crypto.scryptSync(String(password || ""), salt, expected.length);
   return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function passwordPolicyError(password, label = "A senha") {
+  return String(password || "").length < MIN_PASSWORD_LENGTH
+    ? `${label} deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`
+    : "";
 }
 
 function parseCookies(req) {
@@ -94,6 +103,37 @@ function invalidateSession(req) {
     .run(new Date().toISOString(), sessionHash(token));
 }
 
+function cleanupSessions(options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date(options.now || Date.now());
+  const limit = positiveInteger(
+    options.limit,
+    process.env.EMDIA_SESSION_CLEANUP_LIMIT,
+    DEFAULT_SESSION_CLEANUP_LIMIT,
+  );
+  const retentionMs = positiveInteger(
+    options.revokedRetentionMs,
+    process.env.EMDIA_REVOKED_SESSION_RETENTION_MS,
+    DEFAULT_REVOKED_RETENTION_MS,
+  );
+  const revokedBefore = new Date(now.getTime() - retentionMs).toISOString();
+  const result = getDatabase().prepare(`
+    DELETE FROM sessions
+    WHERE id IN (
+      SELECT id
+      FROM sessions
+      WHERE expires_at <= ?
+         OR (revoked_at IS NOT NULL AND revoked_at <= ?)
+      ORDER BY expires_at
+      LIMIT ?
+    )
+  `).run(now.toISOString(), revokedBefore, limit);
+
+  return {
+    deleted: Number(result.changes),
+    limit,
+  };
+}
+
 function buildSessionCookie(token, maxAgeSeconds) {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   return `${COOKIE_NAME}=${encodeURIComponent(token)}; Max-Age=${maxAgeSeconds}; Path=/; HttpOnly; SameSite=Lax${secure}`;
@@ -121,13 +161,22 @@ function verifyCsrf(req, body) {
   return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
+function positiveInteger(explicitValue, environmentValue, fallback) {
+  const value = Number(explicitValue ?? environmentValue);
+  return Number.isSafeInteger(value) && value > 0 ? value : fallback;
+}
+
 module.exports = {
+  MIN_PASSWORD_LENGTH,
+  SESSION_MAX_AGE_SECONDS,
+  cleanupSessions,
   clearSessionCookie,
   createSession,
   csrfToken,
   getSession,
   hashPassword,
   invalidateSession,
+  passwordPolicyError,
   verifyCsrf,
   verifyPassword,
 };

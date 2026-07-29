@@ -26,7 +26,7 @@ function recordActionLink({ href, icon, label, tone = "" }) {
 }
 
 function recordActionForm({ action, icon, label, tone = "", user, confirmMessage = "" }) {
-  const confirmAttribute = confirmMessage ? ` onsubmit="return confirm('${escapeHtml(confirmMessage)}')"` : "";
+  const confirmAttribute = confirmMessage ? ` data-confirm="${escapeHtml(confirmMessage)}"` : "";
 
   return `<form class="record-action-form" method="post" action="${escapeHtml(action)}"${confirmAttribute}>
     ${csrfInput(user)}
@@ -42,7 +42,9 @@ function categoryNameWithColor(category) {
   const color = normalizeHexColor(category.color);
 
   return `<span class="category-name-with-color">
-    <span class="category-color-dot" style="background-color: ${escapeHtml(color)};" title="${escapeHtml(color)}" aria-label="Cor da categoria ${escapeHtml(color)}"></span>
+    <svg class="category-color-dot" viewBox="0 0 16 16" title="${escapeHtml(color)}" aria-label="Cor da categoria ${escapeHtml(color)}">
+      <circle cx="8" cy="8" r="7" fill="${escapeHtml(color)}"></circle>
+    </svg>
     <span>${escapeHtml(category.name)}</span>
   </span>`;
 }

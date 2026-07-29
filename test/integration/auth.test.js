@@ -5,6 +5,8 @@ const { createUser, db, resetDatabase } = require("../helpers/testDatabase");
 const { requestWithSession } = require("../helpers/http");
 const { createServer } = require("../../src/server");
 const Auth = require("../../src/services/authService");
+const { createLoginRateLimiter } = require("../../src/services/loginRateLimitService");
+const User = require("../../src/models/User");
 
 beforeEach(resetDatabase);
 
@@ -28,6 +30,69 @@ describe("autenticação e sessões", () => {
     assert.match(wrongPassword.text, /E-mail ou senha inválidos/);
     assert.doesNotMatch(missing.text, /não encontrado|inexistente/i);
     assert.doesNotMatch(wrongPassword.text, /senha incorreta/i);
+  });
+
+  it("limita tentativas por IP confiável e e-mail normalizado sem espera real", async () => {
+    let now = 1_000;
+    const loginRateLimiter = createLoginRateLimiter({
+      maxAttempts: 2,
+      windowMs: 10_000,
+      now: () => now,
+    });
+    const user = createUser({ email: "limite@example.test", password: "senha-legada" });
+    const app = createServer({ loginRateLimiter });
+
+    await request(app).post("/login").set("X-Forwarded-For", "198.51.100.10")
+      .type("form").send({ email: " LIMITE@example.test ", password: "errada" }).expect(401);
+    const blocked = await request(app).post("/login").set("X-Forwarded-For", "198.51.100.10")
+      .type("form").send({ email: user.email, password: "errada" }).expect(429);
+    assert.match(blocked.text, /Muitas tentativas/);
+    assert.ok(Number(blocked.headers["retry-after"]) > 0);
+
+    await request(app).post("/login").set("X-Forwarded-For", "198.51.100.11")
+      .type("form").send({ email: user.email, password: "senha-legada" }).expect(303);
+    await request(app).post("/login").set("X-Forwarded-For", "198.51.100.10")
+      .type("form").send({ email: "outro@example.test", password: "errada" }).expect(401);
+
+    now += 10_001;
+    await request(app).post("/login").set("X-Forwarded-For", "198.51.100.10")
+      .type("form").send({ email: user.email, password: "senha-legada" }).expect(303);
+  });
+
+  it("aplica política nova sem invalidar hash legado e revoga sessões ao trocar senha", () => {
+    const user = createUser({ password: "curta" });
+    const legacySession = Auth.createSession(user.id);
+    assert.equal(Auth.verifyPassword("curta", user.password_hash), true);
+
+    const rejected = UserUpdate(user, {
+      current_password: "curta",
+      new_password: "muito-curta",
+      confirm_password: "muito-curta",
+    });
+    assert.equal(rejected.ok, false);
+    assert.match(rejected.errors.join(" "), /12 caracteres/);
+
+    const updated = UserUpdate(user, {
+      current_password: "curta",
+      new_password: "frase senha segura",
+      confirm_password: "frase senha segura",
+    });
+    assert.equal(updated.ok, true);
+    assert.equal(Boolean(Auth.getSession(requestWithSession(legacySession.token))), false);
+  });
+
+  it("remove sessões expiradas e revogadas antigas em lote limitado", () => {
+    const user = createUser();
+    Auth.createSession(user.id);
+    Auth.createSession(user.id);
+    Auth.createSession(user.id);
+    db.prepare("UPDATE sessions SET expires_at = ?").run("2000-01-01T00:00:00.000Z");
+
+    const first = Auth.cleanupSessions({ now: new Date("2026-01-01T00:00:00.000Z"), limit: 2 });
+    assert.equal(first.deleted, 2);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM sessions").get().total, 1);
+    const second = Auth.cleanupSessions({ now: new Date("2026-01-01T00:00:00.000Z"), limit: 2 });
+    assert.equal(second.deleted, 1);
   });
 
   it("rejeita sessões expiradas e revogadas", () => {
@@ -60,3 +125,12 @@ describe("autenticação e sessões", () => {
     assert.equal(Boolean(Auth.getSession(sessionRequest)), false);
   });
 });
+
+function UserUpdate(user, passwordData) {
+  return User.updateProfile(user.id, {
+    name: user.name,
+    email: user.email,
+    phone_e164: "",
+    ...passwordData,
+  });
+}

@@ -169,6 +169,22 @@ O middleware global nunca devolve a mensagem técnica da exceção. A view
 autenticado. Rotas com contrato JSON são identificadas antes do carregamento da
 sessão para que falhas precoces também preservem o formato da resposta.
 
+Antes das rotas, `securityHeaders` aplica CSP efetiva sem `unsafe-inline`,
+proteção contra frames, política de referência e permissões mínimas. A CSP
+permite scripts e estilos locais e imagens locais, `data:` e Gravatar. HSTS
+depende de produção com HTTPS explicitamente confirmado.
+
+O `POST /login` usa um limitador em memória por IP resolvido pelo proxy
+confiável e e-mail normalizado. Esse desenho atende ao processo único atual;
+uma implantação horizontal precisa de armazenamento compartilhado. `/health`
+é liveness independente do banco, enquanto `/ready` faz consulta leve ao
+SQLite e compara as migrations aplicadas com o plano versionado. WhatsApp
+permanece fora desse contrato por ser dependência secundária.
+
+Sessões mantêm validade máxima de oito horas. A expiração é verificada em cada
+acesso e um scheduler do processo remove, em lotes limitados, registros
+expirados e revogados antigos usando índices próprios.
+
 Rotas principais:
 
 ```text

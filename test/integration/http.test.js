@@ -8,6 +8,7 @@ const { createServer } = require("../../src/server");
 const Entry = require("../../src/models/FinancialEntry");
 const User = require("../../src/models/User");
 const { getLogFilePath } = require("../../src/services/operationalLogger");
+const { checkReadiness } = require("../../src/services/readinessService");
 
 beforeEach(resetDatabase);
 
@@ -15,7 +16,58 @@ describe("integração HTTP Express", () => {
   it("responde health e ready sem autenticação", async () => {
     const app = createServer();
     await request(app).get("/health").expect(200).expect("Content-Type", /json/);
-    await request(app).get("/ready").expect(200).expect({ ok: true, service: "emdia" });
+    await request(app).get("/ready").expect(200).expect({
+      ok: true,
+      service: "emdia",
+      database: "ready",
+      migrations: "ready",
+    });
+  });
+
+  it("separa liveness de readiness indisponível", async () => {
+    const app = createServer({
+      readinessCheck: () => checkReadiness({
+        db: { prepare() { throw new Error("banco indisponível"); } },
+      }),
+    });
+    await request(app).get("/health").expect(200).expect({ ok: true, service: "emdia" });
+    await request(app).get("/ready").expect(503).expect({
+      ok: false,
+      service: "emdia",
+      error: "Dependência obrigatória indisponível.",
+    });
+  });
+
+  it("aplica cabeçalhos seguros também em assets e erros", async () => {
+    const app = createServer();
+    for (const pathname of ["/login", "/public/css/styles.css", "/rota-inexistente"]) {
+      const response = await request(app).get(pathname);
+      assert.equal(response.headers["x-powered-by"], undefined);
+      assert.equal(response.headers["x-content-type-options"], "nosniff");
+      assert.equal(response.headers["x-frame-options"], "DENY");
+      assert.equal(response.headers["strict-transport-security"], undefined);
+      assert.match(response.headers["content-security-policy"], /script-src 'self'/);
+      assert.doesNotMatch(response.headers["content-security-policy"], /unsafe-inline/);
+    }
+
+    const agent = request.agent(app);
+    await login(agent);
+    const dashboard = await agent.get("/dashboard").expect(200);
+    assert.match(dashboard.headers["content-security-policy"], /img-src 'self' data: https:\/\/gravatar\.com/);
+  });
+
+  it("interrompe readiness quando o probe excede o timeout configurado", () => {
+    let now = 0;
+    const result = checkReadiness({
+      db,
+      timeoutMs: 5,
+      now: () => {
+        now += 10;
+        return now;
+      },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, "timeout");
   });
 
   it("redireciona acesso protegido e preserva sessão entre login e logout", async () => {

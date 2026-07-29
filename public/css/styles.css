@@ -2786,7 +2786,13 @@ textarea {
 .calendar-weekdays span { padding: 8px; }
 .calendar-days { gap: 8px; }
 .calendar-day { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-height: 145px; padding: 10px; }
-.calendar-day:first-child { grid-column-start: var(--calendar-start); }
+.calendar-start-1 { grid-column-start: 1; }
+.calendar-start-2 { grid-column-start: 2; }
+.calendar-start-3 { grid-column-start: 3; }
+.calendar-start-4 { grid-column-start: 4; }
+.calendar-start-5 { grid-column-start: 5; }
+.calendar-start-6 { grid-column-start: 6; }
+.calendar-start-7 { grid-column-start: 7; }
 .calendar-day-today { border: 2px solid var(--primary); }
 .calendar-day-heading { align-items: center; color: var(--muted); display: flex; font-size: 11px; gap: 7px; margin-bottom: 8px; text-transform: capitalize; }
 .calendar-day-number { align-items: center; background: var(--surface-2); border-radius: 999px; color: var(--text); display: inline-flex; font-size: 13px; font-weight: 800; height: 27px; justify-content: center; min-width: 27px; }

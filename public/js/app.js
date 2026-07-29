@@ -66,6 +66,15 @@
     }
   }
 
+  function confirmFormSubmission(event) {
+    var form = event.target;
+    var message = form.getAttribute("data-confirm");
+
+    if (message && !window.confirm(message)) {
+      event.preventDefault();
+    }
+  }
+
   function autoSubmitOnChange(event) {
     var field = event.target;
     var form = field.matches("[data-auto-submit-on-change]")
@@ -492,6 +501,7 @@
   document.addEventListener("change", autoSubmitOnChange);
   document.addEventListener("input", updateSettlementProjectionOnInput);
   document.addEventListener("submit", validateForms);
+  document.addEventListener("submit", confirmFormSubmission);
   document.querySelectorAll("[data-settlement-form]").forEach(updateSettlementProjection);
   restoreSettingsSections();
   collapseMobileEntryFilters();

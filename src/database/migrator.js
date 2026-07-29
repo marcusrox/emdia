@@ -105,5 +105,6 @@ function applyMigration(db, migration) {
 }
 
 module.exports = {
+  loadMigrations,
   runMigrations,
 };

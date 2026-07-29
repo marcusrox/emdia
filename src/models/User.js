@@ -1,6 +1,6 @@
 const { getDatabase } = require("../database/connection");
 const { withImmediateTransaction } = require("../database/transaction");
-const { hashPassword, verifyPassword } = require("../services/authService");
+const { hashPassword, passwordPolicyError, verifyPassword } = require("../services/authService");
 const { newId } = require("../services/id");
 
 const DEFAULT_EMAIL = "usuario@emdia.local";
@@ -116,7 +116,8 @@ function resetPasswordAdmin(userId, data) {
   const newPassword = String(data.new_password || "");
   const confirmPassword = String(data.confirm_password || "");
   const errors = {};
-  if (newPassword.length < 6) errors.new_password = "A nova senha deve ter pelo menos 6 caracteres.";
+  const policyError = passwordPolicyError(newPassword, "A nova senha");
+  if (policyError) errors.new_password = policyError;
   if (newPassword !== confirmPassword) errors.confirm_password = "A confirmação da nova senha não confere.";
   if (Object.keys(errors).length) return { ok: false, errors };
   const db = getDatabase();
@@ -157,7 +158,8 @@ function validateAdminData(values, { current = null, actorId = null, requirePass
   if (!isValidTimeZone(values.timezone)) errors.timezone = "Informe um fuso horário válido.";
   if (!isValidLocale(values.locale)) errors.locale = "Informe uma localidade válida, como pt-BR.";
   if (requirePassword) {
-    if (values.new_password.length < 6) errors.new_password = "A senha deve ter pelo menos 6 caracteres.";
+    const policyError = passwordPolicyError(values.new_password);
+    if (policyError) errors.new_password = policyError;
     if (values.new_password !== values.confirm_password) errors.confirm_password = "A confirmação da senha não confere.";
   }
   if (current && actorId === current.id && !values.is_admin) errors.role = "Você não pode remover o próprio perfil administrativo.";
@@ -250,15 +252,21 @@ function updateProfile(userId, data) {
 
   const passwordHash = profile.new_password ? hashPassword(profile.new_password) : current.password_hash;
 
-  getDatabase()
-    .prepare(
+  const db = getDatabase();
+  const now = new Date().toISOString();
+  withImmediateTransaction(db, () => {
+    db.prepare(
       `
-      UPDATE users
-      SET name = ?, email = ?, phone_e164 = ?, password_hash = ?, updated_at = ?
-      WHERE id = ? AND is_active = 1
-    `
-    )
-    .run(profile.name, profile.email, profile.phone_e164 || null, passwordHash, new Date().toISOString(), userId);
+        UPDATE users
+        SET name = ?, email = ?, phone_e164 = ?, password_hash = ?, updated_at = ?
+        WHERE id = ? AND is_active = 1
+      `
+    ).run(profile.name, profile.email, profile.phone_e164 || null, passwordHash, now, userId);
+
+    if (profile.new_password) {
+      db.prepare("UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL").run(now, userId);
+    }
+  });
 
   return { ok: true, user: getById(userId) };
 }
@@ -305,8 +313,9 @@ function validateProfile(current, profile) {
 
     if (!profile.new_password) {
       errors.push("Informe a nova senha.");
-    } else if (profile.new_password.length < 6) {
-      errors.push("A nova senha deve ter pelo menos 6 caracteres.");
+    } else {
+      const policyError = passwordPolicyError(profile.new_password, "A nova senha");
+      if (policyError) errors.push(policyError);
     }
 
     if (profile.new_password !== profile.confirm_password) {

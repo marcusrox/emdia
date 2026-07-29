@@ -484,6 +484,22 @@ Regras obrigatórias:
 - validar IDs e dados de formulário antes de confiar neles;
 - manter uploads, OCR e WhatsApp com confirmação humana quando forem
   implementados.
+- novas senhas exigem no mínimo 12 caracteres pelo helper central de
+  `authService`; hashes existentes não são rejeitados pela nova política;
+- alterações de senha revogam as sessões do usuário;
+- o limitador de login usa IP confiável e e-mail normalizado, nunca senha ou
+  e-mail completo em logs; múltiplas instâncias exigem storage compartilhado;
+- preserve a CSP sem `unsafe-inline`: use assets locais, atributos `data-*` e
+  classes CSS em vez de handlers ou estilos inline;
+- HSTS só pode ser habilitado quando HTTPS estiver garantido;
+- limpeza de sessões deve ser periódica, indexada e limitada, nunca executada
+  em toda requisição;
+- `/health` é liveness leve; `/ready` valida SQLite e migrations e retorna
+  `503` sem detalhes internos quando a dependência obrigatória falha.
+
+Se os parâmetros do `scrypt` forem alterados no futuro, mantenha a identificação
+do esquema no hash e faça rehash oportunista após autenticação válida, sem
+rotação forçada em massa.
 
 ## 16. Validação
 

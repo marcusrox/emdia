@@ -16,7 +16,7 @@ readiness.
 Adicionar uma linha de base de segurança e operação adequada ao monólito atual,
 sem introduzir infraestrutura desproporcional ao MVP.
 
-**Status:** planejada.
+**Status:** implementada.
 
 ## Princípios
 
@@ -204,3 +204,12 @@ secundária. Seu estado continua em endpoint ou tela operacional própria.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Assinatura da LLM
+
+- Data: 28/07/2026 23:45
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao
