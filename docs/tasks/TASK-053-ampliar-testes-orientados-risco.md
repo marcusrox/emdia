@@ -20,7 +20,7 @@ financeira.
 Organizar e ampliar a suíte por risco de negócio, mantendo testes rápidos,
 determinísticos e isolados do banco local.
 
-**Status:** planejada.
+**Status:** implementada em 28/07/2026.
 
 ## Matriz de risco
 
@@ -222,3 +222,38 @@ TASK-049, TASK-050 e TASK-052 conforme cada uma for implementada.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação
+
+- `npm test` passou a descobrir automaticamente `test/**/*.test.js`, mantendo
+  execução sequencial e eliminando a lista manual de arquivos.
+- O helper compartilhado recusa qualquer banco diferente de `:memory:` e
+  fixtures HTTP de login, CSRF e sessão foram centralizadas.
+- Foram adicionadas suítes por capacidade para autenticação/sessões,
+  administração de usuários, contas/categorias e migrations.
+- Sessões expiradas, revogadas e pertencentes a usuário inativo passaram a ser
+  verificadas, assim como mensagens genéricas de login.
+- O ciclo administrativo cobre cadastro, validação, filtros, promoção,
+  autobloqueio, último administrador, bloqueio com revogação e redefinição de
+  senha com revogação.
+- Contas e categorias cobrem isolamento entre usuários, exclusão lógica,
+  preservação dos vínculos financeiros, restauração e nomes duplicados conforme
+  a regra atual.
+- O migrator passou a aceitar banco e plano controlados em testes, validando o
+  plano inteiro e rejeitando IDs duplicados antes de aplicar alterações.
+- Migrations são testadas em banco vazio, reexecução idempotente, banco em
+  versão anterior, plano inválido e rollback de migration com falha.
+- A matriz de risco e as regras para escrever testes foram documentadas em
+  README, patterns e arquitetura.
+- A release foi incrementada para `Release 28/07/2026 23:34 - 075`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 28/07/2026 23:34
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualizacao

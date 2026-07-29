@@ -491,7 +491,30 @@ Para alterações JavaScript:
 
 ```powershell
 npm run check
+npm test
 ```
+
+`npm test` usa a descoberta `test/**/*.test.js`. Novas suítes devem seguir esse
+padrão; arquivos em `test/helpers/` não devem terminar em `.test.js`.
+
+Regras de testes:
+
+- priorize risco crítico (finanças, atomicidade, migrations e backup), depois
+  risco alto (sessões, autorização, administração, contas, categorias e erro
+  global);
+- use `node:test` e Supertest, sem adicionar outro framework;
+- use `test/helpers/testDatabase.js` para o singleton isolado em `:memory:`;
+- use uma `DatabaseSync` em memória ou diretório temporário quando a suíte
+  precisar controlar schema, concorrência ou arquivos;
+- nunca abra `data/emdia.sqlite`; o helper compartilhado deve falhar se o
+  caminho não for `:memory:`;
+- mantenha fixtures pequenas e explícitas;
+- injete falhas com migrations controladas ou triggers temporárias e sempre
+  confirme rollback;
+- não dependa da porta 3000, de rede externa ou de relógio real;
+- mantenha `--test-concurrency=1` enquanto a conexão da aplicação for singleton;
+- para mudanças na infraestrutura de testes, execute `npm test` duas vezes e
+  confirme que `git status` não contém bancos ou artefatos.
 
 Para arquivos especificos:
 
@@ -534,7 +557,6 @@ Itens previstos no PRD, mas ainda não implementados no MVP atual:
 - anexos;
 - OCR;
 - relatórios avancados;
-- testes automatizados;
 - TypeScript;
 - EJS/Drizzle.
 

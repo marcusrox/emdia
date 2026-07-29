@@ -393,7 +393,40 @@ O diretório padrão é `backups/` e pode ser alterado por
 com armazenamento externo. A criação automática antes de migrations também não
 está habilitada nesta etapa.
 
-## 12. Limites do MVP atual
+## 12. Testes automatizados
+
+A suíte usa `node:test`, Supertest e descoberta automática de
+`test/**/*.test.js`, com execução sequencial enquanto o banco da aplicação
+permanecer singleton.
+
+```text
+test/
+  helpers/
+    testDatabase.js
+    http.js
+  unit/
+    *.test.js
+  integration/
+    *.test.js
+```
+
+`testDatabase.js` define SQLite `:memory:`, executa todas as migrations e
+recusa caminhos não isolados. Suítes de migrations, concorrência e backup usam
+conexões próprias em memória ou diretórios temporários.
+
+A matriz de prioridade é:
+
+1. risco crítico: lançamentos, baixas, estornos, atomicidade, isolamento,
+   migrations e backup/restauração;
+2. risco alto: sessões, autorização, administração de usuários, contas,
+   categorias, recorrências e erro global;
+3. risco moderado: telas, preferências, filtros, CSV, notificações e operação.
+
+Falhas intermediárias são injetadas por triggers ou migrations controladas,
+sem alterar dados reais. Testes HTTP chamam o app Express diretamente e não
+abrem porta.
+
+## 13. Limites do MVP atual
 
 Ainda não existem:
 
@@ -403,14 +436,13 @@ Ainda não existem:
 - anexos;
 - OCR;
 - relatórios avancados;
-- testes automatizados;
 - templates EJS;
 - API JSON completa.
 
 Esses itens estao previstos no PRD ou em evolução futura, mas não devem ser
 presumidos em mudanças pequenas.
 
-## 13. Caminhos de evolução
+## 14. Caminhos de evolução
 
 Evolucoes prováveis:
 
@@ -420,8 +452,7 @@ Evolucoes prováveis:
 4. criar OCR com revisão humana;
 5. evoluir a integração WhatsApp para entrada de mensagens e mídias;
 6. extrair relatórios;
-7. adicionar testes automatizados;
-8. avaliar migracao para EJS/TypeScript/Drizzle se o projeto crescer.
+7. avaliar migracao para EJS/TypeScript/Drizzle se o projeto crescer.
 
 Qualquer evolução deve preservar:
 
@@ -432,7 +463,7 @@ Qualquer evolução deve preservar:
 - HTML escapado;
 - separacao entre dados, regras e renderização.
 
-## 14. Notificações WhatsApp outbound
+## 15. Notificações WhatsApp outbound
 
 `notificationService.js` gera e consome a fila de notificações sem conhecer o
 gateway externo. `whatsappClient.js` seleciona, por configuração, um dos
@@ -446,7 +477,7 @@ Evolution API e WAHA mantêm seus próprios endpoints, headers, payloads e estad
 de sessão. Ambos retornam o mesmo contrato interno para que troca de provedor
 não altere geração de lembretes, idempotência, persistência ou interface.
 
-## 15. Cabeçalhos das views internas
+## 16. Cabeçalhos das views internas
 
 `src/services/viewHelpers.js` fornece `pageHeading`, responsável pela marcação
 comum, escape dos textos e composição opcional de ações. As views informam
@@ -456,7 +487,7 @@ título, eyebrow, descrição e ações específicas sem duplicar a estrutura.
 lançamentos. A competência continua calculada pelos serviços de data e visível
 no cabeçalho; o helper de view cuida somente da apresentação e navegação.
 
-## 16. Ambiente de execução
+## 17. Ambiente de execução
 
 A rota autenticada `GET /runtime-environment` oferece um diagnóstico somente
 leitura do processo atual. `src/services/runtimeEnvironmentService.js` coleta e

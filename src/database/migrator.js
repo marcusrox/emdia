@@ -6,18 +6,31 @@ const { logError, logInfo } = require("../services/operationalLogger");
 
 const migrationsDir = path.join(__dirname, "migrations");
 
-function runMigrations() {
-  const db = getDatabase();
+function runMigrations(options = {}) {
+  const db = options.db || getDatabase();
+  const migrations = options.migrations || loadMigrations();
+  validateMigrationPlan(migrations);
   ensureMigrationsTable(db);
 
   const applied = new Set(
     db.prepare("SELECT id FROM schema_migrations ORDER BY id").all().map((migration) => migration.id),
   );
-  const migrations = loadMigrations();
 
   migrations.forEach((migration) => {
     if (applied.has(migration.id)) return;
     applyMigration(db, migration);
+  });
+}
+
+function validateMigrationPlan(migrations) {
+  const ids = new Set();
+
+  migrations.forEach((migration, index) => {
+    validateMigration(`posição ${index + 1}`, migration);
+    if (ids.has(migration.id)) {
+      throw new Error(`Migration duplicada: ${migration.id}.`);
+    }
+    ids.add(migration.id);
   });
 }
 

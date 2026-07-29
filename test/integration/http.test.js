@@ -3,20 +3,13 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const request = require("supertest");
 const { db, resetDatabase } = require("../helpers/testDatabase");
+const { csrfFrom, login } = require("../helpers/http");
 const { createServer } = require("../../src/server");
 const Entry = require("../../src/models/FinancialEntry");
 const User = require("../../src/models/User");
 const { getLogFilePath } = require("../../src/services/operationalLogger");
 
 beforeEach(resetDatabase);
-
-async function login(agent) {
-  return agent.post("/login").type("form").send({ email: "usuario@emdia.local", password: "emdia123" });
-}
-
-function csrfFrom(html) {
-  return html.match(/name="_csrf" value="([^"]+)"/)?.[1] || "";
-}
 
 describe("integração HTTP Express", () => {
   it("responde health e ready sem autenticação", async () => {

@@ -131,6 +131,17 @@ curl --fail http://127.0.0.1:3000/ready
 
 A suíte usa `node:test` e Supertest, não acessa `data/emdia.sqlite` e não abre
 porta HTTP. Os testes de rotas exercitam diretamente a aplicação Express.
+`npm test` descobre automaticamente arquivos `test/**/*.test.js`; helpers e
+fixtures devem ficar em `test/helpers/` sem o sufixo `.test.js`.
+
+A prioridade da suíte é risco de negócio:
+
+- crítico: finanças, atomicidade, isolamento, migrations e backup;
+- alto: sessões, autorização, administração, contas, categorias e erros;
+- moderado: renderização, filtros, CSV, notificações e rotas operacionais.
+
+O helper de banco recusa qualquer caminho diferente de `:memory:`. Testes que
+precisam de arquivos SQLite usam diretórios temporários próprios.
 
 Rotas úteis para validação manual:
 

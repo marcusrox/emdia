@@ -3,9 +3,13 @@ process.env.EMDIA_DB_PATH = ":memory:";
 process.env.EMDIA_DEFAULT_PASSWORD = "emdia123";
 
 const crypto = require("node:crypto");
-const { getDatabase } = require("../../src/database/connection");
+const { dbPath, getDatabase } = require("../../src/database/connection");
 const { initializeDatabase } = require("../../src/database/schema");
 const { hashPassword } = require("../../src/services/authService");
+
+if (dbPath !== ":memory:") {
+  throw new Error(`Testes recusaram banco não isolado: ${dbPath}`);
+}
 
 initializeDatabase();
 const db = getDatabase();
