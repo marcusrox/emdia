@@ -54,6 +54,7 @@ mas elas ainda não fazem parte da arquitetura implementada.
 
 ```text
 app.js
+  adquire lock operacional do banco
   executa migrations de banco
   executa seed
   cria servidor HTTP
@@ -110,6 +111,8 @@ Responsabilidades:
 
 - `initializeDatabase`: ponto público de inicialização do banco; delega para o
   migrator.
+- `databaseLockService`: impede duas instâncias oficiais da aplicação e bloqueia
+  restauração enquanto o processo está ativo.
 - `runMigrations`: cria `schema_migrations`, carrega migrations versionadas em
   `src/database/migrations/` e aplica apenas as pendentes.
 - `seedDatabase`: cria usuário local, contas, categorias e exemplos se o banco
@@ -332,6 +335,32 @@ schema_migrations
 
 O uso de WAL pode criar arquivos `*.sqlite-wal` e `*.sqlite-shm`. Eles sao
 artefatos locais e não devem ser commitados.
+
+Backups são produzidos por `databaseBackupService` com a API nativa
+`node:sqlite.backup`, portanto incluem um snapshot consistente mesmo quando WAL
+está habilitado. O fluxo operacional é:
+
+```text
+backup
+  -> snapshot SQLite em arquivo parcial
+  -> integrity_check + foreign_key_check
+  -> SHA-256 + manifesto
+  -> publicação no diretório de backups
+
+restore
+  -> valida origem dentro do diretório configurado
+  -> exige --confirm e lock da aplicação livre
+  -> cria backup before-restore do banco atual
+  -> prepara e verifica banco temporário no mesmo volume
+  -> troca arquivos
+  -> verifica novamente
+  -> em falha, recupera os arquivos originais
+```
+
+O diretório padrão é `backups/` e pode ser alterado por
+`EMDIA_BACKUP_DIR`. Não há rota HTTP, upload, retenção automática ou integração
+com armazenamento externo. A criação automática antes de migrations também não
+está habilitada nesta etapa.
 
 ## 12. Limites do MVP atual
 

@@ -157,6 +157,26 @@ Quando uma mudanca precisar de dados iniciais, atualize também
 `src/database/seed.js`. Migrations cuidam de estrutura e transformações
 necessárias de dados; seed cuida dos dados locais iniciais.
 
+### Backup e restauração
+
+- Use `databaseBackupService`; não copie somente `emdia.sqlite` com o banco em
+  WAL.
+- Backups gerenciados ficam em `EMDIA_BACKUP_DIR` ou em `backups/` por padrão.
+- Toda criação deve usar a API nativa `node:sqlite.backup`, verificar
+  `integrity_check` e `foreign_key_check` e gerar manifesto com SHA-256.
+- Verificação abre o arquivo em modo somente leitura e exige a tabela
+  `schema_migrations`.
+- Restauração exige confirmação explícita, aplicação encerrada e lock
+  operacional livre.
+- Antes de substituir o destino, crie um backup `before-restore` do banco
+  atual.
+- Prepare a restauração no mesmo volume, verifique antes e depois da troca e
+  recupere o arquivo original se a substituição falhar.
+- Restrinja origens de restauração ao diretório configurado e rejeite symlinks,
+  diretórios, extensões inesperadas e path traversal.
+- Nunca use `data/emdia.sqlite` em testes; use diretórios temporários.
+- Retenção automática permanece desabilitada até existir política aprovada.
+
 ## 6. Dinheiro
 
 Valores monetarios devem ser persistidos em centavos inteiros.

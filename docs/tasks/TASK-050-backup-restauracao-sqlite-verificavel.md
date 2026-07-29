@@ -15,7 +15,7 @@ sobrescrita acidental do banco ativo e oferecer evidência de integridade.
 Disponibilizar comandos seguros e documentados para criar, verificar, listar e
 restaurar backups consistentes do banco local.
 
-**Status:** planejada.
+**Status:** implementada em 28/07/2026.
 
 ## Decisão técnica
 
@@ -223,3 +223,39 @@ antes de automatizar backups pré-migration em produção.
 - Modelo: GPT-5 Codex
 - Versao: não informado
 - Acao: criacao
+
+## Implementação
+
+- Criado `databaseBackupService` com snapshot consistente pela API nativa
+  `node:sqlite.backup`.
+- Cada backup é criado como arquivo parcial, verificado e somente então
+  publicado com nome único em UTC.
+- A verificação confere assinatura SQLite, `integrity_check`,
+  `foreign_key_check`, tabela `schema_migrations`, tamanho e SHA-256.
+- Cada backup criado recebe manifesto JSON sem dados financeiros ou caminho do
+  banco de origem.
+- Foram adicionados comandos para criar, listar, verificar e restaurar backups.
+- A restauração exige `--confirm`, restringe a origem ao diretório configurado,
+  rejeita symlinks e path traversal e não aceita banco em memória.
+- O bootstrap passou a manter um lock operacional por processo. A restauração
+  é bloqueada enquanto a aplicação está ativa e locks de processos encerrados
+  são recuperados com segurança.
+- Antes da troca, a restauração cria um backup `before-restore` do banco atual.
+  O novo arquivo é preparado no mesmo volume, verificado antes e depois da
+  substituição e o original é recuperado em caso de falha.
+- O diretório padrão é `backups/`, configurável por `EMDIA_BACKUP_DIR` e
+  ignorado pelo Git. Não foi habilitada retenção automática.
+- Testes isolados cobrem WAL, nomes únicos, manifesto, corrupção, checksum,
+  caminho externo, confirmação, lock ativo, restauração e rollback controlado.
+- README, padrões e arquitetura foram atualizados com o procedimento de
+  recuperação.
+- A release foi incrementada para `Release 28/07/2026 22:05 - 072`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 28/07/2026 22:05
+- Modelo: GPT-5 Codex
+- Versao: não informado
+- Acao: atualizacao

@@ -150,7 +150,57 @@ npm run dev    # inicia com watch do Node
 npm run seed   # cria dados iniciais
 npm run check  # valida sintaxe dos arquivos principais
 npm test       # executa testes unitários e de integração
+npm run backup # cria e verifica um backup consistente
+npm run backup:list
+npm run backup:verify -- backups/arquivo.sqlite
+npm run restore -- backups/arquivo.sqlite --confirm
 ```
+
+---
+
+## 💾 Backup e restauração
+
+Por padrão, os backups ficam em `backups/`, fora de `data/` e ignorados pelo
+Git. Para usar outro local, configure `EMDIA_BACKUP_DIR` com um diretório
+dedicado.
+
+Criar um backup consistente, inclusive quando o SQLite estiver em WAL:
+
+```bash
+npm run backup
+```
+
+O comando usa a API nativa de backup do SQLite, executa `integrity_check` e
+`foreign_key_check` e grava um manifesto JSON com tamanho, migration e checksum
+SHA-256.
+
+Listar e verificar:
+
+```bash
+npm run backup:list
+npm run backup:verify -- backups/emdia-backup-AAAAMMDDTHHMMSSmmmZ-id.sqlite
+```
+
+Restaurar é uma operação destrutiva. Encerre completamente o EmDia e execute:
+
+```bash
+npm run restore -- backups/emdia-backup-AAAAMMDDTHHMMSSmmmZ-id.sqlite --confirm
+```
+
+Antes de substituir o banco, o comando:
+
+1. valida o backup informado;
+2. confirma que a aplicação não mantém o lock operacional;
+3. cria e verifica um backup `emdia-before-restore-*` do banco atual;
+4. prepara e verifica o banco restaurado em arquivo temporário;
+5. substitui o banco e executa nova verificação;
+6. recupera o arquivo original se houver falha durante a troca.
+
+Nunca remova o backup `before-restore` antes de confirmar que a aplicação abriu
+corretamente e que os dados esperados estão presentes. Backups no mesmo disco
+protegem contra erro operacional, mas não substituem uma cópia externa.
+
+Não há retenção ou exclusão automática nesta versão.
 
 ---
 
@@ -191,6 +241,8 @@ emdia/
     services/
       authService.js
       csvService.js
+      databaseBackupService.js
+      databaseLockService.js
       dateService.js
       formValidation.js
       id.js
@@ -206,6 +258,11 @@ emdia/
   test/
     integration/
     unit/
+  scripts/
+    backup.js
+    list-backups.js
+    restore-backup.js
+    verify-backup.js
 ```
 
 ---
@@ -244,6 +301,7 @@ Exemplo:
 - ✅ Valores monetários devem ser tratados em centavos inteiros.
 - ✅ SQL deve usar placeholders `?`.
 - ✅ Dados exibidos em HTML devem ser escapados.
+- ✅ Backups e locks operacionais devem permanecer fora do versionamento.
 
 ---
 
@@ -270,7 +328,6 @@ node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { get
 
 ## 🛣️ Próximos passos sugeridos
 
-- 💾 Backup e restauração verificável do banco local.
 - 🧾 Parcelamento básico com geração transacional das parcelas.
 - 👥 Cadastro e manutenção de favorecidos e pagadores.
 - 📈 Relatórios mensais e históricos.

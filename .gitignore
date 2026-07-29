@@ -14,5 +14,6 @@ data/*.sqlite-*
 
 uploads/
 backups/
+*.emdia.lock
 logs/
 *.log

@@ -3,9 +3,11 @@ const { loadEnv } = require("./src/config/env");
 loadEnv();
 
 const { createServer } = require("./src/server");
+const { dbPath } = require("./src/database/connection");
 const { initializeDatabase } = require("./src/database/schema");
 const { seedDatabase } = require("./src/database/seed");
 const { RELEASE_LABEL } = require("./src/config/release");
+const { acquireDatabaseLock } = require("./src/services/databaseLockService");
 const { logError, logInfo } = require("./src/services/operationalLogger");
 const { startNotificationScheduler } = require("./src/services/notificationScheduler");
 
@@ -21,8 +23,10 @@ logInfo("app.startup.begin", "Inicialização da aplicação iniciada.", {
 });
 
 let server;
+let databaseLock;
 
 try {
+  databaseLock = acquireDatabaseLock(dbPath, { owner: "application" });
   initializeDatabase();
   logInfo("app.startup.schema_ready", "Schema do banco verificado.");
 
@@ -41,6 +45,7 @@ try {
   });
   startNotificationScheduler();
 } catch (error) {
+  releaseDatabaseLock();
   logError("app.startup.failed", "Falha crítica durante a inicialização.", {
     details: errorDetails(error),
   });
@@ -72,6 +77,7 @@ function shutdown(signal, exitCode = 0) {
   });
 
   if (!server) {
+    releaseDatabaseLock();
     logInfo("app.shutdown.completed", "Encerramento da aplicação concluído.", {
       details: { signal },
     });
@@ -79,6 +85,7 @@ function shutdown(signal, exitCode = 0) {
   }
 
   server.close((error) => {
+    releaseDatabaseLock();
     if (error) {
       logError("app.shutdown.failed", "Falha durante o encerramento do servidor HTTP.", {
         details: errorDetails(error),
@@ -94,6 +101,19 @@ function shutdown(signal, exitCode = 0) {
     });
     process.exit(exitCode);
   });
+}
+
+function releaseDatabaseLock() {
+  if (!databaseLock) return;
+  try {
+    databaseLock.release();
+  } catch (error) {
+    logError("app.shutdown.database_lock_failed", "Falha ao liberar lock operacional do banco.", {
+      details: errorDetails(error),
+    });
+  } finally {
+    databaseLock = null;
+  }
 }
 
 function errorDetails(error) {
