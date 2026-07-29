@@ -1,8 +1,10 @@
 const { beforeEach, describe, it } = require("node:test");
 const assert = require("node:assert/strict");
+const { DatabaseSync } = require("node:sqlite");
 const { createFinancialFixture, db, resetDatabase } = require("../helpers/testDatabase");
 const Entry = require("../../src/models/FinancialEntry");
 const Recurrence = require("../../src/models/Recurrence");
+const settlementClosureMigration = require("../../src/database/migrations/006_add_settlement_closure");
 
 beforeEach(resetDatabase);
 
@@ -53,6 +55,136 @@ describe("models financeiros", () => {
     assert.equal(paid.status, "PAID");
     const audit = db.prepare("SELECT payload_json FROM audit_logs WHERE entity_id = ? AND action = 'settled' ORDER BY created_at DESC").get(entry.id);
     assert.equal(JSON.parse(audit.payload_json).excess_cents, 275);
+  });
+
+  it("distingue baixa parcial de quitação abaixo do previsto", () => {
+    const fixture = createFinancialFixture();
+    const partialEntry = createEntry(fixture);
+    const partial = Entry.settle(fixture.user, partialEntry.id, settlement(fixture, {
+      principal: "80,00",
+    }));
+
+    assert.equal(partial.realized_amount_cents, 8000);
+    assert.equal(partial.status, "PARTIALLY_PAID");
+    assert.equal(partial.has_active_closing_settlement, 0);
+    assert.equal(db.prepare("SELECT closes_entry FROM settlements WHERE financial_entry_id = ?").get(partialEntry.id).closes_entry, 0);
+
+    const finalEntry = createEntry(fixture);
+    const paid = Entry.settle(fixture.user, finalEntry.id, settlement(fixture, {
+      principal: "80,00",
+      settlement_completion: "FINAL",
+    }));
+
+    assert.equal(paid.expected_amount_cents, 10000);
+    assert.equal(paid.realized_amount_cents, 8000);
+    assert.equal(paid.status, "PAID");
+    assert.equal(paid.has_active_closing_settlement, 1);
+    assert.equal(db.prepare("SELECT closes_entry FROM settlements WHERE financial_entry_id = ?").get(finalEntry.id).closes_entry, 1);
+    assert.throws(
+      () => Entry.settle(fixture.user, finalEntry.id, settlement(fixture, { principal: "20,00" })),
+      (error) => error.code === "SETTLEMENT_NOT_ALLOWED",
+    );
+
+    const audit = db.prepare("SELECT payload_json FROM audit_logs WHERE entity_id = ? AND action = 'settled'").get(finalEntry.id);
+    assert.deepEqual(
+      {
+        settlement_completion: JSON.parse(audit.payload_json).settlement_completion,
+        difference_cents: JSON.parse(audit.payload_json).difference_cents,
+        closes_entry: JSON.parse(audit.payload_json).closes_entry,
+      },
+      { settlement_completion: "FINAL", difference_cents: 2000, closes_entry: true },
+    );
+  });
+
+  it("quita receita abaixo do previsto e preserva a decisão após edição", () => {
+    const fixture = createFinancialFixture({ entryType: "INCOME" });
+    const entry = createEntry(fixture, { entry_type: "INCOME" });
+    const received = Entry.settle(fixture.user, entry.id, settlement(fixture, {
+      principal: "95,00",
+      settlement_completion: "FINAL",
+    }));
+
+    assert.equal(received.status, "RECEIVED");
+    assert.equal(received.realized_amount_cents, 9500);
+
+    const edited = Entry.update(fixture.user, entry.id, {
+      entry_type: "INCOME",
+      description: "Receita ajustada",
+      category_id: fixture.categoryId,
+      financial_account_id: fixture.accountId,
+      expected_amount: "100,00",
+      realized_amount: "95,00",
+      competence_month: "2026-07",
+      due_date: "2999-07-10",
+      party_name: "",
+      notes: "",
+    });
+
+    assert.equal(edited.status, "RECEIVED");
+    assert.equal(edited.has_active_closing_settlement, 1);
+  });
+
+  it("reabre lançamento ao estornar a baixa que quitou abaixo do previsto", () => {
+    const fixture = createFinancialFixture();
+    const entry = createEntry(fixture);
+    Entry.settle(fixture.user, entry.id, settlement(fixture, {
+      principal: "80,00",
+      settlement_completion: "FINAL",
+    }));
+    const item = db.prepare("SELECT * FROM settlements WHERE financial_entry_id = ?").get(entry.id);
+
+    const reopened = Entry.reverseSettlement(fixture.user, item.id, {
+      reason: "Conta reaberta para correção",
+      confirm_reversal: "yes",
+    });
+
+    assert.equal(reopened.realized_amount_cents, 0);
+    assert.equal(reopened.status, "PENDING");
+    assert.equal(reopened.has_active_closing_settlement, 0);
+  });
+
+  it("mantém quitação enquanto outra baixa parcial é estornada", () => {
+    const fixture = createFinancialFixture();
+    const entry = createEntry(fixture);
+    Entry.settle(fixture.user, entry.id, settlement(fixture, { principal: "20,00" }));
+    Entry.settle(fixture.user, entry.id, settlement(fixture, {
+      principal: "70,00",
+      settlement_completion: "FINAL",
+    }));
+    const partial = db.prepare("SELECT * FROM settlements WHERE financial_entry_id = ? AND closes_entry = 0").get(entry.id);
+
+    const updated = Entry.reverseSettlement(fixture.user, partial.id, {
+      reason: "Remover parcela anterior",
+      confirm_reversal: "yes",
+    });
+
+    assert.equal(updated.realized_amount_cents, 7000);
+    assert.equal(updated.status, "PAID");
+    assert.equal(updated.has_active_closing_settlement, 1);
+  });
+
+  it("migration de encerramento preserva settlements existentes", () => {
+    const legacy = new DatabaseSync(":memory:");
+    try {
+      legacy.exec(`
+        CREATE TABLE settlements (
+          id TEXT PRIMARY KEY,
+          financial_entry_id TEXT NOT NULL,
+          total_cents INTEGER NOT NULL
+        );
+        INSERT INTO settlements (id, financial_entry_id, total_cents)
+        VALUES ('set-legacy', 'entry-legacy', 8000);
+      `);
+
+      settlementClosureMigration.up(legacy);
+      settlementClosureMigration.up(legacy);
+
+      const columns = legacy.prepare("PRAGMA table_info(settlements)").all();
+      assert.ok(columns.some((column) => column.name === "closes_entry"));
+      assert.equal(legacy.prepare("SELECT closes_entry FROM settlements WHERE id = 'set-legacy'").get().closes_entry, 0);
+    } finally {
+      legacy.close();
+    }
   });
 
   it("faz rollback completo quando a auditoria falha", () => {

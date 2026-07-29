@@ -26,7 +26,9 @@ function entryTypeLabel(type) {
 }
 
 function entryRow(entry) {
-  const open = Math.max(0, Number(entry.expected_amount_cents || 0) - Number(entry.realized_amount_cents || 0));
+  const open = entry.has_active_closing_settlement
+    ? 0
+    : Math.max(0, Number(entry.expected_amount_cents || 0) - Number(entry.realized_amount_cents || 0));
   return [entry.id, entryTypeLabel(entry.entry_type), entry.description, entry.competence_month,
     entry.due_date, statusLabel(entry.status), formatCents(entry.expected_amount_cents),
     formatCents(entry.realized_amount_cents), formatCents(open), entry.category_name,

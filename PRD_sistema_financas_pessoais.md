@@ -578,6 +578,12 @@ Na baixa, permitir:
 O total realizado pode superar o valor previsto. Nesse caso, o sistema deve
 informar a diferença e exigir confirmação explícita, sem bloquear a baixa.
 
+Quando o total realizado ficar abaixo do previsto, o usuário deve poder manter
+a diferença como saldo em aberto ou declarar que o valor realizado quitou
+integralmente o lançamento. A segunda opção deve ser explícita, auditável e não
+deve alterar silenciosamente o valor previsto nem transformar a diferença em
+desconto.
+
 ### RF-013 — Favorecidos e pagadores
 
 Campos:

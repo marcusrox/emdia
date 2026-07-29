@@ -1453,6 +1453,105 @@ textarea {
   line-height: 1.35;
 }
 
+.settlement-shortfall-choice {
+  background: linear-gradient(145deg, #f4f9ff, #edf6ff);
+  border: 1px solid #9fc5ea;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(35, 91, 145, 0.07);
+  color: #234d73;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 14px;
+}
+
+.settlement-shortfall-choice[hidden] {
+  display: none;
+}
+
+.settlement-shortfall-choice legend {
+  align-items: center;
+  color: #1f4c73;
+  display: flex;
+  float: left;
+  font-size: 14px;
+  gap: 8px;
+  padding: 0;
+  width: 100%;
+}
+
+.settlement-shortfall-choice legend + * {
+  clear: both;
+}
+
+.settlement-shortfall-choice legend svg {
+  flex: 0 0 auto;
+  height: 18px;
+  stroke-width: 2.25;
+  width: 18px;
+}
+
+.settlement-shortfall-choice > p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0 0 3px;
+}
+
+.entry-settlement-panel .settlement-completion-option {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid #bfd7ee;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 10px 11px;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  width: 100%;
+}
+
+.entry-settlement-panel .settlement-completion-option:hover {
+  background: #fff;
+  border-color: #6fa7d8;
+}
+
+.entry-settlement-panel .settlement-completion-option:focus-within {
+  border-color: #397caf;
+  box-shadow: 0 0 0 3px rgba(57, 124, 175, 0.14);
+}
+
+.settlement-completion-option input {
+  accent-color: var(--primary);
+  height: 18px;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  width: 18px;
+}
+
+.settlement-completion-option span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.settlement-completion-option span strong {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.settlement-completion-option span small {
+  color: #4e6c86;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
 .compact-crud {
   align-items: start;
   grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);

@@ -5,12 +5,13 @@ function deriveStatus(entry, timezone = "America/Bahia") {
 
   const expected = Number(entry.expected_amount_cents) || 0;
   const realized = Number(entry.realized_amount_cents) || 0;
+  const hasActiveClosingSettlement = Boolean(Number(entry.has_active_closing_settlement) || entry.has_active_closing_settlement === true);
 
   if (entry.entry_type === "INCOME") {
-    if (realized >= expected) return "RECEIVED";
+    if (hasActiveClosingSettlement || realized >= expected) return "RECEIVED";
     if (realized > 0) return "PARTIALLY_RECEIVED";
   } else {
-    if (realized >= expected) return "PAID";
+    if (hasActiveClosingSettlement || realized >= expected) return "PAID";
     if (realized > 0) return "PARTIALLY_PAID";
   }
 
@@ -23,6 +24,9 @@ function settlementEligibility(entry) {
   const realized = Number(entry?.realized_amount_cents) || 0;
   const openAmountCents = Math.max(0, expected - realized);
   const status = entry?.status;
+  const hasActiveClosingSettlement = Boolean(
+    Number(entry?.has_active_closing_settlement) || entry?.has_active_closing_settlement === true,
+  );
 
   const blockedMessages = {
     PAID: "Este lançamento já está pago e não aceita uma nova baixa.",
@@ -33,6 +37,16 @@ function settlementEligibility(entry) {
 
   if (blockedMessages[status]) {
     return blockedSettlement(status.toLowerCase(), blockedMessages[status], openAmountCents);
+  }
+
+  if (hasActiveClosingSettlement) {
+    return blockedSettlement(
+      "closed_by_settlement",
+      entry?.entry_type === "INCOME"
+        ? "Este lançamento já foi recebido e não aceita uma nova baixa."
+        : "Este lançamento já está pago e não aceita uma nova baixa.",
+      0,
+    );
   }
 
   if (openAmountCents <= 0) {

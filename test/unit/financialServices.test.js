@@ -44,6 +44,8 @@ describe("serviços financeiros", () => {
     assert.equal(deriveStatus({ ...base, entry_type: "EXPENSE", realized_amount_cents: 10000 }), "PAID");
     assert.equal(deriveStatus({ ...base, entry_type: "INCOME", realized_amount_cents: 5000 }), "PARTIALLY_RECEIVED");
     assert.equal(deriveStatus({ ...base, entry_type: "INCOME", realized_amount_cents: 10000 }), "RECEIVED");
+    assert.equal(deriveStatus({ ...base, entry_type: "EXPENSE", realized_amount_cents: 8000, has_active_closing_settlement: 1 }), "PAID");
+    assert.equal(deriveStatus({ ...base, entry_type: "INCOME", realized_amount_cents: 8000, has_active_closing_settlement: 1 }), "RECEIVED");
     assert.equal(deriveStatus({ ...base, entry_type: "EXPENSE", realized_amount_cents: 0, due_date: "2000-01-01" }), "OVERDUE");
     assert.equal(deriveStatus({ ...base, entry_type: "EXPENSE", realized_amount_cents: 0, status: "CANCELLED" }), "CANCELLED");
   });
@@ -53,6 +55,12 @@ describe("serviços financeiros", () => {
       assert.equal(settlementEligibility({ status, expected_amount_cents: 100, realized_amount_cents: 0 }).allowed, false);
     }
     assert.equal(settlementEligibility({ status: "PENDING", expected_amount_cents: 100, realized_amount_cents: 100 }).allowed, false);
+    assert.equal(settlementEligibility({
+      status: "PARTIALLY_PAID",
+      expected_amount_cents: 100,
+      realized_amount_cents: 80,
+      has_active_closing_settlement: 1,
+    }).allowed, false);
     assert.equal(settlementEligibility({ status: "PENDING", expected_amount_cents: 100, realized_amount_cents: 0 }).allowed, true);
   });
 });

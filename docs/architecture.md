@@ -239,6 +239,7 @@ Fluxo de baixa:
 POST /entries/:id/settlements
   -> localiza lançamento
   -> valida conta financeira
+  -> identifica baixa parcial ou quitação final
   -> cria settlement
   -> soma total ao realized_amount_cents
   -> recalcula status
@@ -265,6 +266,11 @@ Regras gerais:
 - baixa parcial vira status parcial;
 - vencimento anterior a hoje, sem baixa completa, vira `OVERDUE`;
 - cancelado permanece `CANCELLED`.
+
+Uma baixa pode encerrar explicitamente o lançamento abaixo do valor previsto.
+Essa decisão fica em `settlements.closes_entry`, sem alterar o valor previsto.
+O status considera a existência de uma baixa encerradora vigente; estornos
+removem essa baixa do cálculo lógico e podem reabrir o lançamento.
 
 ## 10. Renderização
 

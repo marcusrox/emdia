@@ -24,15 +24,24 @@ function getActiveForUser(userId, settlementId) {
   `).get(userId, settlementId);
 }
 
-function activeTotalByEntry(userId, entryId) {
+function activeSummaryByEntry(userId, entryId) {
   const row = getDatabase().prepare(`
-    SELECT COALESCE(SUM(s.total_cents), 0) AS total_cents
+    SELECT
+      COALESCE(SUM(s.total_cents), 0) AS total_cents,
+      COALESCE(MAX(s.closes_entry), 0) AS has_closing_settlement
     FROM settlements s
     LEFT JOIN settlement_reversals r ON r.settlement_id = s.id
     WHERE s.user_id = ? AND s.financial_entry_id = ?
       AND s.reversed_at IS NULL AND r.id IS NULL
   `).get(userId, entryId);
-  return Number(row?.total_cents || 0);
+  return {
+    hasClosingSettlement: Boolean(Number(row?.has_closing_settlement || 0)),
+    totalCents: Number(row?.total_cents || 0),
+  };
+}
+
+function activeTotalByEntry(userId, entryId) {
+  return activeSummaryByEntry(userId, entryId).totalCents;
 }
 
 function create(userId, entryId, data) {
@@ -50,8 +59,9 @@ function create(userId, entryId, data) {
       INSERT INTO settlements (
         id, user_id, financial_entry_id, financial_account_id, settlement_type,
         principal_cents, interest_cents, penalty_cents, discount_cents,
-        other_adjustment_cents, total_cents, settled_at, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        other_adjustment_cents, total_cents, settled_at, notes, created_at,
+        closes_entry
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     .run(
       id,
@@ -67,13 +77,15 @@ function create(userId, entryId, data) {
       total,
       data.settled_at || now.slice(0, 10),
       data.notes || null,
-      now
+      now,
+      data.closes_entry ? 1 : 0
     );
 
-  return { id, total_cents: total };
+  return { id, total_cents: total, closes_entry: data.closes_entry ? 1 : 0 };
 }
 
 module.exports = {
+  activeSummaryByEntry,
   activeTotalByEntry,
   create,
   getActiveForUser,

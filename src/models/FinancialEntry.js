@@ -57,8 +57,15 @@ function list(user, filters = {}) {
         r.description AS recurrence_description,
         (SELECT count(*) FROM settlements s
           LEFT JOIN settlement_reversals sr ON sr.settlement_id = s.id
-          WHERE s.user_id = e.user_id AND s.financial_entry_id = e.id AND sr.id IS NULL
-        ) AS active_settlement_count
+          WHERE s.user_id = e.user_id AND s.financial_entry_id = e.id
+            AND s.reversed_at IS NULL AND sr.id IS NULL
+        ) AS active_settlement_count,
+        EXISTS (
+          SELECT 1 FROM settlements s
+          LEFT JOIN settlement_reversals sr ON sr.settlement_id = s.id
+          WHERE s.user_id = e.user_id AND s.financial_entry_id = e.id
+            AND s.closes_entry = 1 AND s.reversed_at IS NULL AND sr.id IS NULL
+        ) AS has_active_closing_settlement
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id
@@ -82,7 +89,13 @@ function getById(userOrId, id) {
         c.name AS category_name,
         p.name AS party_name,
         a.name AS financial_account_name,
-        r.description AS recurrence_description
+        r.description AS recurrence_description,
+        EXISTS (
+          SELECT 1 FROM settlements s
+          LEFT JOIN settlement_reversals sr ON sr.settlement_id = s.id
+          WHERE s.user_id = e.user_id AND s.financial_entry_id = e.id
+            AND s.closes_entry = 1 AND s.reversed_at IS NULL AND sr.id IS NULL
+        ) AS has_active_closing_settlement
       FROM financial_entries e
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN parties p ON p.id = e.party_id
@@ -316,6 +329,8 @@ function settle(user, id, data) {
 
     const projectedRealizedCents = entry.realized_amount_cents + validation.normalized.totalCents;
     const excessCents = Math.max(0, projectedRealizedCents - entry.expected_amount_cents);
+    const differenceCents = Math.max(0, entry.expected_amount_cents - projectedRealizedCents);
+    const closesEntry = differenceCents > 0 && validation.normalized.settlementCompletion === "FINAL";
 
     if (excessCents > 0 && data.confirm_excess !== "yes") {
       validation.errors.confirm_excess = `Confirme a baixa com ${formatCentsForMessage(excessCents)} acima do valor previsto.`;
@@ -333,12 +348,14 @@ function settle(user, id, data) {
       other_adjustment_cents: validation.normalized.otherAdjustmentCents,
       total_cents: validation.normalized.totalCents,
       settled_at: validation.normalized.settledAt,
+      closes_entry: closesEntry,
     });
 
     const realized = entry.realized_amount_cents + settlement.total_cents;
     const updated = {
       ...entry,
       realized_amount_cents: realized,
+      has_active_closing_settlement: closesEntry ? 1 : entry.has_active_closing_settlement,
       status: entry.status,
     };
     updated.status = deriveStatus(updated, user.timezone);
@@ -361,6 +378,11 @@ function settle(user, id, data) {
     AuditLog.record(user.id, "financial_entry", id, "settled", {
       settlement_id: settlement.id,
       total_cents: settlement.total_cents,
+      settlement_completion: closesEntry ? "FINAL" : "PARTIAL",
+      expected_amount_cents: entry.expected_amount_cents,
+      projected_realized_cents: projectedRealizedCents,
+      difference_cents: differenceCents,
+      closes_entry: closesEntry,
       excess_cents: excessCents,
     });
 
@@ -422,8 +444,13 @@ function reverseSettlement(user, settlementId, data = {}) {
       VALUES (?, ?, ?, ?, ?, ?)`)
       .run(newId("rev"), user.id, entry.id, settlement.id, reason, now);
 
-    const realized = Settlement.activeTotalByEntry(user.id, entry.id);
-    const updated = { ...entry, realized_amount_cents: realized };
+    const activeSummary = Settlement.activeSummaryByEntry(user.id, entry.id);
+    const realized = activeSummary.totalCents;
+    const updated = {
+      ...entry,
+      realized_amount_cents: realized,
+      has_active_closing_settlement: activeSummary.hasClosingSettlement ? 1 : 0,
+    };
     updated.status = deriveStatus(updated, user.timezone);
     db.prepare(`UPDATE financial_entries
       SET realized_amount_cents = ?, settled_at = ?, status = ?, updated_at = ?

@@ -444,6 +444,18 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
   const settledAtValue = settlementValue("settled_at", new Date().toISOString().slice(0, 10));
   const openAmountCents = Math.max(0, Number(entry.expected_amount_cents || 0) - Number(entry.realized_amount_cents || 0));
   const excessAmountCents = Math.max(0, Number(entry.realized_amount_cents || 0) - Number(entry.expected_amount_cents || 0));
+  const closedBelowExpected = Boolean(entry.has_active_closing_settlement) && openAmountCents > 0;
+  const differenceLabel = excessAmountCents > 0
+    ? "Excedente ao previsto"
+    : closedBelowExpected
+      ? "Diferença para o previsto"
+      : "Saldo em aberto";
+  const differenceValueCents = excessAmountCents || openAmountCents;
+  const differenceTone = excessAmountCents > 0 || (closedBelowExpected && entry.entry_type === "INCOME")
+    ? "warning"
+    : differenceValueCents > 0
+      ? closedBelowExpected ? "good" : "warning"
+      : "good";
   const recurrenceLink = entry.recurrence_rule_id
     ? `<a class="strong-link" href="/recurrences/${entry.recurrence_rule_id}/edit">Recorrência: ${escapeHtml(entry.recurrence_description || entry.description)}</a>`
     : "-";
@@ -469,7 +481,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
       <section class="entry-summary-grid">
         ${entrySummaryItem("Valor previsto", formatMoney(entry.expected_amount_cents), "wallet", entry.entry_type === "INCOME" ? "good" : "bad")}
         ${entrySummaryItem("Valor realizado", formatMoney(entry.realized_amount_cents), "check-circle", entry.realized_amount_cents > 0 ? "good" : "")}
-        ${entrySummaryItem(excessAmountCents > 0 ? "Excedente ao previsto" : "Saldo em aberto", formatMoney(excessAmountCents || openAmountCents), "circle-dollar-sign", excessAmountCents > 0 || openAmountCents > 0 ? "warning" : "good")}
+        ${entrySummaryItem(differenceLabel, formatMoney(differenceValueCents), "circle-dollar-sign", differenceTone)}
         ${entrySummaryItem("Vencimento", escapeHtml(entry.due_date), "calendar-days")}
       </section>
 
@@ -495,7 +507,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
                       <div class="settlement-summary">
                         <strong>${formatMoney(item.total_cents)}</strong>
                         <span>${escapeHtml(item.settled_at)} · ${escapeHtml(item.account_name)}</span>
-                        <span class="settlement-state${reversed ? " settlement-state-reversed" : ""}">${reversed ? "Estornada" : "Vigente"}</span>
+                        <span class="settlement-state${reversed ? " settlement-state-reversed" : ""}">${reversed ? "Estornada" : "Vigente"}${item.closes_entry ? " · Quitação final" : ""}</span>
                       </div>
                       ${reversed
                         ? `<div class="settlement-reversal-details">
@@ -563,6 +575,31 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
               <input name="discount" inputmode="decimal" value="${escapeHtml(settlementValue("discount", "0,00"))}" data-validate-money data-settlement-value data-settlement-discount data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(settlementErrors, "discount")}>
               ${fieldError(settlementErrors, "discount")}
             </label>
+            <fieldset class="settlement-shortfall-choice" data-settlement-shortfall hidden aria-live="polite">
+              <legend>
+                ${lucideIcon("circle-help")}
+                <strong>Valor abaixo do previsto</strong>
+              </legend>
+              <p>
+                Após esta baixa, haverá uma diferença de
+                <strong data-settlement-shortfall-value></strong>. Como deseja tratá-la?
+              </p>
+              <label class="settlement-completion-option">
+                <input type="radio" name="settlement_completion" value="PARTIAL"${settlementValue("settlement_completion", "PARTIAL") !== "FINAL" ? " checked" : ""}${fieldErrorAttributes(settlementErrors, "settlement_completion")}>
+                <span>
+                  <strong data-settlement-partial-label>Manter a diferença em aberto</strong>
+                  <small>O lançamento continuará aceitando novas baixas.</small>
+                </span>
+              </label>
+              <label class="settlement-completion-option">
+                <input type="radio" name="settlement_completion" value="FINAL"${settlementValue("settlement_completion") === "FINAL" ? " checked" : ""}${fieldErrorAttributes(settlementErrors, "settlement_completion")}>
+                <span>
+                  <strong>Quitar pelo valor realizado</strong>
+                  <small>O lançamento será considerado integralmente ${entry.entry_type === "INCOME" ? "recebido" : "pago"}, sem alterar o previsto.</small>
+                </span>
+              </label>
+              ${fieldError(settlementErrors, "settlement_completion")}
+            </fieldset>
             <div class="settlement-excess-warning" data-settlement-excess-warning hidden role="status">
               <div class="settlement-excess-heading">
                 ${lucideIcon("triangle-alert")}

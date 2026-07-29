@@ -212,7 +212,8 @@ Fluxo esperado:
 
 1. localizar lançamento;
 2. avaliar a elegibilidade da baixa com `settlementEligibility`;
-3. validar conta financeira, valor e eventual confirmação de excedente;
+3. validar conta financeira, valor, modo de conclusão e eventual confirmação
+   de excedente;
 4. criar settlement;
 5. atualizar valor realizado e status do lançamento;
 6. registrar auditoria.
@@ -227,6 +228,16 @@ O saldo em aberto deve ser sugerido como principal da próxima baixa, sem atuar
 como limite máximo. Quando a soma realizada após a nova baixa superar o valor
 previsto, a interface deve informar o excedente e exigir confirmação explícita.
 Essa confirmação também deve ser validada no model, dentro da transação.
+
+Quando o total realizado projetado ficar abaixo do previsto, o usuário deve
+escolher explicitamente entre manter a diferença em aberto ou quitar pelo valor
+realizado. A opção parcial é o padrão. A quitação por valor menor deve ser
+persistida no settlement que encerrou o lançamento, sem alterar o previsto nem
+converter automaticamente a diferença em desconto.
+
+Status, elegibilidade e estorno devem considerar somente settlements
+encerradores vigentes. Ao estornar a baixa encerradora, recalcule o total, a
+existência de outra baixa encerradora e o status na mesma transação.
 
 ## 9. Status
 
@@ -244,7 +255,9 @@ Estados atualmente esperados:
 - `DRAFT`.
 
 Ao alterar vencimento, valor esperado, valor realizado ou baixa, recalcule o
-status com `deriveStatus`.
+status com `deriveStatus`. Informe ao serviço se existe settlement encerrador
+vigente para que uma quitação abaixo do previsto permaneça `PAID` ou
+`RECEIVED`.
 
 ## 10. Rotas HTTP
 

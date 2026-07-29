@@ -264,7 +264,14 @@ function validateSettlementPayload(user, data, dependencies) {
   const discountCents = validateMoney(result, "discount", { required: false });
   const otherAdjustmentCents = validateMoney(result, "other_adjustment", { required: false });
   const settledAt = validateIsoDate(result, "settled_at", { message: "Informe uma data válida." });
+  const settlementCompletion = String(result.values.settlement_completion || "PARTIAL").trim().toUpperCase();
   const totalCents = (principalCents || 0) + (interestCents || 0) + (penaltyCents || 0) + (otherAdjustmentCents || 0) - (discountCents || 0);
+
+  result.values.settlement_completion = settlementCompletion;
+
+  if (!["PARTIAL", "FINAL"].includes(settlementCompletion)) {
+    addError(result, "settlement_completion", "Selecione como a diferença deve ser tratada.");
+  }
 
   if (!result.errors.principal && principalCents <= 0) {
     addError(result, "principal", "Informe um valor principal maior que zero.");
@@ -284,6 +291,7 @@ function validateSettlementPayload(user, data, dependencies) {
       otherAdjustmentCents,
       penaltyCents,
       principalCents,
+      settlementCompletion,
       settledAt,
       totalCents,
     },

@@ -47,7 +47,7 @@
       return;
     }
 
-    updateSettlementExcess(form);
+    updateSettlementProjection(form);
     clearFieldErrors(form);
 
     var firstInvalid = null;
@@ -140,7 +140,7 @@
     }).format(cents / 100);
   }
 
-  function updateSettlementExcess(form) {
+  function updateSettlementProjection(form) {
     if (!form || !form.matches("[data-settlement-form]")) {
       return;
     }
@@ -154,16 +154,21 @@
       totalCents += field.hasAttribute("data-settlement-discount") ? -cents : cents;
     });
 
-    var excessCents = Math.max(0, realizedCents + totalCents - expectedCents);
+    var projectedRealizedCents = realizedCents + totalCents;
+    var excessCents = Math.max(0, projectedRealizedCents - expectedCents);
+    var shortfallCents = Math.max(0, expectedCents - projectedRealizedCents);
     var warning = form.querySelector("[data-settlement-excess-warning]");
     var confirmation = form.elements.confirm_excess;
+    var shortfall = form.querySelector("[data-settlement-shortfall]");
+    var completion = form.elements.settlement_completion;
 
-    if (!warning || !confirmation) {
+    if (!warning || !confirmation || !shortfall || !completion) {
       return;
     }
 
     warning.hidden = excessCents <= 0;
     confirmation.required = excessCents > 0;
+    shortfall.hidden = shortfallCents <= 0;
 
     if (excessCents > 0) {
       warning.querySelector("[data-settlement-excess-message]").textContent =
@@ -171,10 +176,18 @@
     } else {
       confirmation.checked = false;
     }
+
+    if (shortfallCents > 0) {
+      shortfall.querySelector("[data-settlement-shortfall-value]").textContent = formatCents(shortfallCents);
+      shortfall.querySelector("[data-settlement-partial-label]").textContent =
+        "Manter " + formatCents(shortfallCents) + " em aberto";
+    } else {
+      completion.value = "PARTIAL";
+    }
   }
 
-  function updateSettlementExcessOnInput(event) {
-    updateSettlementExcess(event.target.closest("[data-settlement-form]"));
+  function updateSettlementProjectionOnInput(event) {
+    updateSettlementProjection(event.target.closest("[data-settlement-form]"));
   }
 
   function storageGet(key) {
@@ -477,9 +490,9 @@
   document.addEventListener("click", closeNotification);
   document.addEventListener("click", closeParentDetails);
   document.addEventListener("change", autoSubmitOnChange);
-  document.addEventListener("input", updateSettlementExcessOnInput);
+  document.addEventListener("input", updateSettlementProjectionOnInput);
   document.addEventListener("submit", validateForms);
-  document.querySelectorAll("[data-settlement-form]").forEach(updateSettlementExcess);
+  document.querySelectorAll("[data-settlement-form]").forEach(updateSettlementProjection);
   restoreSettingsSections();
   collapseMobileEntryFilters();
   startOperationalLogPolling();
