@@ -19,6 +19,7 @@ function list(userId) {
         r.*,
         c.name AS category_name,
         c.entry_type AS category_entry_type,
+        c.icon AS category_icon,
         c.color AS category_color,
         a.name AS financial_account_name,
         p.name AS party_name

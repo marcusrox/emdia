@@ -2,6 +2,7 @@ const { formatMoney } = require("../services/moneyService");
 const {
   buttonContent,
   buttonLink,
+  categoryIdentity,
   categoryOptionLabel,
   csrfInput,
   entryTypeLabel,
@@ -144,7 +145,11 @@ function recurrencesTable(recurrences, user) {
         ${recurrences.map((recurrence) => `<tr>
           <td><strong>${escapeHtml(recurrence.description)}</strong></td>
           <td>
-            ${escapeHtml(recurrence.category_name)}
+            ${categoryIdentity({
+              name: recurrence.category_name,
+              icon: recurrence.category_icon,
+              color: recurrence.category_color,
+            })}
             <small>${escapeHtml(entryTypeLabel(recurrence.category_entry_type))}</small>
           </td>
           <td class="${recurrence.category_entry_type === "INCOME" ? "positive" : "negative"}">${formatMoney(recurrence.expected_amount_cents)}</td>

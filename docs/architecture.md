@@ -213,8 +213,10 @@ A competência mensal e a principal regra de navegação e consulta.
 
 ```text
 request sem competence
-  -> normalizeCompetence()
-  -> currentCompetence(timezone)
+  -> tela com filtro mensal
+     -> resolveMonthlyCompetence()
+     -> última competência válida persistida do usuário
+     -> fallback para currentCompetence(timezone)
   -> consulta filtrada por financial_entries.competence_month
 ```
 
@@ -225,6 +227,13 @@ Request com competência explícita:
   -> normalizeCompetence("2026-07")
   -> usa 2026-07
 ```
+
+No Dashboard, na Agenda e na listagem de lançamentos, uma competência explícita
+e válida também atualiza `users.last_competence`. O
+`monthlyCompetenceService` centraliza a ordem de precedência para todas as
+telas com filtro mensal. A preferência é isolada por usuário, persiste entre
+sessões e não é alterada por exportação CSV, formulário de novo lançamento ou
+visualização de detalhe.
 
 Telas mensais devem manter controles para:
 

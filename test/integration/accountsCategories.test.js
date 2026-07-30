@@ -62,6 +62,23 @@ describe("contas e categorias", () => {
     assert.equal(Account.list(fixture.user.id).filter((item) => item.name === "Conta teste").length, 2);
     assert.equal(Category.list(fixture.user.id).filter((item) => item.name === "Categoria teste").length, 2);
   });
+
+  it("persiste apenas ícones de categoria suportados", () => {
+    const fixture = createFinancialFixture();
+    const category = Category.create(fixture.user.id, {
+      ...categoryPayload("Categoria com ícone"),
+      icon: "utensils",
+    });
+
+    assert.equal(category.icon, "utensils");
+
+    const updated = Category.update(fixture.user.id, category.id, {
+      ...categoryPayload("Categoria atualizada"),
+      icon: "../../arquivo-invalido",
+    });
+
+    assert.equal(updated.icon, null);
+  });
 });
 
 function accountPayload(name) {

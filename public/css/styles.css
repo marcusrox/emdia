@@ -1768,6 +1768,30 @@ tbody tr:hover {
   width: 0.9em;
 }
 
+.category-icon {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 1.75rem;
+  justify-content: center;
+  position: relative;
+  width: 1.75rem;
+}
+
+.category-icon > svg:not(.category-icon-circle) {
+  height: 1rem;
+  position: relative;
+  width: 1rem;
+  z-index: 1;
+}
+
+.category-icon .category-icon-circle {
+  height: 1.75rem;
+  inset: 0;
+  position: absolute;
+  width: 1.75rem;
+}
+
 .status {
   border-radius: 999px;
   display: inline-flex;

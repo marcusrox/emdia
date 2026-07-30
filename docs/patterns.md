@@ -9,11 +9,15 @@ antes de alterar código, banco, rotas, telas ou regras financeiras.
 O EmDia trabalha por competência mensal.
 
 Quando nenhuma competência for informada, telas operacionais devem usar a
-competência do mês corrente do usuário como filtro padrão.
+competência do mês corrente do usuário como filtro padrão. Depois de uma
+seleção explícita, todas as telas com filtro mensal — Dashboard, Agenda e
+Lançamentos — reutilizam a última competência válida persistida para o usuário.
+Sem preferência válida, continuam usando o mês corrente no fuso do usuário.
 
 Isso vale para:
 
 - dashboard;
+- agenda;
 - listagem de lançamentos;
 - filtros e buscas;
 - relatórios mensais futuros;
@@ -352,6 +356,13 @@ Padrões:
   pretty-print, query string escalar e detalhes normalizados da requisição.
 - Sirva assets com o prefixo `/public` por `express.static`.
 - Preserve URLs com `competence` quando a tela fizer parte do fluxo mensal.
+- Em `GET /dashboard`, `GET /calendar` e `GET /entries`, uma competência válida
+  da URL tem precedência e atualiza `users.last_competence`; sem valor válido,
+  use a preferência salva e, por fim, o mês corrente.
+- Use `monthlyCompetenceService` para manter essa resolução compartilhada entre
+  as telas participantes.
+- Não atualize essa preferência ao exportar CSV, abrir formulário ou visualizar
+  detalhe isoladamente.
 
 Erros inesperados devem ser tratados pelo middleware global com estas regras:
 

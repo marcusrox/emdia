@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
+const { CATEGORY_ICON_OPTIONS, normalizeCategoryIcon } = require("./categoryIconService");
 
 const LUCIDE_ICONS_PATH = path.join(path.dirname(require.resolve("lucide-static/package.json")), "icons");
 const LUCIDE_ICON_CACHE = new Map();
@@ -109,6 +110,23 @@ function categoryOptionLabel(category) {
   return `${category.name} (${entryTypeLabel(category.entry_type)})`;
 }
 
+function normalizeHexColor(value) {
+  return /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#0f766e";
+}
+
+function contrastColor(hexColor) {
+  const channels = hexColor
+    .slice(1)
+    .match(/.{2}/g)
+    .map((channel) => Number.parseInt(channel, 16) / 255)
+    .map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+  const luminance = (0.2126 * channels[0]) + (0.7152 * channels[1]) + (0.0722 * channels[2]);
+  const whiteContrast = 1.05 / (luminance + 0.05);
+  const blackContrast = (luminance + 0.05) / 0.05;
+
+  return whiteContrast >= blackContrast ? "#ffffff" : "#111827";
+}
+
 function normalizeFontScale(value) {
   return FONT_SCALE_VALUES.has(value) ? value : "medium";
 }
@@ -133,6 +151,27 @@ function lucideIcon(name) {
   }
 
   return LUCIDE_ICON_CACHE.get(name);
+}
+
+function categoryIdentity({ name, icon, color } = {}) {
+  const categoryName = name || "Sem categoria";
+  const normalizedIcon = normalizeCategoryIcon(icon);
+  const normalizedColor = normalizeHexColor(color);
+  const iconLabel = CATEGORY_ICON_OPTIONS.find(([value]) => value === normalizedIcon)?.[1] || "Ícone da categoria";
+  const identityIcon = normalizedIcon
+    ? `<span class="category-icon" title="${escapeHtml(iconLabel)}">
+        <svg class="category-icon-circle" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <circle cx="16" cy="16" r="15" fill="${escapeHtml(normalizedColor)}"></circle>
+        </svg>
+        ${lucideIcon(normalizedIcon).replaceAll("currentColor", contrastColor(normalizedColor))}
+      </span>`
+    : icon || color
+      ? `<svg class="category-color-dot" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="8" cy="8" r="7" fill="${escapeHtml(normalizedColor)}"></circle>
+        </svg>`
+      : "";
+
+  return `<span class="category-name-with-color">${identityIcon}<span>${escapeHtml(categoryName)}</span></span>`;
 }
 
 function buttonContent(label, iconName = "") {
@@ -212,6 +251,7 @@ module.exports = {
   accountTypeLabel,
   buttonContent,
   buttonLink,
+  categoryIdentity,
   categoryOptionLabel,
   csrfInput,
   entryTypeLabel,

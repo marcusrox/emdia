@@ -2,11 +2,12 @@ const { beforeEach, describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const request = require("supertest");
-const { db, resetDatabase } = require("../helpers/testDatabase");
+const { createUser, db, resetDatabase } = require("../helpers/testDatabase");
 const { csrfFrom, login } = require("../helpers/http");
 const { createServer } = require("../../src/server");
 const Entry = require("../../src/models/FinancialEntry");
 const User = require("../../src/models/User");
+const { currentCompetence } = require("../../src/services/dateService");
 const { getLogFilePath } = require("../../src/services/operationalLogger");
 const { checkReadiness } = require("../../src/services/readinessService");
 
@@ -184,6 +185,90 @@ describe("integração HTTP Express", () => {
     assert.match(calendar.text, /Novo lançamento/);
     assert.doesNotMatch(calendar.text, /Segredo/);
     await agent.get("/entries/secret").expect(404);
+  });
+
+  it("compartilha a última competência entre todas as telas mensais por usuário", async () => {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent);
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get("usuario@emdia.local");
+
+    const firstAccess = await agent.get("/entries").expect(200);
+    assert.match(firstAccess.text, new RegExp(`name="competence" value="${currentCompetence(user.timezone)}"`));
+    assert.equal(
+      db.prepare("SELECT last_competence FROM users WHERE id = ?").get(user.id).last_competence,
+      null
+    );
+
+    db.prepare("UPDATE users SET last_competence = 'invalida' WHERE id = ?").run(user.id);
+    const invalidPreference = await agent.get("/entries").expect(200);
+    assert.match(
+      invalidPreference.text,
+      new RegExp(`name="competence" value="${currentCompetence(user.timezone)}"`)
+    );
+
+    await agent.get("/entries?competence=2025-12").expect(200);
+    assert.equal(
+      db.prepare("SELECT last_competence FROM users WHERE id = ?").get(user.id).last_competence,
+      "2025-12"
+    );
+
+    db.prepare("UPDATE users SET updated_at = '2000-01-01T00:00:00.000Z' WHERE id = ?").run(user.id);
+    await agent.get("/entries?competence=2025-12").expect(200);
+    assert.equal(
+      db.prepare("SELECT updated_at FROM users WHERE id = ?").get(user.id).updated_at,
+      "2000-01-01T00:00:00.000Z"
+    );
+
+    const dashboardRemembered = await agent.get("/dashboard").expect(200);
+    assert.match(dashboardRemembered.text, /name="competence" value="2025-12"/);
+
+    await agent.get("/dashboard?competence=2025-11").expect(200);
+    assert.equal(
+      db.prepare("SELECT last_competence FROM users WHERE id = ?").get(user.id).last_competence,
+      "2025-11"
+    );
+
+    const calendarRemembered = await agent.get("/calendar").expect(200);
+    assert.match(calendarRemembered.text, /name="competence" value="2025-11"/);
+
+    await agent.get("/calendar?competence=2025-10").expect(200);
+    assert.equal(
+      db.prepare("SELECT last_competence FROM users WHERE id = ?").get(user.id).last_competence,
+      "2025-10"
+    );
+
+    const remembered = await agent.get("/entries").expect(200);
+    assert.match(remembered.text, /name="competence" value="2025-10"/);
+
+    const invalid = await agent.get("/entries?competence=valor-invalido").expect(200);
+    assert.match(invalid.text, /name="competence" value="2025-10"/);
+    assert.equal(
+      db.prepare("SELECT last_competence FROM users WHERE id = ?").get(user.id).last_competence,
+      "2025-10"
+    );
+
+    await agent.get("/entries/export.csv?competence=2024-11").expect(200);
+    assert.equal(
+      db.prepare("SELECT last_competence FROM users WHERE id = ?").get(user.id).last_competence,
+      "2025-10"
+    );
+
+    const other = createUser({
+      email: "outra-pessoa@example.test",
+      password: "senha-segura-123",
+    });
+    const otherAgent = request.agent(app);
+    await login(otherAgent, { email: other.email, password: "senha-segura-123" });
+    await otherAgent.get("/entries?competence=2024-03").expect(200);
+
+    assert.equal(User.getLastCompetence(user.id), "2025-10");
+    assert.equal(User.getLastCompetence(other.id), "2024-03");
+
+    const newSession = request.agent(createServer());
+    await login(newSession);
+    const afterLogin = await newSession.get("/dashboard").expect(200);
+    assert.match(afterLogin.text, /name="competence" value="2025-10"/);
   });
 
   it("exporta CSV filtrado, com nome previsível e auditoria", async () => {

@@ -1,6 +1,7 @@
 const { getDatabase } = require("../database/connection");
 const { withImmediateTransaction } = require("../database/transaction");
 const { hashPassword, passwordPolicyError, verifyPassword } = require("../services/authService");
+const { isCompetence } = require("../services/dateService");
 const { newId } = require("../services/id");
 
 const DEFAULT_EMAIL = "usuario@emdia.local";
@@ -378,6 +379,30 @@ function updateInterfacePreferences(userId, data) {
   };
 }
 
+function getLastCompetence(userId) {
+  const user = getDatabase()
+    .prepare("SELECT last_competence FROM users WHERE id = ? AND is_active = 1")
+    .get(userId);
+
+  return user?.last_competence || "";
+}
+
+function updateLastCompetence(userId, competence) {
+  if (!isCompetence(competence)) return false;
+
+  const result = getDatabase()
+    .prepare(`
+      UPDATE users
+      SET last_competence = ?, updated_at = ?
+      WHERE id = ?
+        AND is_active = 1
+        AND (last_competence IS NULL OR last_competence <> ?)
+    `)
+    .run(competence, new Date().toISOString(), userId, competence);
+
+  return result.changes > 0;
+}
+
 module.exports = {
   DEFAULT_FONT_SCALE,
   DEFAULT_LIST_DENSITY,
@@ -397,6 +422,8 @@ module.exports = {
   resetPasswordAdmin,
   normalizeFontScale,
   normalizeListDensity,
+  getLastCompetence,
+  updateLastCompetence,
   updateFontScale,
   updateInterfacePreferences,
   updateProfile,

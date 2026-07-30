@@ -55,6 +55,7 @@ function list(user, filters = {}) {
       SELECT
         e.*,
         c.name AS category_name,
+        c.icon AS category_icon,
         c.color AS category_color,
         p.name AS party_name,
         a.name AS financial_account_name,

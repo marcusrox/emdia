@@ -1,5 +1,6 @@
 const { getDatabase } = require("../database/connection");
 const AuditLog = require("./AuditLog");
+const { normalizeCategoryIcon } = require("../services/categoryIconService");
 const { newId } = require("../services/id");
 
 function list(userId) {
@@ -43,7 +44,7 @@ function create(userId, data) {
       userId,
       data.name,
       data.entry_type || "EXPENSE",
-      data.icon || null,
+      normalizeCategoryIcon(data.icon),
       data.color || "#0f766e",
       now,
       now
@@ -70,7 +71,7 @@ function update(userId, id, data) {
     .run(
       data.name,
       data.entry_type || "EXPENSE",
-      data.icon || null,
+      normalizeCategoryIcon(data.icon),
       data.color || "#0f766e",
       now,
       userId,

@@ -5,6 +5,7 @@ const Entry = require("../models/FinancialEntry");
 const Recurrence = require("../models/Recurrence");
 const { entriesCsv } = require("../services/csvService");
 const { dueDateFromCompetence, normalizeCompetence } = require("../services/dateService");
+const { resolveMonthlyCompetence } = require("../services/monthlyCompetenceService");
 const { logBusinessError } = require("../services/errorLogging");
 const { entryDetail, entryForm } = require("../services/financialEntryView");
 const { isValidationError } = require("../services/formValidation");
@@ -23,7 +24,7 @@ const {
 function registerEntryRoutes(app, { requireCsrf }) {
   app.get("/entries", (req, res) => {
     const user = req.user;
-    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    const competence = resolveMonthlyCompetence(user, queryValue(req, "competence"));
     const filters = entryFilters(req, competence);
     Recurrence.generateForCompetence(user, competence);
 

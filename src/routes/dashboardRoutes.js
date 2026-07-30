@@ -1,7 +1,7 @@
 const Entry = require("../models/FinancialEntry");
 const Recurrence = require("../models/Recurrence");
-const { normalizeCompetence } = require("../services/dateService");
 const { queryValue, redirect, sendHtml } = require("../services/http");
+const { resolveMonthlyCompetence } = require("../services/monthlyCompetenceService");
 const {
   calendarView,
   dashboardView,
@@ -14,14 +14,14 @@ function registerDashboardRoutes(app) {
 
   app.get("/dashboard", (req, res) => {
     const user = req.user;
-    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    const competence = resolveMonthlyCompetence(user, queryValue(req, "competence"));
     Recurrence.generateForCompetence(user, competence);
     return sendHtml(res, dashboardView({ user, competence, dashboard: Entry.dashboard(user, competence) }));
   });
 
   app.get("/calendar", (req, res) => {
     const user = req.user;
-    const competence = normalizeCompetence(queryValue(req, "competence"), user.timezone);
+    const competence = resolveMonthlyCompetence(user, queryValue(req, "competence"));
     Recurrence.generateForCompetence(user, competence);
     return sendHtml(res, calendarView({ user, competence, calendar: Entry.calendar(user, competence) }));
   });

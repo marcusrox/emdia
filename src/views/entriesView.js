@@ -3,6 +3,7 @@ const { settlementEligibility, statusLabel } = require("../services/statusServic
 const {
   buttonContent,
   buttonLink,
+  categoryIdentity,
   categoryOptionLabel,
   csrfInput,
   entryTypeLabel,
@@ -85,7 +86,11 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
                 <a class="strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
                 <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.recurrence_rule_id ? " · Recorrente" : ""}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
               </td>
-              <td>${escapeHtml(entry.category_name || "Sem categoria")}</td>
+              <td>${categoryIdentity({
+                name: entry.category_name,
+                icon: entry.category_icon,
+                color: entry.category_color,
+              })}</td>
               <td>${escapeHtml(entry.financial_account_name || "-")}</td>
               <td class="${valueClass(entry)}">${formatMoney(entry.expected_amount_cents)}</td>
               <td><span class="status status-${entry.status.toLowerCase()}">${escapeHtml(statusLabel(entry.status))}</span></td>
@@ -137,7 +142,14 @@ function entriesMobileList(entries, { user, valueClass }) {
         const typeLabel = entry.entry_type === "INCOME" ? "Receita" : "Despesa";
         const recurrence = entry.recurrence_rule_id ? "Recorrente" : "";
         const party = entry.party_name || "";
-        const details = [escapeHtml(entry.due_date), escapeHtml(entry.category_name || "Sem categoria")].join(" · ");
+        const details = [
+          escapeHtml(entry.due_date),
+          categoryIdentity({
+            name: entry.category_name,
+            icon: entry.category_icon,
+            color: entry.category_color,
+          }),
+        ].join(" · ");
         const meta = [escapeHtml(account), recurrence, party ? escapeHtml(party) : ""].filter(Boolean).join(" · ");
 
         return `<article class="entry-mobile-card">

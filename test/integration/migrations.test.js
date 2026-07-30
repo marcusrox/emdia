@@ -29,6 +29,8 @@ describe("migrations", () => {
     );
     assert.ok(tableExists(database, "financial_entries"));
     assert.ok(columnExists(database, "settlements", "closes_entry"));
+    assert.ok(columnExists(database, "users", "last_entries_competence"));
+    assert.ok(columnExists(database, "users", "last_competence"));
     assert.equal(database.isTransaction, false);
   });
 
@@ -45,6 +47,40 @@ describe("migrations", () => {
     assert.equal(columnExists(database, "users", "is_admin"), true);
     assert.equal(tableExists(database, "settlement_reversals"), true);
     assert.equal(columnExists(database, "settlements", "closes_entry"), true);
+    assert.equal(columnExists(database, "users", "last_entries_competence"), true);
+    assert.equal(columnExists(database, "users", "last_competence"), true);
+  });
+
+  it("preserva a preferência criada antes da generalização", () => {
+    const database = createDatabase();
+    const migrations = loadProjectMigrations();
+    const beforeGeneralization = migrations.slice(0, -1);
+
+    runMigrations({ db: database, migrations: beforeGeneralization });
+    const now = new Date().toISOString();
+    database.prepare(`
+      INSERT INTO users (
+        id, name, email, password_hash, timezone, locale, is_active,
+        created_at, updated_at, last_entries_competence
+      ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+    `).run(
+      "migration-user",
+      "Usuário migration",
+      "migration@example.test",
+      "hash",
+      "America/Sao_Paulo",
+      "pt-BR",
+      now,
+      now,
+      "2025-12"
+    );
+
+    runMigrations({ db: database, migrations });
+
+    assert.equal(
+      database.prepare("SELECT last_competence FROM users WHERE id = ?").get("migration-user").last_competence,
+      "2025-12"
+    );
   });
 
   it("rejeita IDs duplicados e migrations inválidas antes de aplicar", () => {
