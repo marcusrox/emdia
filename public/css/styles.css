@@ -1175,6 +1175,91 @@ textarea {
   line-height: 1.25;
 }
 
+.entries-total-row th,
+.entries-total-row td {
+  background: var(--surface-2);
+  border-bottom: 0;
+  border-top: 2px solid var(--line);
+}
+
+.entries-total-row th {
+  font-size: 11px;
+  text-align: right;
+}
+
+.entries-total-values {
+  display: inline-grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, max-content);
+  font-variant-numeric: tabular-nums;
+}
+
+.entries-total-group {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: grid;
+  gap: 3px;
+  padding: 5px;
+}
+
+.entries-total-group.positive {
+  border-color: #c9e8d2;
+}
+
+.entries-total-group.negative {
+  border-color: #f0d0cc;
+}
+
+.entries-total-group > span {
+  align-items: baseline;
+  border-radius: 4px;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 3px 6px;
+  white-space: nowrap;
+}
+
+.entries-total-group.positive > span:first-of-type {
+  background: #eef8f1;
+}
+
+.entries-total-group.positive > span:last-of-type {
+  background: #dff2e5;
+}
+
+.entries-total-group.negative > span:first-of-type {
+  background: #fff4f2;
+}
+
+.entries-total-group.negative > span:last-of-type {
+  background: #fee7e5;
+}
+
+.entries-total-type {
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 1px 6px 2px;
+  text-transform: uppercase;
+}
+
+.entries-total-group small {
+  color: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.entries-total-group span > strong {
+  font-size: 12px;
+}
+
+.entries-mobile-totals {
+  display: none;
+}
+
 .split {
   display: grid;
   gap: 18px;
@@ -3287,6 +3372,29 @@ textarea {
     gap: 7px;
     min-width: 0;
     padding: 10px;
+  }
+
+  .entries-mobile-totals {
+    align-items: start;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: space-between;
+    padding: 12px 10px;
+  }
+
+  .entries-mobile-totals > strong {
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .entries-mobile-totals .entries-total-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    text-align: right;
+    width: 100%;
   }
 
   .entry-mobile-card-main {

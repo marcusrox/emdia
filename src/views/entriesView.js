@@ -83,6 +83,38 @@ function toolbarIconButton({ icon, label, tone = "" }) {
   return `<button type="submit" class="toolbar-icon-button ${tone}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${TOOLBAR_ICONS[icon]}</button>`;
 }
 
+function entriesTotals(entries) {
+  return entries.reduce(
+    (totals, entry) => {
+      const type = entry.entry_type === "INCOME" ? "income" : "expense";
+      totals[type].expectedCents += Number(entry.expected_amount_cents || 0);
+      totals[type].realizedCents += Number(entry.realized_amount_cents || 0);
+      return totals;
+    },
+    {
+      income: { expectedCents: 0, realizedCents: 0 },
+      expense: { expectedCents: 0, realizedCents: 0 },
+    }
+  );
+}
+
+function entriesTotalsContent(entries) {
+  const totals = entriesTotals(entries);
+
+  return `<span class="entries-total-values">
+    <span class="entries-total-group positive">
+      <strong class="entries-total-type">Receitas</strong>
+      <span><small>Previsto</small><strong>${formatMoney(totals.income.expectedCents)}</strong></span>
+      <span><small>Realizado</small><strong>${formatMoney(totals.income.realizedCents)}</strong></span>
+    </span>
+    <span class="entries-total-group negative">
+      <strong class="entries-total-type">Despesas</strong>
+      <span><small>Previsto</small><strong>${formatMoney(totals.expense.expectedCents)}</strong></span>
+      <span><small>Realizado</small><strong>${formatMoney(totals.expense.realizedCents)}</strong></span>
+    </span>
+  </span>`;
+}
+
 function entriesTable(entries, { compact = false, user = null } = {}) {
   if (!entries.length) {
     return `<div class="empty-state">Nenhum lançamento encontrado para esta competência.</div>`;
@@ -149,6 +181,17 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
           )
           .join("")}
       </tbody>
+      ${
+        compact
+          ? ""
+          : `<tfoot>
+        <tr class="entries-total-row">
+          <th colspan="4" scope="row">Totais</th>
+          <td class="entry-value-cell" colspan="2">${entriesTotalsContent(entries)}</td>
+          <td></td>
+        </tr>
+      </tfoot>`
+      }
     </table>
   </div>`;
 
@@ -213,6 +256,10 @@ function entriesMobileList(entries, { user }) {
         </article>`;
       })
       .join("")}
+    <section class="entries-mobile-totals" aria-label="Totais dos lançamentos">
+      <strong>Totais</strong>
+      ${entriesTotalsContent(entries)}
+    </section>
   </div>`;
 }
 
