@@ -149,7 +149,7 @@ function recurrencesTable(recurrences, user) {
               name: recurrence.category_name,
               icon: recurrence.category_icon,
               color: recurrence.category_color,
-            })}
+            }, { appearance: "badge" })}
             <small>${escapeHtml(entryTypeLabel(recurrence.category_entry_type))}</small>
           </td>
           <td class="${recurrence.category_entry_type === "INCOME" ? "positive" : "negative"}">${formatMoney(recurrence.expected_amount_cents)}</td>

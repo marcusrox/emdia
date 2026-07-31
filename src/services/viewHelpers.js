@@ -114,6 +114,21 @@ function normalizeHexColor(value) {
   return /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#0f766e";
 }
 
+function validHexColor(value) {
+  return /^#[0-9a-f]{6}$/i.test(value || "") ? value : null;
+}
+
+function blendHexColor(hexColor, targetHexColor, targetWeight) {
+  const sourceChannels = hexColor.slice(1).match(/.{2}/g).map((channel) => Number.parseInt(channel, 16));
+  const targetChannels = targetHexColor.slice(1).match(/.{2}/g).map((channel) => Number.parseInt(channel, 16));
+
+  return `#${sourceChannels
+    .map((channel, index) => Math.round(channel * (1 - targetWeight) + targetChannels[index] * targetWeight)
+      .toString(16)
+      .padStart(2, "0"))
+    .join("")}`;
+}
+
 function contrastColor(hexColor) {
   const channels = hexColor
     .slice(1)
@@ -153,8 +168,31 @@ function lucideIcon(name) {
   return LUCIDE_ICON_CACHE.get(name);
 }
 
-function categoryIdentity({ name, icon, color } = {}) {
+function categoryIdentity({ name, icon, color } = {}, { appearance = "default" } = {}) {
   const categoryName = name || "Sem categoria";
+
+  if (appearance === "badge") {
+    const hasCategory = Boolean(String(name || "").trim());
+    const normalizedIcon = hasCategory ? normalizeCategoryIcon(icon) : null;
+    const normalizedColor = hasCategory ? validHexColor(color) : null;
+    const identityIcon = normalizedIcon
+      ? `<span class="entry-category-icon" aria-hidden="true">${lucideIcon(normalizedIcon)}</span>`
+      : "";
+    const badgeClass = normalizedColor ? "entry-category-badge" : "entry-category-badge entry-category-badge-neutral";
+    const badgeBackground = normalizedColor
+      ? `<svg class="entry-category-badge-background" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <rect width="1" height="1" fill="${blendHexColor(normalizedColor, "#ffffff", 0.84)}"></rect>
+        </svg>`
+      : "";
+    const badgeText = normalizedColor
+      ? `<svg class="entry-category-badge-text" aria-hidden="true" focusable="false">
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="${blendHexColor(normalizedColor, "#000000", 0.55)}">${escapeHtml(categoryName)}</text>
+        </svg>`
+      : "";
+
+    return `<span class="category-name-with-color entry-category-identity">${identityIcon}<span class="${badgeClass}">${badgeBackground}<span class="entry-category-badge-label"${normalizedColor ? ' aria-hidden="true"' : ""}>${escapeHtml(categoryName)}</span>${badgeText}${normalizedColor ? `<span class="sr-only">${escapeHtml(categoryName)}</span>` : ""}</span></span>`;
+  }
+
   const normalizedIcon = normalizeCategoryIcon(icon);
   const normalizedColor = normalizeHexColor(color);
   const iconLabel = CATEGORY_ICON_OPTIONS.find(([value]) => value === normalizedIcon)?.[1] || "Ícone da categoria";

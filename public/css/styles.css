@@ -1149,6 +1149,32 @@ textarea {
   text-decoration-skip-ink: none;
 }
 
+.entry-value-cell {
+  white-space: nowrap;
+}
+
+.entry-list-value {
+  display: inline-flex;
+  flex-direction: column;
+  font-variant-numeric: tabular-nums;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.entry-list-value > strong {
+  color: inherit;
+  font-size: inherit;
+  white-space: nowrap;
+}
+
+.entry-list-value > small {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
 .split {
   display: grid;
   gap: 18px;
@@ -1790,6 +1816,69 @@ tbody tr:hover {
   inset: 0;
   position: absolute;
   width: 1.75rem;
+}
+
+.entry-category-identity {
+  gap: 0.4rem;
+}
+
+.entry-category-icon {
+  align-items: center;
+  color: #000000;
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.entry-category-icon svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.entry-category-badge {
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.25;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  padding: 0.25rem 0.55rem;
+  position: relative;
+}
+
+.entry-category-badge-background {
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.entry-category-badge-text {
+  height: 100%;
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+}
+
+.entry-category-badge-text text {
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.entry-category-badge:not(.entry-category-badge-neutral) .entry-category-badge-label {
+  visibility: hidden;
+}
+
+.entry-category-badge-neutral {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
 }
 
 .status {
@@ -3216,13 +3305,17 @@ textarea {
   }
 
   .entry-mobile-value {
+    align-items: flex-end;
     font-size: 15px;
-    font-variant-numeric: tabular-nums;
     line-height: 1.2;
-    max-width: 9rem;
+    max-width: 12rem;
     min-width: 0;
     overflow-wrap: anywhere;
     text-align: right;
+  }
+
+  .entry-mobile-value > small {
+    max-width: 12rem;
   }
 
   .entry-mobile-card-status {

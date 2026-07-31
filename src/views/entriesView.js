@@ -31,6 +31,39 @@ const TOOLBAR_ICONS = {
   download: lucideIcon("download"),
 };
 
+const PARTIAL_STATUS_VALUES = new Set(["PARTIALLY_PAID", "PARTIALLY_RECEIVED"]);
+
+function entryValueDisplay(entry, { className = "" } = {}) {
+  const expectedCents = Number(entry.expected_amount_cents || 0);
+  const realizedCents = Number(entry.realized_amount_cents || 0);
+  const isCancelled = entry.status === "CANCELLED";
+  const hasActiveSettlement = Number(entry.active_settlement_count || 0) > 0;
+  const showRealized = hasActiveSettlement && !isCancelled;
+  const primaryCents = showRealized ? realizedCents : expectedCents;
+  let detail = "previsto";
+
+  if (showRealized && PARTIAL_STATUS_VALUES.has(entry.status)) {
+    detail = `realizado de ${formatMoney(expectedCents)} previsto`;
+  } else if (showRealized && realizedCents === expectedCents) {
+    detail = "realizado";
+  } else if (showRealized) {
+    detail = `previsto ${formatMoney(expectedCents)}`;
+  }
+
+  const classes = [
+    "entry-list-value",
+    entry.entry_type === "INCOME" ? "positive" : "negative",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `<span class="${escapeHtml(classes)}">
+    <strong class="${isCancelled ? "entry-value-cancelled" : ""}">${formatMoney(primaryCents)}</strong>
+    <small>${escapeHtml(detail)}</small>
+  </span>`;
+}
+
 function recordActionLink({ href, icon, label, tone = "" }) {
   return `<a class="record-action-button ${tone}" href="${escapeHtml(href)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[icon]}</a>`;
 }
@@ -54,14 +87,6 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
   if (!entries.length) {
     return `<div class="empty-state">Nenhum lançamento encontrado para esta competência.</div>`;
   }
-
-  const valueClass = (entry) =>
-    [
-      entry.entry_type === "INCOME" ? "positive" : "negative",
-      entry.status === "CANCELLED" ? "entry-value-cancelled" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
 
   const tableClass = compact ? "table-wrap" : "table-wrap entries-desktop-table";
   const tableMarkup = `<div class="${tableClass}">
@@ -90,9 +115,9 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
                 name: entry.category_name,
                 icon: entry.category_icon,
                 color: entry.category_color,
-              })}</td>
+              }, { appearance: "badge" })}</td>
               <td>${escapeHtml(entry.financial_account_name || "-")}</td>
-              <td class="${valueClass(entry)}">${formatMoney(entry.expected_amount_cents)}</td>
+              <td class="entry-value-cell">${entryValueDisplay(entry)}</td>
               <td><span class="status status-${entry.status.toLowerCase()}">${escapeHtml(statusLabel(entry.status))}</span></td>
               ${
                 compact
@@ -131,10 +156,10 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
     return tableMarkup;
   }
 
-  return `${tableMarkup}${entriesMobileList(entries, { user, valueClass })}`;
+  return `${tableMarkup}${entriesMobileList(entries, { user })}`;
 }
 
-function entriesMobileList(entries, { user, valueClass }) {
+function entriesMobileList(entries, { user }) {
   return `<div class="entries-mobile-list" aria-label="Lançamentos">
     ${entries
       .map((entry) => {
@@ -148,14 +173,14 @@ function entriesMobileList(entries, { user, valueClass }) {
             name: entry.category_name,
             icon: entry.category_icon,
             color: entry.category_color,
-          }),
+          }, { appearance: "badge" }),
         ].join(" · ");
         const meta = [escapeHtml(account), recurrence, party ? escapeHtml(party) : ""].filter(Boolean).join(" · ");
 
         return `<article class="entry-mobile-card">
           <div class="entry-mobile-card-main">
             <a class="entry-mobile-title strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
-            <strong class="entry-mobile-value ${valueClass(entry)}">${formatMoney(entry.expected_amount_cents)}</strong>
+            ${entryValueDisplay(entry, { className: "entry-mobile-value" })}
           </div>
           <div class="entry-mobile-card-status">
             <span>${typeLabel}</span>
@@ -646,4 +671,5 @@ module.exports = {
   entriesTable,
   entryDetailView,
   entryFormView,
+  entryValueDisplay,
 };
