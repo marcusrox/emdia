@@ -2,7 +2,7 @@ const Account = require("../models/FinancialAccount");
 const AuditLog = require("../models/AuditLog");
 const Category = require("../models/Category");
 const Settlement = require("../models/Settlement");
-const { normalizeCompetence } = require("./dateService");
+const { resolveMonthlyCompetence } = require("./monthlyCompetenceService");
 const {
   entryDetailView,
   entryFormView,
@@ -21,7 +21,7 @@ function entryForm(user, { entry = null, competence, action, errors = {} }) {
 }
 
 function entryDetail(user, entry, {
-  competence = entry.competence_month,
+  competence = "",
   returnTo = "",
   settlementErrors = {},
   settlementValues = null,
@@ -31,7 +31,7 @@ function entryDetail(user, entry, {
   return entryDetailView({
     user,
     entry,
-    competence: normalizeCompetence(competence, user.timezone),
+    competence: resolveMonthlyCompetence(user, competence),
     returnTo,
     settlements: Settlement.listByEntry(user.id, entry.id),
     accounts: Account.active(user.id),

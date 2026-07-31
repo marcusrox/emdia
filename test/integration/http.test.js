@@ -271,6 +271,34 @@ describe("integração HTTP Express", () => {
     assert.match(afterLogin.text, /name="competence" value="2025-10"/);
   });
 
+  it("mantém a competência persistida ao voltar do detalhe de um lançamento", async () => {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent);
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get("usuario@emdia.local");
+    const now = new Date().toISOString();
+    db.prepare(`INSERT INTO financial_entries (
+      id, user_id, entry_type, description, expected_amount_cents, realized_amount_cents,
+      competence_month, due_date, status, origin, created_at, updated_at
+    ) VALUES ('return-entry', ?, 'EXPENSE', 'Teste de retorno', 10000, 0,
+      '2025-10', '2025-10-10', 'PENDING', 'MANUAL', ?, ?)`)
+      .run(user.id, now, now);
+    const entry = { id: "return-entry" };
+
+    await agent.get("/entries?competence=2025-10").expect(200);
+    const rememberedDetail = await agent.get(`/entries/${entry.id}`).expect(200);
+    assert.match(rememberedDetail.text, /href="\/entries\?competence=2025-10"/);
+
+    const calendarDetail = await agent
+      .get(`/entries/${entry.id}?competence=2025-09&return_to=calendar`)
+      .expect(200);
+    assert.match(calendarDetail.text, /href="\/calendar\?competence=2025-09"/);
+    assert.equal(User.getLastCompetence(user.id), "2025-09");
+
+    const invalidDetail = await agent.get(`/entries/${entry.id}?competence=valor-invalido`).expect(200);
+    assert.match(invalidDetail.text, /href="\/entries\?competence=2025-09"/);
+  });
+
   it("exporta CSV filtrado, com nome previsível e auditoria", async () => {
     const app = createServer();
     const agent = request.agent(app);
