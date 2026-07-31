@@ -15,7 +15,7 @@ const {
   option,
   pageHeading,
 } = require("../services/viewHelpers");
-const { currentCompetence } = require("../services/dateService");
+const { currentCompetence, formatCivilDate } = require("../services/dateService");
 const { actionLabel, payloadSummary } = require("./auditView");
 const { layout, monthSwitcher } = require("./layout");
 
@@ -106,7 +106,7 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
         ${entries
           .map(
             (entry) => `<tr>
-              <td>${escapeHtml(entry.due_date)}</td>
+              <td>${escapeHtml(formatCivilDate(entry.due_date))}</td>
               <td>
                 <a class="strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
                 <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.recurrence_rule_id ? " · Recorrente" : ""}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
@@ -168,7 +168,7 @@ function entriesMobileList(entries, { user }) {
         const recurrence = entry.recurrence_rule_id ? "Recorrente" : "";
         const party = entry.party_name || "";
         const details = [
-          escapeHtml(entry.due_date),
+          escapeHtml(formatCivilDate(entry.due_date)),
           categoryIdentity({
             name: entry.category_name,
             icon: entry.category_icon,
@@ -519,7 +519,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
         ${entrySummaryItem("Valor previsto", formatMoney(entry.expected_amount_cents), "wallet", entry.entry_type === "INCOME" ? "good" : "bad")}
         ${entrySummaryItem("Valor realizado", formatMoney(entry.realized_amount_cents), "check-circle", entry.realized_amount_cents > 0 ? "good" : "")}
         ${entrySummaryItem(differenceLabel, formatMoney(differenceValueCents), "circle-dollar-sign", differenceTone)}
-        ${entrySummaryItem("Vencimento", escapeHtml(entry.due_date), "calendar-days")}
+        ${entrySummaryItem("Vencimento", escapeHtml(formatCivilDate(entry.due_date)), "calendar-days")}
       </section>
 
       <section class="entry-detail-grid">
@@ -543,7 +543,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
                     return `<li class="${reversed ? "settlement-reversed" : ""}">
                       <div class="settlement-summary">
                         <strong>${formatMoney(item.total_cents)}</strong>
-                        <span>${escapeHtml(item.settled_at)} · ${escapeHtml(item.account_name)}</span>
+                        <span>${escapeHtml(formatCivilDate(item.settled_at))} · ${escapeHtml(item.account_name)}</span>
                         <span class="settlement-state${reversed ? " settlement-state-reversed" : ""}">${reversed ? "Estornada" : "Vigente"}${item.closes_entry ? " · Quitação final" : ""}</span>
                       </div>
                       ${reversed

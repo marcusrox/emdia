@@ -1,3 +1,4 @@
+const { formatCivilDate } = require("./dateService");
 const { statusLabel } = require("./statusService");
 
 const HEADERS = [
@@ -30,7 +31,7 @@ function entryRow(entry) {
     ? 0
     : Math.max(0, Number(entry.expected_amount_cents || 0) - Number(entry.realized_amount_cents || 0));
   return [entry.id, entryTypeLabel(entry.entry_type), entry.description, entry.competence_month,
-    entry.due_date, statusLabel(entry.status), formatCents(entry.expected_amount_cents),
+    formatCivilDate(entry.due_date, ""), statusLabel(entry.status), formatCents(entry.expected_amount_cents),
     formatCents(entry.realized_amount_cents), formatCents(open), entry.category_name,
     entry.party_name, entry.financial_account_name, entry.origin, entry.recurrence_description,
     entry.installment_number, entry.installment_count, entry.active_settlement_count, entry.notes,

@@ -1,6 +1,12 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { addMonths, dueDateFromCompetence, isCompetence, normalizeCompetence } = require("../../src/services/dateService");
+const {
+  addMonths,
+  dueDateFromCompetence,
+  formatCivilDate,
+  isCompetence,
+  normalizeCompetence,
+} = require("../../src/services/dateService");
 const { formatMoney, toCents } = require("../../src/services/moneyService");
 const { deriveStatus, settlementEligibility } = require("../../src/services/statusService");
 const { csvCell, entriesCsv, neutralizeFormula } = require("../../src/services/csvService");
@@ -10,10 +16,16 @@ describe("serviços financeiros", () => {
     assert.equal(neutralizeFormula("=1+1"), "'=1+1");
     assert.equal(neutralizeFormula("  @comando"), "'  @comando");
     assert.equal(csvCell('texto; "citado"'), '"texto; ""citado"""');
-    const csv = entriesCsv([{ id: "ent_1", description: "+Fórmula", competence_month: "2026-07" }]);
+    const csv = entriesCsv([{
+      id: "ent_1",
+      description: "+Fórmula",
+      competence_month: "2026-07",
+      due_date: "2026-07-10",
+    }]);
     assert.equal(csv.charCodeAt(0), 0xfeff);
     assert.match(csv, /Quantidade de baixas vigentes/);
     assert.match(csv, /'\+Fórmula/);
+    assert.match(csv, /10\/07\/2026/);
   });
 
   it("valida competência e usa o mês corrente como fallback", () => {
@@ -28,6 +40,13 @@ describe("serviços financeiros", () => {
     assert.equal(dueDateFromCompetence("2024-02", 31), "2024-02-29");
     assert.equal(dueDateFromCompetence("2025-02", 31), "2025-02-28");
     assert.equal(dueDateFromCompetence("2026-04", 31), "2026-04-30");
+  });
+
+  it("apresenta datas civis no padrão brasileiro sem alterar o formato de persistência", () => {
+    assert.equal(formatCivilDate("2026-08-10"), "10/08/2026");
+    assert.equal(formatCivilDate("2024-02-29"), "29/02/2024");
+    assert.equal(formatCivilDate("2025-02-29"), "-");
+    assert.equal(formatCivilDate("2026-08", "original"), "original");
   });
 
   it("converte e formata dinheiro", () => {

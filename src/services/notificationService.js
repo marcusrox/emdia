@@ -2,7 +2,7 @@ const Entry = require("../models/FinancialEntry");
 const Notification = require("../models/Notification");
 const NotificationPreference = require("../models/NotificationPreference");
 const User = require("../models/User");
-const { addMonths, currentCompetence, todayIso } = require("./dateService");
+const { addMonths, currentCompetence, formatCivilDate, todayIso } = require("./dateService");
 const { formatMoney } = require("./moneyService");
 const { logError, logInfo, logWarn } = require("./operationalLogger");
 const { createWhatsAppClient } = require("./whatsappClient");
@@ -89,7 +89,7 @@ function generateOverdueReminders(user, preferences) {
 function buildOverdueReminderMessage(entry, daysOverdue) {
   return [
     `EmDia: ${entry.description} está vencida há ${daysOverdue} dia(s).`,
-    `Vencimento: ${entry.due_date}.`,
+    `Vencimento: ${formatCivilDate(entry.due_date)}.`,
     `Valor previsto: ${formatMoney(entry.expected_amount_cents)}.`,
     entryLinkLine(entry.id),
   ].filter(Boolean).join("\n");
@@ -192,7 +192,7 @@ function buildEntryReminderMessage(entry, offset) {
   const when = offset === 0 ? "vence hoje" : `vence em ${offset} dia(s)`;
   return [
     `EmDia: ${entry.description} ${when}.`,
-    `Vencimento: ${entry.due_date}.`,
+    `Vencimento: ${formatCivilDate(entry.due_date)}.`,
     `Valor previsto: ${formatMoney(entry.expected_amount_cents)}.`,
     `Status: ${entry.status}.`,
     entryLinkLine(entry.id),

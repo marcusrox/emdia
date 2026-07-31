@@ -1,4 +1,5 @@
 const { layout } = require("./layout");
+const { formatCivilDate } = require("../services/dateService");
 const { buttonContent, escapeHtml, option, pageHeading } = require("../services/viewHelpers");
 
 const ENTITY_OPTIONS = [
@@ -149,6 +150,7 @@ function parsePayload(payloadJson) {
 function formatPayloadValue(value) {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object") return JSON.stringify(value);
+  if (typeof value === "string") return formatCivilDate(value, value);
   return String(value);
 }
 

@@ -53,10 +53,24 @@ function dueDateFromCompetence(competence, day = 10) {
   return `${competence}-${String(Math.min(Number(day) || 10, lastDay)).padStart(2, "0")}`;
 }
 
+function formatCivilDate(value, fallback = "-") {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+  if (!match) return fallback;
+
+  const [, year, month, day] = match;
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  const isValid = date.getUTCFullYear() === Number(year)
+    && date.getUTCMonth() === Number(month) - 1
+    && date.getUTCDate() === Number(day);
+
+  return isValid ? `${day}/${month}/${year}` : fallback;
+}
+
 module.exports = {
   addMonths,
   currentCompetence,
   dueDateFromCompetence,
+  formatCivilDate,
   isCompetence,
   monthLabel,
   normalizeCompetence,

@@ -91,6 +91,9 @@ describe("identidade da categoria nas listagens de lançamentos", () => {
 
     assert.equal(html.match(badgePattern)?.length, 2);
     assert.equal(compactHtml.match(badgePattern)?.length, 1);
+    assert.equal(html.split("30/07/2026").length - 1, 2);
+    assert.match(compactHtml, /30\/07\/2026/);
+    assert.ok(!html.includes(">2026-07-30<"));
   });
 
   it("aplica o badge e o ícone simples à listagem de categorias", () => {

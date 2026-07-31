@@ -41,6 +41,11 @@ Datas civis, como vencimento e baixa, devem usar:
 YYYY-MM-DD
 ```
 
+Esse formato ISO deve ser preservado na persistência, nas regras de negócio e
+nos valores de campos HTML de data. Na apresentação textual ao usuário, use
+`formatCivilDate` para exibir `DD/MM/AAAA`. Não converta datas civis com fuso
+horário.
+
 Instantes técnicos, como criação, atualização e auditoria, devem usar ISO string
 com `new Date().toISOString()`.
 
