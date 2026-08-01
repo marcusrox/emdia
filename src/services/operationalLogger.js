@@ -65,9 +65,20 @@ function normalizeEvent(eventData = {}) {
 
   if (eventData.details && typeof eventData.details === "object") {
     event.details = sanitizeValue(eventData.details);
+    restoreExplicitWebhookSender(event, eventData);
   }
 
   return event;
+}
+
+function restoreExplicitWebhookSender(event, eventData) {
+  if (
+    !eventData.allowWebhookSenderE164
+    || event.event !== "whatsapp.webhook.ignored"
+    || eventData.details?.reason !== "user_not_found"
+  ) return;
+  const sender = String(eventData.details?.senderPhoneE164 || "").trim();
+  if (/^\+[1-9]\d{7,14}$/.test(sender)) event.details.senderPhoneE164 = sender;
 }
 
 function normalizeLevel(level) {
@@ -115,5 +126,6 @@ module.exports = {
   logInfo,
   logOperationalEvent,
   logWarn,
+  normalizeEvent,
   sanitizeValue,
 };

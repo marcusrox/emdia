@@ -29,14 +29,41 @@ async function acceptWebhook(rawBody, headers, options = {}) {
   let event;
   try { event = JSON.parse(rawBody.toString("utf8")); } catch { return { ok: false, status: 400, reason: "invalid_json" }; }
   const requestId = safeId(header(headers, "x-webhook-request-id"));
+  const logDetails = webhookLogDetails(event);
   const validation = validateEvent(event);
-  if (!validation.ok) return { ...validation, requestId, eventName: safeId(event?.event) };
-  if (validation.ignored) return { ok: true, ignored: true, reason: validation.reason, requestId, eventName: "message" };
+  if (!validation.ok) return { ...validation, requestId, eventName: safeId(event?.event), logDetails };
+  if (validation.ignored) {
+    return { ok: true, ignored: true, reason: validation.reason, requestId, eventName: "message", logDetails };
+  }
 
-  const senderPhone = await resolveSenderPhone(validation.payload.from, options.fetchImpl || fetch);
-  if (!senderPhone) return { ok: true, ignored: true, reason: "sender_unresolved", requestId, eventName: "message" };
+  let senderPhone;
+  try {
+    senderPhone = await resolveSenderPhone(validation.payload.from, options.fetchImpl || fetch);
+  } catch (error) {
+    error.webhookLogDetails = { ...logDetails, stage: "sender_resolution" };
+    throw error;
+  }
+  if (!senderPhone) {
+    return {
+      ok: true,
+      ignored: true,
+      reason: "sender_unresolved",
+      requestId,
+      eventName: "message",
+      logDetails: { ...logDetails, stage: "sender_resolution" },
+    };
+  }
   const user = User.findActiveByPhoneE164(senderPhone);
-  if (!user) return { ok: true, ignored: true, reason: "user_not_found", requestId, eventName: "message" };
+  if (!user) {
+    return {
+      ok: true,
+      ignored: true,
+      reason: "user_not_found",
+      requestId,
+      eventName: "message",
+      logDetails: { ...logDetails, stage: "user_lookup", senderPhoneE164: senderPhone },
+    };
+  }
 
   const inserted = ReceiptImport.createFromWebhook({
     user_id: user.id,
@@ -57,7 +84,58 @@ async function acceptWebhook(rawBody, headers, options = {}) {
     userId: user.id,
     requestId,
     eventName: "message",
+    logDetails: { ...logDetails, stage: "persisted" },
   };
+}
+
+function webhookLogDetails(event) {
+  const payload = event && typeof event.payload === "object" ? event.payload : {};
+  const from = String(payload?.from || "");
+  const mime = String(payload?.media?.mimetype || payload?.media?.mimeType || "").toLowerCase();
+  return compactObject({
+    stage: "validated",
+    event: safeValue(event?.event, 60),
+    wahaInstance: safeValue(event?.session, 80),
+    engine: safeValue(event?.engine, 40),
+    providerEventRef: technicalReference(event?.id || event?.eventId),
+    providerMessageRef: technicalReference(payload?.id),
+    senderType: senderType(from),
+    senderRef: from ? privateReference(from) : "",
+    fromMe: typeof payload?.fromMe === "boolean" ? payload.fromMe : undefined,
+    hasMedia: typeof payload?.hasMedia === "boolean" ? payload.hasMedia : undefined,
+    mediaMime: safeValue(mime, 80),
+    messageTimestamp: normalizeTimestamp(payload?.timestamp),
+  });
+}
+
+function senderType(value) {
+  const chatId = String(value || "");
+  if (/^[1-9]\d{7,14}@(c\.us|s\.whatsapp\.net)$/.test(chatId)) return "individual";
+  if (/^[1-9]\d{7,19}@lid$/.test(chatId)) return "lid";
+  if (chatId.endsWith("@g.us")) return "group";
+  if (chatId.endsWith("@broadcast")) return "broadcast";
+  return chatId ? "unsupported" : "missing";
+}
+
+function technicalReference(value) {
+  const clean = safeValue(value, 160);
+  if (!clean) return "";
+  if (/^[a-zA-Z0-9_.:-]{1,100}$/.test(clean) && !/\d{8,}/.test(clean)) return clean;
+  return privateReference(clean);
+}
+
+function privateReference(value) {
+  const secret = String(process.env.WAHA_WEBHOOK_HMAC_KEY || "");
+  if (!secret || !value) return "unavailable";
+  return `hmac:${crypto.createHmac("sha256", secret).update(String(value)).digest("hex").slice(0, 16)}`;
+}
+
+function compactObject(value) {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== null && item !== ""));
+}
+
+function safeValue(value, maxLength) {
+  return String(value || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, maxLength);
 }
 
 function validateEvent(event) {
@@ -159,6 +237,9 @@ module.exports = {
   directPhoneFromChatId,
   normalizeTimestamp,
   resolveSenderPhone,
+  senderType,
+  technicalReference,
   validateEvent,
   verifyWebhook,
+  webhookLogDetails,
 };

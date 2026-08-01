@@ -10,9 +10,16 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
     express.raw({ type: "application/json", limit: "1mb" }),
     async (req, res) => {
       const requestId = safeId(req.get("X-Webhook-Request-Id"));
-      logInfo("whatsapp.webhook.received", "Webhook do WAHA recebido.", { requestId });
+      const receiptDetails = incomingRequestDetails(req);
+      logInfo("whatsapp.webhook.received", "Webhook do WAHA recebido.", {
+        requestId,
+        details: receiptDetails,
+      });
       if (!Buffer.isBuffer(req.body)) {
-        logWarn("whatsapp.webhook.invalid_payload", "Webhook WAHA sem corpo JSON bruto válido.", { requestId });
+        logWarn("whatsapp.webhook.invalid_payload", "Webhook WAHA sem corpo JSON bruto válido.", {
+          requestId,
+          details: { ...receiptDetails, outcome: "rejected", reason: "raw_json_body_missing" },
+        });
         return res.status(400).json({ ok: false });
       }
       try {
@@ -25,14 +32,26 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
               : "whatsapp.webhook.invalid_payload";
           logWarn(eventName, "Webhook WAHA recusado.", {
             requestId,
-            details: { reason: result.reason },
+            details: {
+              ...receiptDetails,
+              ...result.logDetails,
+              outcome: "rejected",
+              reason: result.reason,
+              httpStatus: result.status || 400,
+            },
           });
           return res.status(result.status || 400).json({ ok: false });
         }
         if (result.ignored) {
           logInfo("whatsapp.webhook.ignored", "Webhook WAHA ignorado.", {
             requestId,
-            details: { reason: result.reason, event: result.eventName },
+            allowWebhookSenderE164: result.reason === "user_not_found",
+            details: {
+              ...result.logDetails,
+              outcome: "ignored",
+              reason: result.reason,
+              event: result.eventName,
+            },
           });
           return res.status(200).json({ ok: true });
         }
@@ -41,6 +60,8 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
             requestId,
             entity: "receipt_import",
             entityId: result.receiptId,
+            user: result.userId ? { id: result.userId } : null,
+            details: { ...result.logDetails, outcome: "duplicate" },
           });
           return res.status(200).json({ ok: true });
         }
@@ -48,14 +69,21 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
           requestId,
           entity: "receipt_import",
           entityId: result.receiptId,
-          details: { userId: result.userId },
+          user: result.userId ? { id: result.userId } : null,
+          details: { ...result.logDetails, outcome: "queued" },
         });
         wakeReceiptImportWorker();
         return res.status(200).json({ ok: true });
       } catch (error) {
         logError("whatsapp.webhook.failed", "Falha transitória ao persistir webhook WAHA.", {
           requestId,
-          details: { code: safeId(error.code || "WEBHOOK_FAILURE") },
+          details: {
+            ...receiptDetails,
+            ...error.webhookLogDetails,
+            stage: error.webhookLogDetails?.stage || "processing",
+            outcome: "failed",
+            code: safeId(error.code || "WEBHOOK_FAILURE"),
+          },
         });
         return res.status(500).json({ ok: false });
       }
@@ -70,4 +98,17 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
 
 function safeId(value) { return String(value || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 160); }
 
-module.exports = { registerWhatsAppWebhookRoutes };
+function incomingRequestDetails(req) {
+  const contentLength = Number(req.get("Content-Length") || 0);
+  return {
+    stage: "received",
+    contentType: safeId(req.get("Content-Type")).slice(0, 100),
+    contentLength: Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : 0,
+    requestIdPresent: Boolean(req.get("X-Webhook-Request-Id")),
+    signaturePresent: Boolean(req.get("X-Webhook-Hmac")),
+    timestampPresent: Boolean(req.get("X-Webhook-Timestamp")),
+    hmacAlgorithm: safeId(req.get("X-Webhook-Hmac-Algorithm")).slice(0, 20).toLowerCase(),
+  };
+}
+
+module.exports = { incomingRequestDetails, registerWhatsAppWebhookRoutes };

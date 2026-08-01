@@ -7,8 +7,14 @@ const User = require("../src/models/User");
 const { createServer } = require("../src/server");
 const { buildRequest, extractionSchema, openRouterEndpoint } = require("../src/services/receiptExtractionService");
 const { processReceipt } = require("../src/services/receiptImportWorker");
+const { normalizeEvent } = require("../src/services/operationalLogger");
 const { detectImage, validateMediaUrl } = require("../src/services/receiptStorageService");
-const { acceptWebhook, directPhoneFromChatId, verifyWebhook } = require("../src/services/wahaReceiptWebhookService");
+const {
+  acceptWebhook,
+  directPhoneFromChatId,
+  verifyWebhook,
+  webhookLogDetails,
+} = require("../src/services/wahaReceiptWebhookService");
 const { createFinancialFixture, createUser, db, resetDatabase } = require("./helpers/testDatabase");
 
 beforeEach(() => {
@@ -32,6 +38,7 @@ test("webhook WAHA autenticado cria uma única importação para telefone ativo"
 
   assert.equal(first.created, true);
   assert.equal(first.userId, user.id);
+  assert.equal(first.logDetails.senderPhoneE164, undefined);
   assert.equal(second.duplicate, true);
   assert.equal(db.prepare("SELECT COUNT(*) AS total FROM receipt_imports").get().total, 1);
 });
@@ -41,6 +48,48 @@ test("webhook recusa assinatura inválida e timestamp fora da janela", () => {
   const validHeaders = signedHeaders(raw);
   assert.equal(verifyWebhook(raw, { ...validHeaders, "x-webhook-hmac": "00" }).status, 403);
   assert.equal(verifyWebhook(raw, { ...validHeaders, "x-webhook-timestamp": String(Date.now() - 600000) }).reason, "replay_rejected");
+});
+
+test("metadados do webhook enriquecem diagnóstico sem expor remetente ou mídia", async () => {
+  const raw = webhookBody();
+  const event = JSON.parse(raw.toString("utf8"));
+  event.engine = "WEBJS";
+  const details = webhookLogDetails(event);
+  const result = await acceptWebhook(raw, signedHeaders(raw));
+  const safeMetadata = JSON.stringify(details);
+
+  assert.equal(details.stage, "validated");
+  assert.equal(details.event, "message");
+  assert.equal(details.wahaInstance, "default");
+  assert.equal(details.engine, "WEBJS");
+  assert.equal(details.providerEventRef, "event-1");
+  assert.equal(details.providerMessageRef, "message-1");
+  assert.equal(details.senderType, "individual");
+  assert.match(details.senderRef, /^hmac:[a-f0-9]{16}$/);
+  assert.equal(details.hasMedia, true);
+  assert.equal(details.mediaMime, "image/jpeg");
+  assert.equal(result.reason, "user_not_found");
+  assert.equal(result.logDetails.stage, "user_lookup");
+  assert.equal(result.logDetails.senderPhoneE164, "+5511999999999");
+  assert.doesNotMatch(safeMetadata, /5511999999999/);
+  assert.doesNotMatch(safeMetadata, /receipt\.jpg/);
+  assert.doesNotMatch(safeMetadata, /test-hmac-key/);
+
+  const logDetails = { ...result.logDetails, reason: result.reason };
+  const defaultLog = normalizeEvent({ event: "whatsapp.webhook.ignored", details: logDetails });
+  const diagnosticLog = normalizeEvent({
+    event: "whatsapp.webhook.ignored",
+    allowWebhookSenderE164: true,
+    details: logDetails,
+  });
+  const wrongReasonLog = normalizeEvent({
+    event: "whatsapp.webhook.ignored",
+    allowWebhookSenderE164: true,
+    details: { ...logDetails, reason: "sender_unresolved" },
+  });
+  assert.equal(defaultLog.details.senderPhoneE164, "[redacted]");
+  assert.equal(diagnosticLog.details.senderPhoneE164, "+5511999999999");
+  assert.equal(wrongReasonLog.details.senderPhoneE164, "[redacted]");
 });
 
 test("normalização aceita somente chats individuais documentados", () => {

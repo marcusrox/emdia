@@ -229,7 +229,8 @@ Os logs não podem conter:
 
 - corpo integral do webhook;
 - imagem, Base64 ou URL de mídia;
-- telefone completo, chat ID ou LID completos;
+- telefone completo, exceto `senderPhoneE164` exclusivamente no resultado
+  `user_not_found`; chat ID e LID completos continuam proibidos;
 - legenda ou texto integral da mensagem;
 - nome, banco, valor, chave Pix ou identificador da transação;
 - JSON extraído;
@@ -237,8 +238,10 @@ Os logs não podem conter:
 - headers de autorização;
 - resposta bruta do WAHA ou do OpenRouter.
 
-Quando necessário correlacionar remetentes sem usuário, usar hash HMAC local ou
-valor truncado irreversível, nunca o telefone completo.
+Quando necessário correlacionar remetentes, usar hash HMAC local. Por decisão
+explícita de produto, o evento ignorado com motivo `user_not_found` também deve
+registrar `senderPhoneE164` completo para diagnóstico de cadastro. Nenhum outro
+resultado deve registrar o telefone completo.
 
 ## Tabela `receipt_imports`
 
@@ -762,7 +765,8 @@ integração simulados. Ela só é necessária para a validação real da extra�
 - apenas um usuário ativo com telefone exato é identificado;
 - telefones cadastrados passam a ser únicos quando preenchidos;
 - usuário desconhecido, inativo ou ambíguo não gera importação;
-- logs de todos esses resultados existem sem payload ou telefone completo.
+- logs de todos esses resultados existem sem payload; telefone completo aparece
+  somente em `user_not_found`.
 
 ### Arquivo e fila
 
@@ -956,6 +960,56 @@ consomem créditos do OpenRouter.
 ## Assinatura da LLM
 
 - Data: 01/08/2026 00:02
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao
+
+---
+
+## Atualização: diagnóstico dos webhooks
+
+Os logs de mensagens recebidas passaram a registrar metadados técnicos por
+etapa, sem persistir o payload bruto. Os resultados agora incluem, quando
+disponíveis:
+
+- etapa `received`, `validated`, `sender_resolution`, `user_lookup` ou
+  `persisted`;
+- resultado `ignored`, `queued`, `duplicate`, `rejected` ou `failed`;
+- evento, instância WAHA, engine, MIME e flags `fromMe`/`hasMedia`;
+- presença dos headers de HMAC, timestamp e request ID;
+- tamanho e tipo do corpo HTTP;
+- referências seguras do evento, mensagem e remetente;
+- motivo normalizado, status HTTP ou código de falha.
+
+IDs que possam conter telefone são substituídos por referência HMAC-SHA256
+local truncada. O E.164 completo é incluído somente quando o motivo for
+`user_not_found`; chat ID, LID, URL da mídia, payload, valores e segredos
+continuam proibidos no log. A cobertura automatizada passou a 101 testes.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 00:24
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao
+
+---
+
+## Atualização: telefone no diagnóstico de usuário não encontrado
+
+Por decisão explícita do responsável pelo EmDia, o evento
+`whatsapp.webhook.ignored` com motivo `user_not_found` passa a registrar o campo
+`senderPhoneE164` completo. A exceção é aplicada pelo logger somente a esse
+evento e motivo; nos demais fluxos o mesmo campo continua redigido e os eventos
+de usuário identificado não recebem o telefone nos metadados.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 00:28
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao

@@ -620,7 +620,9 @@ Regras do adaptador:
 - aceitar do WAHA somente identificadores individuais numéricos com sufixo
   `@c.us` ou `@lid`, rejeitando grupos, canais e identificadores arbitrários;
 - usar timeout com `AbortController`;
-- nunca registrar chave, telefone completo ou texto integral da mensagem;
+- nunca registrar chave ou texto integral da mensagem; telefone completo só é
+  permitido na exceção documentada de `whatsapp.webhook.ignored` com motivo
+  `user_not_found`;
 - manter segredos apenas no ambiente e valores vazios no `.env.example`.
 
 ## 20. Cabeçalhos das páginas internas
@@ -680,6 +682,11 @@ Regras:
 - Logs operacionais registram apenas IDs técnicos internos e códigos
   normalizados; payload, telefone, URL da mídia, valores e segredos são
   proibidos.
+- Logs de webhook devem indicar etapa e resultado e podem registrar sessão
+  WAHA, engine, flags de mídia, MIME, timestamp e referências técnicas. Quando
+  a correlação do remetente for necessária, use HMAC local truncado. A única
+  exceção para E.164 completo é o diagnóstico de `user_not_found`; chat ID e
+  LID completos permanecem proibidos.
 - Extrações automatizadas sempre exigem conferência humana antes de criar
   lançamento financeiro. Pagamentos confirmados geram uma linha em
   `settlements` e usam centavos inteiros.
