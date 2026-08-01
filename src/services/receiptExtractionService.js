@@ -87,10 +87,19 @@ async function extractReceipt(receipt, options = {}) {
 
 function buildRequest(model, mimeType, image, categories) {
   const categoryNames = categories.map((category) => category.name.slice(0, 80));
+  const maxOutputTokens = boundedNumber(
+    process.env.OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS,
+    4000,
+    2048,
+    16000
+  );
   return {
     model,
     store: false,
-    max_output_tokens: 1200,
+    max_output_tokens: maxOutputTokens,
+    reasoning: {
+      effort: "minimal",
+    },
     provider: {
       require_parameters: true,
       data_collection: "deny",
@@ -382,6 +391,12 @@ function safeDiagnosticToken(value) {
 function positiveNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : fallback;
+}
+
+function boundedNumber(value, fallback, minimum, maximum) {
+  const number = Number(value);
+  if (!Number.isSafeInteger(number)) return fallback;
+  return Math.min(Math.max(number, minimum), maximum);
 }
 
 module.exports = {

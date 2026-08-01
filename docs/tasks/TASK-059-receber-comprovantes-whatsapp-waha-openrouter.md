@@ -1100,3 +1100,27 @@ dados e exige suporte aos parâmetros usados pelo schema estruturado.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao
+
+---
+
+## Atualização: orçamento de saída para raciocínio e JSON
+
+O OpenRouter retornou HTTP 200 com status `incomplete`, motivo
+`max_output_tokens` e somente um item `reasoning`. O limite anterior de 1.200
+tokens foi consumido antes que o `openai/gpt-5-mini` produzisse o
+`output_text` estruturado.
+
+O request passa a usar `reasoning.effort: minimal` e 4.000 tokens de saída por
+padrão. O valor pode ser configurado por
+`OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS`, limitado pelo EmDia ao intervalo de
+2.048 a 16.000 tokens. Isso preserva espaço para o JSON mesmo após o orçamento
+mínimo de raciocínio e limita configurações acidentais de custo excessivo.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 08:24
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

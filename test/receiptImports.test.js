@@ -200,8 +200,9 @@ test("requisição OpenRouter desabilita armazenamento e exige schema estruturad
   assert.equal(requestBody.store, false);
   assert.equal(requestBody.provider.zdr, undefined);
   assert.equal(requestBody.provider.data_collection, "deny");
-  assert.equal(requestBody.provider.data_collection, "deny");
   assert.equal(requestBody.provider.require_parameters, true);
+  assert.equal(requestBody.max_output_tokens, 4000);
+  assert.equal(requestBody.reasoning.effort, "minimal");
   assert.equal(requestBody.text.format.strict, true);
   assert.equal(requestBody.text.format.schema.additionalProperties, false);
   assert.equal(requestBody.input[0].content[1].detail, "high");

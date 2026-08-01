@@ -396,6 +396,7 @@ WAHA_SESSION=default
 WAHA_WEBHOOK_HMAC_KEY=
 OPENROUTER_API_KEY=
 OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
+OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS=4000
 ```
 
 No WAHA, configure `POST https://SEU-EMDIA/webhooks/whatsapp/waha`, somente o
@@ -413,6 +414,10 @@ chave somente no ambiente. O modelo é configurável e o default
 `store: false`, `provider.require_parameters: true` e
 `provider.data_collection: deny`; ZDR não é exigido. Testes automatizados usam
 mocks e não consomem WAHA ou OpenRouter reais.
+
+Para reservar espaço ao JSON após os tokens internos de raciocínio, o request
+usa esforço `minimal` e 4.000 tokens de saída por padrão. O limite pode ser
+ajustado entre 2.048 e 16.000 por `OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS`.
 
 As imagens ficam em `uploads/receipts`, fora de `public/`, e são removidas após
 a retenção configurada quando aprovadas ou rejeitadas. O backup SQLite atual
