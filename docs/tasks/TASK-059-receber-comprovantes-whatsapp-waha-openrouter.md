@@ -1030,7 +1030,7 @@ diferentes. O alias não é editável e não é criado para telefones fixos ou
 internacionais.
 
 O webhook procura usuário ativo nas duas colunas e registra
-`phoneMatchStrategy` como `exact` ou `legacy_alias`. O E.164 recebido continua
+`userMatchStrategy` como `exact` ou `legacy_alias`. O E.164 recebido continua
 visível no diagnóstico de `user_not_found`; após a identificação, o usuário e a
 estratégia de casamento bastam para a correlação sem repetir o telefone no log.
 Notificações de saída continuam usando exclusivamente o telefone canônico
@@ -1044,6 +1044,36 @@ o cenário real de cadastro `+5571992769969` e recebimento `+557192769969`.
 ## Assinatura da LLM
 
 - Data: 01/08/2026 00:49
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao
+
+---
+
+## Atualização: diagnóstico de resposta inválida do OpenRouter
+
+O alerta `whatsapp.receipt.extraction_failed` passou a detalhar em qual etapa a
+extração falhou, mantendo `OPENROUTER_INVALID_RESPONSE` como código estável. O
+campo `reason` diferencia corpo HTTP não-JSON, ausência de `output_text`, texto
+estruturado não-JSON, tipo de documento inválido e confiança fora do contrato.
+
+Quando disponíveis, o log inclui status HTTP, content type e tamanho declarado
+da resposta, ID e status técnico da resposta, tipos de itens retornados, motivo
+de resposta incompleta, modelo, duração e campo que falhou na validação. Esses
+dados passam por allowlist; corpo da resposta, texto extraído, prompt, imagem,
+payload e segredos não são registrados.
+
+O detalhe de identificação do webhook foi renomeado para
+`userMatchStrategy`, evitando que o sanitizador o confunda com um telefone e o
+mostre como `[redacted]`.
+
+Validações concluídas com `npm run check` e 106 testes automatizados.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 01:00
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao

@@ -5,8 +5,13 @@ const request = require("supertest");
 const ReceiptImport = require("../src/models/ReceiptImport");
 const User = require("../src/models/User");
 const { createServer } = require("../src/server");
-const { buildRequest, extractionSchema, openRouterEndpoint } = require("../src/services/receiptExtractionService");
-const { processReceipt } = require("../src/services/receiptImportWorker");
+const {
+  buildRequest,
+  extractionSchema,
+  openRouterEndpoint,
+  parseStructuredOutput,
+} = require("../src/services/receiptExtractionService");
+const { processReceipt, safeExtractionDiagnostics } = require("../src/services/receiptImportWorker");
 const { normalizeEvent } = require("../src/services/operationalLogger");
 const { detectImage, validateMediaUrl } = require("../src/services/receiptStorageService");
 const {
@@ -39,7 +44,7 @@ test("webhook WAHA autenticado cria uma única importação para telefone ativo"
   assert.equal(first.created, true);
   assert.equal(first.userId, user.id);
   assert.equal(first.logDetails.senderPhoneE164, undefined);
-  assert.equal(first.logDetails.phoneMatchStrategy, "exact");
+  assert.equal(first.logDetails.userMatchStrategy, "exact");
   assert.equal(second.duplicate, true);
   assert.equal(db.prepare("SELECT COUNT(*) AS total FROM receipt_imports").get().total, 1);
 });
@@ -115,7 +120,7 @@ test("webhook reconhece celular brasileiro pelo formato legado sem consultar o W
   assert.equal(user.phone_whatsapp_legacy, "+557192769969");
   assert.equal(result.created, true);
   assert.equal(result.userId, user.id);
-  assert.equal(result.logDetails.phoneMatchStrategy, "legacy_alias");
+  assert.equal(result.logDetails.userMatchStrategy, "legacy_alias");
 });
 
 test("alias legado só é gerado para celular brasileiro no formato atual", () => {
@@ -201,6 +206,51 @@ test("requisição OpenRouter exige ZDR, schema estruturado e imagem com detalhe
   assert.equal(requestBody.input[0].content[1].detail, "high");
   assert.equal(extractionSchema().properties.amount_cents.type[0], "integer");
   assert.equal(openRouterEndpoint(), "https://openrouter.ai/api/v1/responses");
+});
+
+test("resposta OpenRouter inválida informa a etapa sem registrar conteúdo do modelo", () => {
+  const payload = {
+    id: "resp_diagnostic",
+    status: "completed",
+    output: [{ type: "message", content: [{ type: "reasoning", text: "conteúdo sensível" }] }],
+  };
+
+  assert.throws(
+    () => parseStructuredOutput(payload, { httpStatus: 200, responseContentType: "application/json" }),
+    (error) => {
+      assert.equal(error.code, "OPENROUTER_INVALID_RESPONSE");
+      assert.equal(error.diagnostics.diagnosticStage, "structured_output");
+      assert.equal(error.diagnostics.reason, "output_text_missing");
+      assert.equal(error.diagnostics.responseId, "resp_diagnostic");
+      assert.deepEqual(error.diagnostics.outputTypes, ["message"]);
+      assert.deepEqual(error.diagnostics.contentTypes, ["reasoning"]);
+      assert.doesNotMatch(JSON.stringify(error.diagnostics), /conteúdo sensível/);
+      return true;
+    }
+  );
+});
+
+test("worker permite somente metadados seguros no diagnóstico da extração", () => {
+  const details = safeExtractionDiagnostics({
+    diagnostics: {
+      diagnosticStage: "structured_output",
+      reason: "output_text_not_json",
+      httpStatus: 200,
+      responseContentType: "application/json; charset=utf-8",
+      outputTextLength: 321,
+      model: "openai/gpt-5-mini",
+      outputTypes: ["message"],
+      payload: "não registrar",
+      secret: "não registrar",
+    },
+  });
+
+  assert.equal(details.reason, "output_text_not_json");
+  assert.equal(details.httpStatus, 200);
+  assert.equal(details.outputTextLength, 321);
+  assert.equal(details.model, "openai/gpt-5-mini");
+  assert.equal(details.payload, undefined);
+  assert.equal(details.secret, undefined);
 });
 
 test("mídia bloqueia outra origem e reconhece assinatura real", () => {

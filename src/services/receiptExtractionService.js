@@ -28,13 +28,26 @@ async function extractReceipt(receipt, options = {}) {
       body: JSON.stringify(buildRequest(model, receipt.media_mime_type, image, categories)),
       signal: controller.signal,
     });
+    const responseDiagnostics = responseMetadata(response);
     let payload;
-    try { payload = await response.json(); } catch { throw extractionError("OPENROUTER_INVALID_RESPONSE", false); }
-    if (!response.ok || payload?.error || payload?.status === "failed") {
-      throw openRouterResponseError(response.status, payload);
+    try {
+      payload = await response.json();
+    } catch {
+      throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+        ...responseDiagnostics,
+        diagnosticStage: "response_decode",
+        reason: "response_body_not_json",
+      });
     }
-    const raw = parseStructuredOutput(payload);
-    const validated = validateExtraction(raw, categories, receipt.user_id);
+    if (!response.ok || payload?.error || payload?.status === "failed") {
+      throw openRouterResponseError(response.status, payload, responseDiagnostics);
+    }
+    const raw = parseStructuredOutput(payload, responseDiagnostics);
+    const validated = validateExtraction(raw, categories, receipt.user_id, {
+      ...responseDiagnostics,
+      responseId: safeIdentifier(payload?.id),
+      responseStatus: safeDiagnosticToken(payload?.status),
+    });
     return {
       ...validated,
       responseId: safeIdentifier(payload.id),
@@ -43,9 +56,30 @@ async function extractReceipt(receipt, options = {}) {
       durationMs: Date.now() - startedAt,
     };
   } catch (error) {
-    if (error?.name === "AbortError") throw extractionError("OPENROUTER_TIMEOUT", true);
-    if (error?.code) throw error;
-    throw extractionError("OPENROUTER_REQUEST_FAILED", true);
+    if (error?.name === "AbortError") {
+      throw extractionError("OPENROUTER_TIMEOUT", true, {
+        diagnosticStage: "request",
+        reason: "request_timeout",
+        model: safeIdentifier(model),
+        durationMs: Date.now() - startedAt,
+      });
+    }
+    if (error?.code) {
+      if (String(error.code).startsWith("OPENROUTER_")) {
+        error.diagnostics = {
+          model: safeIdentifier(model),
+          durationMs: Date.now() - startedAt,
+          ...error.diagnostics,
+        };
+      }
+      throw error;
+    }
+    throw extractionError("OPENROUTER_REQUEST_FAILED", true, {
+      diagnosticStage: "request",
+      reason: "network_error",
+      model: safeIdentifier(model),
+      durationMs: Date.now() - startedAt,
+    });
   } finally {
     clearTimeout(timeout);
   }
@@ -123,20 +157,50 @@ function extractionSchema() {
   };
 }
 
-function parseStructuredOutput(payload) {
+function parseStructuredOutput(payload, responseDiagnostics = {}) {
   const content = Array.isArray(payload?.output)
     ? payload.output.flatMap((item) => Array.isArray(item?.content) ? item.content : [])
     : [];
   const refusal = content.find((item) => item?.type === "refusal");
-  if (refusal) throw extractionError("OPENROUTER_REFUSAL", false);
+  const structure = outputStructure(payload, content);
+  if (refusal) {
+    throw extractionError("OPENROUTER_REFUSAL", false, {
+      ...responseDiagnostics,
+      ...structure,
+      diagnosticStage: "structured_output",
+      reason: "model_refusal",
+    });
+  }
   const outputText = content.find((item) => item?.type === "output_text")?.text || payload?.output_text;
-  if (typeof outputText !== "string") throw extractionError("OPENROUTER_INVALID_RESPONSE", false);
-  try { return JSON.parse(outputText); } catch { throw extractionError("OPENROUTER_INVALID_RESPONSE", false); }
+  if (typeof outputText !== "string") {
+    throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+      ...responseDiagnostics,
+      ...structure,
+      diagnosticStage: "structured_output",
+      reason: "output_text_missing",
+    });
+  }
+  try {
+    return JSON.parse(outputText);
+  } catch {
+    throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+      ...responseDiagnostics,
+      ...structure,
+      diagnosticStage: "structured_output",
+      reason: "output_text_not_json",
+      outputTextLength: outputText.length,
+    });
+  }
 }
 
-function validateExtraction(raw, categories, userId) {
+function validateExtraction(raw, categories, userId, responseDiagnostics = {}) {
   if (!raw || typeof raw !== "object" || !DOCUMENT_TYPES.includes(raw.document_type)) {
-    throw extractionError("OPENROUTER_INVALID_RESPONSE", false);
+    throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+      ...responseDiagnostics,
+      diagnosticStage: "schema_validation",
+      reason: "invalid_document_type",
+      validationField: "document_type",
+    });
   }
   const warnings = Array.isArray(raw.warnings)
     ? raw.warnings.map(cleanShortString).filter(Boolean).slice(0, 12)
@@ -146,7 +210,7 @@ function validateExtraction(raw, categories, userId) {
   const paymentDate = isReasonableDate(raw.payment_date) ? raw.payment_date : null;
   if (raw.payment_date && !paymentDate) warnings.push("invalid_payment_date");
   const merchantName = cleanNullableString(raw.merchant_name, 160);
-  const confidence = validateConfidence(raw.confidence);
+  const confidence = validateConfidence(raw.confidence, responseDiagnostics);
   const threshold = Math.min(Math.max(Number(process.env.RECEIPT_REVIEW_CONFIDENCE_THRESHOLD || 0.85), 0), 1);
   if (confidence.overall < threshold) warnings.push("low_overall_confidence");
 
@@ -209,12 +273,19 @@ function inferCategoryFromHistory(userId, merchantName) {
   return row?.category_id || null;
 }
 
-function validateConfidence(value) {
+function validateConfidence(value, responseDiagnostics = {}) {
   const fields = ["document_type", "merchant_name", "payment_date", "amount_cents", "category", "overall"];
   const result = {};
   for (const field of fields) {
     const number = Number(value?.[field]);
-    if (!Number.isFinite(number) || number < 0 || number > 1) throw extractionError("OPENROUTER_INVALID_RESPONSE", false);
+    if (!Number.isFinite(number) || number < 0 || number > 1) {
+      throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+        ...responseDiagnostics,
+        diagnosticStage: "schema_validation",
+        reason: "invalid_confidence",
+        validationField: `confidence.${field}`,
+      });
+    }
     result[field] = number;
   }
   return result;
@@ -243,10 +314,11 @@ function normalizeUsage(usage) {
     totalTokens: Number(usage?.total_tokens || 0),
   };
 }
-function extractionError(code, retryable) {
+function extractionError(code, retryable, diagnostics = {}) {
   const error = new Error(code);
   error.code = code;
   error.retryable = retryable;
+  error.diagnostics = diagnostics;
   return error;
 }
 function openRouterEndpoint() {
@@ -258,7 +330,7 @@ function openRouterEndpoint() {
   }
   return `${baseUrl}/responses`;
 }
-function openRouterResponseError(status, payload) {
+function openRouterResponseError(status, payload, responseDiagnostics = {}) {
   const errorType = String(payload?.error_type || payload?.error?.code || "").toLowerCase();
   const retryableTypes = new Set([
     "rate_limit_exceeded", "provider_overloaded", "provider_unavailable", "timeout", "server", "server_error",
@@ -269,7 +341,44 @@ function openRouterResponseError(status, payload) {
     : retryable
       ? "OPENROUTER_REQUEST_FAILED"
       : "OPENROUTER_INVALID_RESPONSE";
-  return extractionError(code, retryable);
+  return extractionError(code, retryable, {
+    ...responseDiagnostics,
+    diagnosticStage: "api_response",
+    reason: "openrouter_error",
+    providerErrorCode: safeDiagnosticToken(payload?.error?.code),
+    providerErrorType: safeDiagnosticToken(payload?.error_type || payload?.error?.type),
+    responseStatus: safeDiagnosticToken(payload?.status),
+    responseId: safeIdentifier(payload?.id),
+  });
+}
+
+function responseMetadata(response) {
+  const rawContentLength = response?.headers?.get?.("content-length");
+  const contentLength = rawContentLength === null || rawContentLength === undefined ? NaN : Number(rawContentLength);
+  return {
+    httpStatus: Number.isInteger(response?.status) ? response.status : undefined,
+    responseContentType: cleanNullableString(response?.headers?.get?.("content-type"), 80),
+    responseContentLength: Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : undefined,
+  };
+}
+
+function outputStructure(payload, content) {
+  const output = Array.isArray(payload?.output) ? payload.output : [];
+  return {
+    responseId: safeIdentifier(payload?.id),
+    responseStatus: safeDiagnosticToken(payload?.status),
+    incompleteReason: safeDiagnosticToken(payload?.incomplete_details?.reason),
+    outputTypes: uniqueDiagnosticTokens(output.map((item) => item?.type)),
+    contentTypes: uniqueDiagnosticTokens(content.map((item) => item?.type)),
+  };
+}
+
+function uniqueDiagnosticTokens(values) {
+  return [...new Set((values || []).map(safeDiagnosticToken).filter(Boolean))].slice(0, 8);
+}
+
+function safeDiagnosticToken(value) {
+  return String(value || "").replace(/[^a-zA-Z0-9_.:/-]/g, "_").slice(0, 80) || undefined;
 }
 function positiveNumber(value, fallback) {
   const number = Number(value);

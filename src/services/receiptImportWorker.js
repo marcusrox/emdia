@@ -85,6 +85,7 @@ async function processReceipt(receipt, options = {}) {
         code: safeCode(error.code || "PROCESSING_FAILURE"),
         attempt: failed?.attempt_count,
         willRetry: failed?.status === ReceiptImport.STATUS.RECEIVED,
+        ...safeExtractionDiagnostics(error),
       },
     });
   }
@@ -111,6 +112,47 @@ function cleanupExpiredMedia() {
 }
 
 function safeCode(value) { return String(value || "").replace(/[^A-Z0-9_-]/gi, "_").slice(0, 80); }
+function safeExtractionDiagnostics(error) {
+  const details = error?.diagnostics;
+  if (!details || typeof details !== "object") return {};
+  const result = {};
+  copyToken(result, details, "diagnosticStage");
+  copyToken(result, details, "reason");
+  copyInteger(result, details, "httpStatus", 100, 599);
+  copyToken(result, details, "responseContentType");
+  copyInteger(result, details, "responseContentLength", 0, Number.MAX_SAFE_INTEGER);
+  copyToken(result, details, "responseStatus");
+  copyToken(result, details, "incompleteReason");
+  copyToken(result, details, "responseId", 120);
+  copyToken(result, details, "providerErrorCode");
+  copyToken(result, details, "providerErrorType");
+  copyToken(result, details, "validationField");
+  copyToken(result, details, "model", 120);
+  copyInteger(result, details, "outputTextLength", 0, Number.MAX_SAFE_INTEGER);
+  copyInteger(result, details, "durationMs", 0, Number.MAX_SAFE_INTEGER);
+  copyTokenList(result, details, "outputTypes");
+  copyTokenList(result, details, "contentTypes");
+  return result;
+}
+
+function copyToken(target, source, key, maxLength = 80) {
+  const value = String(source[key] || "").replace(/[^a-zA-Z0-9_.:/+-]/g, "_").slice(0, maxLength);
+  if (value) target[key] = value;
+}
+
+function copyInteger(target, source, key, minimum, maximum) {
+  const value = Number(source[key]);
+  if (Number.isSafeInteger(value) && value >= minimum && value <= maximum) target[key] = value;
+}
+
+function copyTokenList(target, source, key) {
+  if (!Array.isArray(source[key])) return;
+  const values = source[key]
+    .map((value) => String(value || "").replace(/[^a-zA-Z0-9_.:/+-]/g, "_").slice(0, 80))
+    .filter(Boolean)
+    .slice(0, 8);
+  if (values.length) target[key] = values;
+}
 function positiveNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : fallback;
@@ -119,6 +161,7 @@ function positiveNumber(value, fallback) {
 module.exports = {
   processReceipt,
   runSafely,
+  safeExtractionDiagnostics,
   startReceiptImportWorker,
   wakeReceiptImportWorker,
 };

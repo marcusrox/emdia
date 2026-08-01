@@ -695,3 +695,7 @@ Regras:
 - Extrações automatizadas sempre exigem conferência humana antes de criar
   lançamento financeiro. Pagamentos confirmados geram uma linha em
   `settlements` e usam centavos inteiros.
+- Falhas do OpenRouter devem distinguir request, decodificação HTTP, erro do
+  provedor, saída estruturada e validação de schema. Registre somente códigos,
+  status, tipos, tamanhos, modelo e duração; nunca corpo da resposta, prompt ou
+  texto extraído.

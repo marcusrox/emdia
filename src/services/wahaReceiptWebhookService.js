@@ -87,7 +87,7 @@ async function acceptWebhook(rawBody, headers, options = {}) {
     logDetails: {
       ...logDetails,
       stage: "persisted",
-      phoneMatchStrategy: user.phone_match_strategy || "exact",
+      userMatchStrategy: user.phone_match_strategy || "exact",
     },
   };
 }
