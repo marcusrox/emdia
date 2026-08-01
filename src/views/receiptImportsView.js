@@ -1,4 +1,5 @@
 const { formatMoney } = require("../services/moneyService");
+const { formatCivilDate } = require("../services/dateService");
 const {
   buttonContent,
   buttonLink,
@@ -22,11 +23,21 @@ const STATUS_LABELS = {
   FAILED: "Falhou",
 };
 
+const WARNING_EXPLANATIONS = {
+  PMETH_INFERRED: "O meio de pagamento foi deduzido pelo contexto e deve ser conferido.",
+  CATEGORY_LOW_CONFIDENCE: "A categoria sugerida tem baixa confiança e deve ser revisada.",
+  TRANS_REF_PARTIAL: "A referência da transação foi identificada apenas parcialmente.",
+  INVALID_AMOUNT: "O valor identificado no comprovante não pôde ser validado.",
+  INVALID_PAYMENT_DATE: "A data de pagamento identificada não é válida.",
+  LOW_OVERALL_CONFIDENCE: "A leitura automática teve baixa confiança geral; confira todos os dados.",
+  DOCUMENT_REQUIRES_ATTENTION: "O tipo de documento exige conferência antes da aprovação.",
+};
+
 function receiptImportsListView({ user, imports, filters, notifications = [] }) {
   const rows = imports.length
     ? imports.map((receipt) => `<tr>
         <td><a href="/receipt-imports/${escapeHtml(receipt.id)}">${escapeHtml(receipt.merchant_name || "Comprovante sem favorecido")}</a></td>
-        <td>${escapeHtml(receipt.payment_date || "A conferir")}</td>
+        <td>${escapeHtml(formatCivilDate(receipt.payment_date, "A conferir"))}</td>
         <td>${receipt.amount_cents ? escapeHtml(formatMoney(receipt.amount_cents)) : "A conferir"}</td>
         <td><span class="status status-${escapeHtml(receipt.status.toLowerCase())}">${escapeHtml(STATUS_LABELS[receipt.status] || receipt.status)}</span></td>
         <td>${escapeHtml(formatDateTime(receipt.created_at, user.timezone))}</td>
@@ -148,7 +159,7 @@ function receiptImportDetailView({ user, receipt, categories, accounts, values =
           <div><dt>Referência</dt><dd>${escapeHtml(receipt.transaction_reference || "A conferir")}</dd></div>
           <div><dt>Confiança geral</dt><dd>${confidence.overall === undefined ? "A conferir" : `${Math.round(Number(confidence.overall) * 100)}%`}</dd></div>
         </dl>
-        ${warnings.length ? `<div><strong>Pontos de atenção</strong><ul>${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}</ul></div>` : ""}
+        ${warnings.length ? `<div class="receipt-warning-list"><strong>Pontos de atenção</strong><ul>${warnings.map((warning) => `<li><code>${escapeHtml(warning)}</code><small>${escapeHtml(warningExplanation(warning))}</small></li>`).join("")}</ul></div>` : ""}
         ${receipt.status === "FAILED" ? `<div class="notification error">O processamento falhou. Você pode tentar novamente.</div>` : ""}
         ${receipt.financial_entry_id ? `<p>${buttonLink({ href: `/entries/${receipt.financial_entry_id}`, label: "Abrir despesa criada", icon: "external-link" })}</p>` : ""}
       </section>
@@ -160,6 +171,10 @@ function receiptImportDetailView({ user, receipt, categories, accounts, values =
 
 function parseJsonArray(value) { try { const parsed = JSON.parse(value || "[]"); return Array.isArray(parsed) ? parsed : []; } catch { return []; } }
 function parseJsonObject(value) { try { const parsed = JSON.parse(value || "{}"); return parsed && typeof parsed === "object" ? parsed : {}; } catch { return {}; } }
+function warningExplanation(value) {
+  const code = String(value || "").trim().toUpperCase();
+  return WARNING_EXPLANATIONS[code] || "Aviso gerado durante a leitura automática; revise os dados extraídos.";
+}
 function formatDateTime(value, timezone) {
   try { return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: timezone }).format(new Date(value)); }
   catch { return "-"; }

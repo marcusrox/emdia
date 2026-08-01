@@ -210,6 +210,31 @@ test("possível duplicidade usa alerta e confirmação com marcação própria",
   assert.doesNotMatch(html, /class="notification warning"/);
 });
 
+test("pontos de atenção explicam códigos conhecidos e desconhecidos", () => {
+  const html = receiptImportDetailView({
+    user: {
+      id: "usr_view",
+      name: "Usuário",
+      email: "user@example.test",
+      timezone: "America/Sao_Paulo",
+      csrfToken: "csrf-test",
+    },
+    receipt: {
+      id: "rcp_warnings",
+      status: "NEEDS_REVIEW",
+      confidence_json: "{}",
+      warnings_json: JSON.stringify(["PMETH_INFERRED", "CATEGORY_LOW_CONFIDENCE", "TRANS_REF_PARTIAL", "NEW_WARNING"]),
+    },
+    categories: [],
+    accounts: [],
+  });
+
+  assert.match(html, /PMETH_INFERRED<\/code><small>O meio de pagamento foi deduzido/);
+  assert.match(html, /CATEGORY_LOW_CONFIDENCE<\/code><small>A categoria sugerida tem baixa confiança/);
+  assert.match(html, /TRANS_REF_PARTIAL<\/code><small>A referência da transação foi identificada apenas parcialmente/);
+  assert.match(html, /NEW_WARNING<\/code><small>Aviso gerado durante a leitura automática/);
+});
+
 test("worker usa mocks, detecta hash e leva importação à revisão", async () => {
   const user = createUser();
   const receipt = createReceipt(user.id);

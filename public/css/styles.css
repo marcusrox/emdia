@@ -155,6 +155,29 @@
   overflow-wrap: anywhere;
 }
 
+.receipt-warning-list ul {
+  display: grid;
+  gap: .5rem;
+  margin-bottom: 0;
+}
+
+.receipt-warning-list li {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .55rem;
+}
+
+.receipt-warning-list code {
+  font-weight: 700;
+}
+
+.receipt-warning-list small {
+  color: var(--muted);
+  font-size: .78em;
+  line-height: 1.4;
+}
+
 .receipt-review-form {
   margin-top: 1rem;
 }
