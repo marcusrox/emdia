@@ -31,11 +31,13 @@ const { registerReceiptImportRoutes } = require("./routes/receiptImportRoutes");
 const { registerSettlementRoutes } = require("./routes/settlementRoutes");
 const { registerWhatsAppWebhookRoutes } = require("./routes/whatsappWebhookRoutes");
 const { createLoginRateLimiter } = require("./services/loginRateLimitService");
+const { createSignupRateLimiter } = require("./services/signupRateLimitService");
 const { checkReadiness } = require("./services/readinessService");
 
 function createServer(options = {}) {
   const app = express();
   const loginRateLimiter = options.loginRateLimiter || createLoginRateLimiter();
+  const signupRateLimiter = options.signupRateLimiter || createSignupRateLimiter();
   const readinessCheck = options.readinessCheck || checkReadiness;
 
   app.disable("x-powered-by");
@@ -48,7 +50,7 @@ function createServer(options = {}) {
   registerPublicOperationalRoutes(app, { readinessCheck });
 
   app.use(loadSession);
-  registerPublicAuthRoutes(app, { loginRateLimiter });
+  registerPublicAuthRoutes(app, { loginRateLimiter, signupRateLimiter });
 
   app.use(requireAuth);
 

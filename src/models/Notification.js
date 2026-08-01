@@ -68,6 +68,25 @@ function listPending(limit = 25) {
     .all(new Date().toISOString(), limit);
 }
 
+function listPendingEmail(limit = 25, maxAttempts = 5, now = new Date().toISOString()) {
+  return getDatabase()
+    .prepare(
+      `
+      SELECT notifications.*, users.email AS user_email, users.name AS user_name,
+        users.locale, users.timezone, users.is_active
+      FROM notifications
+      JOIN users ON users.id = notifications.user_id
+      WHERE notifications.channel = 'EMAIL'
+        AND notifications.status IN ('PENDING', 'FAILED')
+        AND notifications.scheduled_at <= ?
+        AND notifications.attempt_count < ?
+      ORDER BY notifications.scheduled_at ASC, notifications.created_at ASC
+      LIMIT ?
+    `
+    )
+    .all(now, maxAttempts, limit);
+}
+
 function listForAdmin(filters = {}) {
   const clauses = ["1 = 1"];
   const params = [];
@@ -79,6 +98,10 @@ function listForAdmin(filters = {}) {
   if (filters.status) {
     clauses.push("notifications.status = ?");
     params.push(filters.status);
+  }
+  if (filters.channel) {
+    clauses.push("notifications.channel = ?");
+    params.push(filters.channel);
   }
   if (filters.event_type) {
     clauses.push("notifications.event_type = ?");
@@ -147,17 +170,19 @@ function markSent(id, providerMessageId) {
     .run(new Date().toISOString(), providerMessageId || null, new Date().toISOString(), id);
 }
 
-function markFailed(id, errorMessage) {
+function markFailed(id, errorMessage, options = {}) {
+  const attemptCount = Number.isInteger(options.attemptCount) ? options.attemptCount : null;
   getDatabase()
     .prepare(
       `
       UPDATE notifications
-      SET status = 'FAILED', attempt_count = attempt_count + 1,
-        error_message = ?, updated_at = ?
+      SET status = 'FAILED', attempt_count = COALESCE(?, attempt_count + 1),
+        scheduled_at = COALESCE(?, scheduled_at), error_message = ?, updated_at = ?
       WHERE id = ?
     `
     )
-    .run(String(errorMessage || "Falha ao enviar notificação.").slice(0, 500), new Date().toISOString(), id);
+    .run(attemptCount, options.scheduledAt || null,
+      String(errorMessage || "Falha ao enviar notificação.").slice(0, 500), new Date().toISOString(), id);
 }
 
 module.exports = {
@@ -165,6 +190,7 @@ module.exports = {
   createPending,
   listForAdmin,
   listPending,
+  listPendingEmail,
   markFailed,
   markSent,
   resend,

@@ -3,6 +3,8 @@ const { withImmediateTransaction } = require("../database/transaction");
 const { hashPassword, passwordPolicyError, verifyPassword } = require("../services/authService");
 const { isCompetence } = require("../services/dateService");
 const { newId } = require("../services/id");
+const { provisionInitialUserData } = require("../services/userProvisioningService");
+const { enqueueAccountCreatedEmail } = require("../services/emailNotificationService");
 
 const DEFAULT_EMAIL = "usuario@emdia.local";
 const DEFAULT_PASSWORD = process.env.EMDIA_DEFAULT_PASSWORD || "emdia123";
@@ -76,6 +78,91 @@ function createAdmin(data) {
   `).run(id, values.name, values.email, hashPassword(values.new_password), values.phone_e164 || null,
     values.phone_whatsapp_legacy || null, values.timezone, values.locale, values.is_active, values.is_admin, now, now);
   return { ok: true, user: getAdminById(id) };
+}
+
+function registerPublic(data, options = {}) {
+  const values = normalizePublicRegistration(data);
+  const errors = validatePublicRegistration(values);
+  if (Object.keys(errors).length) return { ok: false, errors, values: publicRegistrationValues(values) };
+
+  const db = getDatabase();
+  const provisioner = options.provisioner || provisionInitialUserData;
+  const notificationEnqueuer = options.notificationEnqueuer || enqueueAccountCreatedEmail;
+
+  try {
+    const user = withImmediateTransaction(db, () => {
+      const emailOwner = db.prepare("SELECT id FROM users WHERE lower(email) = lower(?) LIMIT 1").get(values.email);
+      if (emailOwner) return null;
+
+      const now = new Date().toISOString();
+      const id = newId("usr");
+      db.prepare(`
+        INSERT INTO users (
+          id, name, email, password_hash, timezone, locale,
+          is_active, is_admin, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+      `).run(id, values.name, values.email, hashPassword(values.password), values.timezone, "pt-BR", now, now);
+
+      const createdUser = getAdminById(id);
+      provisioner(createdUser, { db });
+      notificationEnqueuer(createdUser, { db });
+      return createdUser;
+    });
+
+    if (!user) return duplicatePublicEmail(values);
+    return { ok: true, user };
+  } catch (error) {
+    if (isDuplicateEmailError(error)) return duplicatePublicEmail(values);
+    throw error;
+  }
+}
+
+function normalizePublicRegistration(data) {
+  const requestedTimezone = String(data.timezone || "").trim();
+  return {
+    name: String(data.name || "").trim(),
+    email: String(data.email || "").trim().toLowerCase(),
+    password: String(data.password || ""),
+    confirm_password: String(data.confirm_password || ""),
+    timezone: isValidTimeZone(requestedTimezone) ? requestedTimezone : "America/Sao_Paulo",
+  };
+}
+
+function validatePublicRegistration(values) {
+  const errors = {};
+  if (!values.name) errors.name = "Informe seu nome.";
+  else if (values.name.length > 120) errors.name = "Informe um nome com até 120 caracteres.";
+
+  if (!isValidEmail(values.email) || values.email.length > 254) {
+    errors.email = "Informe um e-mail válido.";
+  } else {
+    const owner = getDatabase().prepare("SELECT id FROM users WHERE lower(email) = lower(?) LIMIT 1").get(values.email);
+    if (owner) errors.email = "Este e-mail já está cadastrado. Entre na sua conta.";
+  }
+
+  const policyError = passwordPolicyError(values.password);
+  if (policyError) errors.password = policyError;
+  if (values.password !== values.confirm_password) {
+    errors.confirm_password = "A confirmação da senha não confere.";
+  }
+  return errors;
+}
+
+function publicRegistrationValues(values) {
+  return { name: values.name, email: values.email, timezone: values.timezone };
+}
+
+function duplicatePublicEmail(values) {
+  return {
+    ok: false,
+    errors: { email: "Este e-mail já está cadastrado. Entre na sua conta." },
+    values: publicRegistrationValues(values),
+  };
+}
+
+function isDuplicateEmailError(error) {
+  return Number(error?.errcode) === 2067
+    || /UNIQUE constraint failed:\s*users\.email/i.test(String(error?.message || ""));
 }
 
 function updateAdmin(actorId, userId, data) {
@@ -456,6 +543,7 @@ module.exports = {
   LIST_DENSITY_OPTIONS: Array.from(LIST_DENSITY_OPTIONS),
   findByEmail,
   findActiveByPhoneE164,
+  registerPublic,
   ensureDefaultUser,
   getById,
   getDefaultUser,

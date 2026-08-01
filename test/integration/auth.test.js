@@ -124,6 +124,21 @@ describe("autenticação e sessões", () => {
     db.prepare("UPDATE users SET is_active = 0 WHERE id = ?").run(user.id);
     assert.equal(Boolean(Auth.getSession(sessionRequest)), false);
   });
+
+  it("assina, valida e expira o token CSRF do cadastro público", () => {
+    const issuedAt = Date.parse("2026-08-01T12:00:00.000Z");
+    const csrf = Auth.createPublicCsrf({ now: () => issuedAt });
+    const req = {
+      headers: { cookie: `emdia_signup_csrf=${encodeURIComponent(csrf.token)}` },
+    };
+
+    assert.equal(Auth.verifyPublicCsrf(req, { _csrf: csrf.token }, { now: () => issuedAt }), true);
+    assert.equal(Auth.verifyPublicCsrf(req, { _csrf: `${csrf.token}x` }, { now: () => issuedAt }), false);
+    assert.equal(
+      Auth.verifyPublicCsrf(req, { _csrf: csrf.token }, { now: () => issuedAt + (10 * 60 + 1) * 1000 }),
+      false,
+    );
+  });
 });
 
 function UserUpdate(user, passwordData) {

@@ -146,7 +146,7 @@ Navegador
     -> middlewares Express
     -> rotas públicas de operação
     -> carregamento de sessão
-    -> login ou autenticação obrigatória
+    -> login, cadastro público ou autenticação obrigatória
     -> módulo de rota do domínio
        -> model/service necessário
        -> view exportada pelo viewEngine, JSON ou redirect
@@ -185,12 +185,24 @@ Sessões mantêm validade máxima de oito horas. A expiração é verificada em 
 acesso e um scheduler do processo remove, em lotes limitados, registros
 expirados e revogados antigos usando índices próprios.
 
+`GET /signup` emite um token CSRF público assinado e limitado no tempo em
+cookie `HttpOnly`; `POST /signup` valida esse token e aplica um limitador por
+IP. A criação força perfil comum e estado ativo, e persiste usuário, duas contas
+com saldo zero, sete categorias iniciais e uma notificação
+`EMAIL/ACCOUNT_CREATED` na mesma transação. Somente depois do commit a sessão é
+criada e o visitante segue para o dashboard na competência corrente do seu
+fuso. O envio externo fica para o worker e nunca aumenta o tempo do cadastro.
+
 Rotas principais:
 
 ```text
 GET  /
 GET  /health
 GET  /ready
+GET  /login
+POST /login
+GET  /signup
+POST /signup
 GET  /dashboard
 GET  /entries
 GET  /entries/new
@@ -501,6 +513,19 @@ adaptadores compatíveis:
 Evolution API e WAHA mantêm seus próprios endpoints, headers, payloads e estados
 de sessão. Ambos retornam o mesmo contrato interno para que troca de provedor
 não altere geração de lembretes, idempotência, persistência ou interface.
+
+## 15.1. E-mail transacional pelo Resend
+
+`emailNotificationService.js` consome somente itens `EMAIL` já enfileirados. O
+cadastro gera a chave idempotente `email:<user_id>:account-created`; o worker
+monta as versões HTML/texto, escolhe `MockEmailClient` ou `ResendEmailClient` e
+salva o identificador aceito pelo provedor. Falhas transitórias usam backoff de
+1, 5, 15 e 60 minutos, limitadas por configuração.
+
+O scheduler de e-mail é independente do WhatsApp e impede ciclos concorrentes
+no mesmo processo. Usuários bloqueados depois do cadastro continuam elegíveis
+para esse aviso transacional. A fila administrativa reúne ambos os canais e
+permite filtrar, cancelar e reenviar mantendo nova chave idempotente.
 
 ## 16. Cabeçalhos das views internas
 

@@ -210,6 +210,7 @@ function notificationQueueFilters(req) {
   return {
     user_id: queryValue(req, "user_id"),
     status: queryValue(req, "status"),
+    channel: queryValue(req, "channel"),
     event_type: queryValue(req, "event_type"),
     q: queryValue(req, "q"),
     limit: queryValue(req, "limit"),

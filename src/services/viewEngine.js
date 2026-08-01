@@ -4,7 +4,7 @@ const { categoriesView, deletedCategoriesView } = require("../views/categoriesVi
 const { dashboardView } = require("../views/dashboardView");
 const { calendarView } = require("../views/calendarView");
 const { entriesListView, entryDetailView, entryFormView } = require("../views/entriesView");
-const { loginView } = require("../views/authView");
+const { loginView, signupView } = require("../views/authView");
 const { notFoundView, unexpectedErrorView } = require("../views/errorsView");
 const { operationalLogsView } = require("../views/operationalLogsView");
 const { notificationQueueView } = require("../views/notificationQueueView");
@@ -40,6 +40,7 @@ module.exports = {
   receiptImportsListView,
   runtimeEnvironmentView,
   settingsView,
+  signupView,
   userAdminFormView,
   usersAdminListView,
 };

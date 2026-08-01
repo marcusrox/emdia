@@ -2,11 +2,14 @@ const crypto = require("node:crypto");
 const { getDatabase } = require("../database/connection");
 
 const COOKIE_NAME = "emdia_session";
+const PUBLIC_CSRF_COOKIE_NAME = "emdia_signup_csrf";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+const PUBLIC_CSRF_MAX_AGE_SECONDS = 10 * 60;
 const SCRYPT_KEY_LENGTH = 64;
 const MIN_PASSWORD_LENGTH = 12;
 const DEFAULT_SESSION_CLEANUP_LIMIT = 500;
 const DEFAULT_REVOKED_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const publicCsrfSecret = crypto.randomBytes(32);
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("base64url");
@@ -161,6 +164,60 @@ function verifyCsrf(req, body) {
   return expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
+function createPublicCsrf(options = {}) {
+  const issuedAt = Math.floor(publicCsrfNow(options) / 1000);
+  const nonce = crypto.randomBytes(24).toString("base64url");
+  const payload = `${issuedAt}.${nonce}`;
+  const signature = signPublicCsrf(payload);
+  const token = `${payload}.${signature}`;
+
+  return {
+    token,
+    cookie: buildPublicCsrfCookie(token, PUBLIC_CSRF_MAX_AGE_SECONDS),
+  };
+}
+
+function verifyPublicCsrf(req, body, options = {}) {
+  const received = String(body?._csrf || "");
+  const cookieToken = String(parseCookies(req)[PUBLIC_CSRF_COOKIE_NAME] || "");
+  if (!received || !cookieToken || !timingSafeStringEqual(received, cookieToken)) return false;
+
+  const parts = received.split(".");
+  if (parts.length !== 3) return false;
+  const [issuedAtValue, nonce, signature] = parts;
+  if (!/^\d+$/.test(issuedAtValue) || !/^[A-Za-z0-9_-]{20,}$/.test(nonce)) return false;
+
+  const expectedSignature = signPublicCsrf(`${issuedAtValue}.${nonce}`);
+  if (!timingSafeStringEqual(signature, expectedSignature)) return false;
+
+  const ageSeconds = Math.floor(publicCsrfNow(options) / 1000) - Number(issuedAtValue);
+  return ageSeconds >= -30 && ageSeconds <= PUBLIC_CSRF_MAX_AGE_SECONDS;
+}
+
+function signPublicCsrf(payload) {
+  return crypto.createHmac("sha256", publicCsrfSecret).update(payload).digest("base64url");
+}
+
+function buildPublicCsrfCookie(token, maxAgeSeconds) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${PUBLIC_CSRF_COOKIE_NAME}=${encodeURIComponent(token)}; Max-Age=${maxAgeSeconds}; Path=/signup; HttpOnly; SameSite=Lax${secure}`;
+}
+
+function clearPublicCsrfCookie() {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${PUBLIC_CSRF_COOKIE_NAME}=; Max-Age=0; Path=/signup; HttpOnly; SameSite=Lax${secure}`;
+}
+
+function timingSafeStringEqual(left, right) {
+  const leftBuffer = Buffer.from(String(left || ""));
+  const rightBuffer = Buffer.from(String(right || ""));
+  return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function publicCsrfNow(options) {
+  return typeof options.now === "function" ? Number(options.now()) : Number(options.now ?? Date.now());
+}
+
 function positiveInteger(explicitValue, environmentValue, fallback) {
   const value = Number(explicitValue ?? environmentValue);
   return Number.isSafeInteger(value) && value > 0 ? value : fallback;
@@ -171,6 +228,8 @@ module.exports = {
   SESSION_MAX_AGE_SECONDS,
   cleanupSessions,
   clearSessionCookie,
+  clearPublicCsrfCookie,
+  createPublicCsrf,
   createSession,
   csrfToken,
   getSession,
@@ -178,5 +237,6 @@ module.exports = {
   invalidateSession,
   passwordPolicyError,
   verifyCsrf,
+  verifyPublicCsrf,
   verifyPassword,
 };

@@ -505,6 +505,12 @@ Regras obrigatórias:
 - alterações de senha revogam as sessões do usuário;
 - o limitador de login usa IP confiável e e-mail normalizado, nunca senha ou
   e-mail completo em logs; múltiplas instâncias exigem storage compartilhado;
+- o cadastro público usa token CSRF assinado em cookie `HttpOnly`, limitado no
+  tempo e validado junto ao campo do formulário; tentativas são limitadas por
+  IP e logs usam somente a impressão do e-mail;
+- cadastro público sempre força `is_active = 1` e `is_admin = 0`; usuário,
+  contas e categorias iniciais são criados na mesma transação e a sessão nasce
+  somente após o commit;
 - preserve a CSP sem `unsafe-inline`: use assets locais, atributos `data-*` e
   classes CSS em vez de handlers ou estilos inline;
 - HSTS só pode ser habilitado quando HTTPS estiver garantido;
@@ -629,6 +635,21 @@ Regras do adaptador:
   permitido na exceção documentada de `whatsapp.webhook.ignored` com motivo
   `user_not_found`;
 - manter segredos apenas no ambiente e valores vazios no `.env.example`.
+
+## 19.1. E-mail transacional
+
+- Cadastros públicos devem inserir `EMAIL/ACCOUNT_CREATED` na tabela
+  `notifications` dentro da mesma transação de usuário, contas e categorias.
+- Chamadas ao Resend são sempre assíncronas, fora da transação e da resposta
+  HTTP. O worker usa lote pequeno, chave `Idempotency-Key` persistida e backoff.
+- Desenvolvimento e testes usam o cliente `mock`; produção usa `resend` com
+  `EMAIL_FROM=EmDia <nao-responda@idevs.com.br>` e domínio verificado.
+- O cliente envia HTML e texto puro por `fetch` nativo, com timeout. API key,
+  endereço completo, corpo da mensagem, headers e resposta bruta não entram em
+  logs.
+- `SENT` significa aceito pelo provedor, não entregue ao destinatário.
+- Falhas 429/5xx e de rede podem ser reagendadas; erros 4xx e configuração
+  inválida encerram as tentativas automáticas e ficam visíveis na administração.
 
 ## 20. Cabeçalhos das páginas internas
 

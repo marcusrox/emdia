@@ -10,6 +10,7 @@ const { RELEASE_LABEL } = require("./src/config/release");
 const { acquireDatabaseLock } = require("./src/services/databaseLockService");
 const { logError, logInfo } = require("./src/services/operationalLogger");
 const { startNotificationScheduler } = require("./src/services/notificationScheduler");
+const { startEmailNotificationScheduler } = require("./src/services/emailNotificationScheduler");
 const { startReceiptImportWorker } = require("./src/services/receiptImportWorker");
 const { startSessionCleanupScheduler } = require("./src/services/sessionCleanupService");
 
@@ -46,6 +47,7 @@ try {
     console.log(startupMessage(port));
   });
   startNotificationScheduler();
+  startEmailNotificationScheduler();
   startReceiptImportWorker();
   startSessionCleanupScheduler();
 } catch (error) {

@@ -6,6 +6,7 @@ const Entry = require("../models/FinancialEntry");
 const User = require("../models/User");
 const { currentCompetence, dueDateFromCompetence } = require("../services/dateService");
 const { logInfo } = require("../services/operationalLogger");
+const { provisionInitialUserData } = require("../services/userProvisioningService");
 
 function seedDatabase() {
   initializeDatabase();
@@ -16,38 +17,12 @@ function seedDatabase() {
   const categoryCount = db.prepare("SELECT COUNT(*) AS total FROM categories WHERE user_id = ?").get(user.id).total;
   const entryCount = db.prepare("SELECT COUNT(*) AS total FROM financial_entries WHERE user_id = ?").get(user.id).total;
 
-  if (!accountCount) {
-    Account.create(user.id, {
-      name: "Conta corrente",
-      type: "CHECKING",
-      institution_name: "Banco principal",
-      initial_balance: "2500,00",
-      initial_balance_date: `${currentCompetence(user.timezone)}-01`,
-      color: "#2563eb",
-      icon: "bank",
-    });
-
-    Account.create(user.id, {
-      name: "Carteira",
-      type: "CASH",
-      initial_balance: "200,00",
-      initial_balance_date: `${currentCompetence(user.timezone)}-01`,
-      color: "#16a34a",
-      icon: "wallet",
-    });
-  }
-
-  if (!categoryCount) {
-    [
-      ["Moradia", "EXPENSE", "#7c3aed"],
-      ["Energia", "EXPENSE", "#f59e0b"],
-      ["Internet", "EXPENSE", "#0891b2"],
-      ["Alimentação", "EXPENSE", "#dc2626"],
-      ["Saúde", "EXPENSE", "#0f766e"],
-      ["Salário", "INCOME", "#16a34a"],
-      ["Reembolso", "INCOME", "#2563eb"],
-    ].forEach(([name, entry_type, color]) => Category.create(user.id, { name, entry_type, color }));
-  }
+  provisionInitialUserData(user, {
+    db,
+    provisionAccounts: !accountCount,
+    provisionCategories: !categoryCount,
+    useDemoBalances: true,
+  });
 
   if (!entryCount) {
     const accounts = Account.active(user.id);

@@ -1,5 +1,6 @@
 const { getDatabase } = require("../database/connection");
 const AuditLog = require("./AuditLog");
+const { normalizeCategoryColor } = require("../services/categoryColorService");
 const { normalizeCategoryIcon } = require("../services/categoryIconService");
 const { newId } = require("../services/id");
 
@@ -45,7 +46,7 @@ function create(userId, data) {
       data.name,
       data.entry_type || "EXPENSE",
       normalizeCategoryIcon(data.icon),
-      data.color || "#0f766e",
+      normalizeCategoryColor(data.color),
       now,
       now
     );
@@ -72,7 +73,7 @@ function update(userId, id, data) {
       data.name,
       data.entry_type || "EXPENSE",
       normalizeCategoryIcon(data.icon),
-      data.color || "#0f766e",
+      normalizeCategoryColor(data.color),
       now,
       userId,
       id

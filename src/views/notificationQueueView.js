@@ -8,13 +8,16 @@ const STATUS_OPTIONS = [
   ["CANCELLED", "Cancelada"],
 ];
 const EVENT_OPTIONS = [
+  ["ACCOUNT_CREATED", "Conta criada"],
   ["DUE_REMINDER", "A vencer"],
   ["DUE_TODAY", "Vence hoje"],
   ["OVERDUE_REMINDER", "Vencida"],
   ["DAILY_SUMMARY", "Resumo diário"],
 ];
+const CHANNEL_OPTIONS = [["EMAIL", "E-mail"], ["WHATSAPP", "WhatsApp"]];
 const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS);
 const EVENT_LABELS = Object.fromEntries(EVENT_OPTIONS);
+const CHANNEL_LABELS = Object.fromEntries(CHANNEL_OPTIONS);
 
 function notificationQueueView({ user, entries, users, filters, notifications = [] }) {
   return layout({
@@ -24,7 +27,7 @@ function notificationQueueView({ user, entries, users, filters, notifications = 
     notifications,
     body: `
       ${pageHeading({
-        eyebrow: "Administração · WhatsApp outbound",
+        eyebrow: "Administração · Mensagens outbound",
         title: "Fila de notificações",
         icon: "bell",
         description: "Consulte eventos gerados, acompanhe tentativas e controle o reenvio sem perder o histórico.",
@@ -42,6 +45,9 @@ function notificationQueueView({ user, entries, users, filters, notifications = 
           </label>
           <label>Status
             <select name="status">${option("", "Todos", filters.status)}${STATUS_OPTIONS.map(([value, label]) => option(value, label, filters.status)).join("")}</select>
+          </label>
+          <label>Canal
+            <select name="channel">${option("", "Todos", filters.channel)}${CHANNEL_OPTIONS.map(([value, label]) => option(value, label, filters.channel)).join("")}</select>
           </label>
           <label>Tipo
             <select name="event_type">${option("", "Todos", filters.event_type)}${EVENT_OPTIONS.map(([value, label]) => option(value, label, filters.event_type)).join("")}</select>
@@ -84,7 +90,7 @@ function queueTable(user, entries) {
   if (!entries.length) return `<div class="empty-state">Nenhum item da fila corresponde aos filtros.</div>`;
 
   return `<div class="table-wrap queue-table-wrap"><table class="notification-queue-table">
-    <thead><tr><th>Notificação</th><th>Usuário</th><th>Status</th><th>Agendamento</th><th>Tentativas</th><th>Mensagem / erro</th><th class="record-actions-cell">Ações</th></tr></thead>
+    <thead><tr><th>Notificação</th><th>Canal</th><th>Usuário</th><th>Status</th><th>Agendamento</th><th>Tentativas</th><th>Mensagem / erro</th><th class="record-actions-cell">Ações</th></tr></thead>
     <tbody>${entries.map((entry) => queueRow(user, entry)).join("")}</tbody>
   </table></div>`;
 }
@@ -94,11 +100,12 @@ function queueRow(user, entry) {
   const cancellable = entry.status === "PENDING" || entry.status === "FAILED";
   return `<tr>
     <td><strong class="queue-event">${escapeHtml(EVENT_LABELS[entry.event_type] || entry.event_type)}</strong><small class="queue-id">${escapeHtml(entry.id)}</small></td>
+    <td><strong>${escapeHtml(CHANNEL_LABELS[entry.channel] || entry.channel)}</strong></td>
     <td><strong>${escapeHtml(entry.user_name)}</strong><small class="queue-user-email">${escapeHtml(entry.user_email)}</small></td>
     <td><span class="queue-status queue-status-${escapeHtml(entry.status.toLowerCase())}">${escapeHtml(STATUS_LABELS[entry.status] || entry.status)}</span></td>
     <td><span class="queue-date">${escapeHtml(formatDateTime(entry.scheduled_at))}</span><small>Criada ${escapeHtml(formatDateTime(entry.created_at))}</small></td>
     <td><strong class="queue-attempts">${escapeHtml(entry.attempt_count)} / 5</strong></td>
-    <td class="queue-message"><span>${escapeHtml(payload.message || "Sem mensagem")}</span>${entry.error_message ? `<small class="queue-error">${lucideIcon("circle-alert")} ${escapeHtml(entry.error_message)}</small>` : ""}</td>
+    <td class="queue-message"><span>${escapeHtml(payload.message || (entry.event_type === "ACCOUNT_CREATED" ? "E-mail transacional de conta criada" : "Sem mensagem"))}</span>${entry.provider_message_id ? `<small>ID do provedor: ${escapeHtml(entry.provider_message_id)}</small>` : ""}${entry.error_message ? `<small class="queue-error">${lucideIcon("circle-alert")} ${escapeHtml(entry.error_message)}</small>` : ""}</td>
     <td class="record-actions-cell"><div class="record-actions">
       <form method="post" action="/admin/notifications/${encodeURIComponent(entry.id)}/resend" class="record-action-form">
         ${csrfInput(user)}<button class="record-action-button" type="submit" title="Reenviar notificação" aria-label="Reenviar notificação">${lucideIcon("refresh-cw")}</button>

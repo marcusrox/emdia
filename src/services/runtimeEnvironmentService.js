@@ -9,6 +9,12 @@ const SAFE_ENV_VALUES = new Set([
   "NODE_ENV",
   "PORT",
   "APP_BASE_URL",
+  "EMAIL_PROVIDER",
+  "EMAIL_FROM",
+  "EMAIL_NOTIFICATIONS_DISABLED",
+  "EMAIL_NOTIFICATION_INTERVAL_MS",
+  "EMAIL_NOTIFICATION_MAX_ATTEMPTS",
+  "RESEND_REQUEST_TIMEOUT_MS",
   "TZ",
   "WHATSAPP_PROVIDER",
   "EVOLUTION_REQUEST_TIMEOUT_MS",
@@ -30,6 +36,14 @@ const ENV_ALLOWLIST = [
   "NODE_ENV",
   "PORT",
   "APP_BASE_URL",
+  "EMAIL_PROVIDER",
+  "EMAIL_FROM",
+  "EMAIL_NOTIFICATIONS_DISABLED",
+  "EMAIL_NOTIFICATION_INTERVAL_MS",
+  "EMAIL_NOTIFICATION_MAX_ATTEMPTS",
+  "RESEND_API_KEY",
+  "RESEND_BASE_URL",
+  "RESEND_REQUEST_TIMEOUT_MS",
   "TZ",
   "EMDIA_DEFAULT_PASSWORD",
   "EMDIA_DB_PATH",
@@ -183,6 +197,7 @@ function collectEnvironmentVariables() {
 
 function collectConfigurations(user) {
   const provider = safeEnvironmentValue("WHATSAPP_PROVIDER", "mock");
+  const emailProvider = safeEnvironmentValue("EMAIL_PROVIDER", process.env.NODE_ENV === "production" ? "resend" : "mock");
   const providerState = notificationProviderState(provider);
 
   return [
@@ -194,6 +209,8 @@ function collectConfigurations(user) {
     configuration("Banco de dados", process.env.EMDIA_DB_PATH ? "Caminho personalizado configurado" : "Caminho local padrão", "hard-drive"),
     configuration("Provedor de notificações", provider, "message-circle", providerState),
     configuration("Agendador de notificações", process.env.WHATSAPP_NOTIFICATIONS_DISABLED === "1" ? "Desabilitado" : "Habilitado", "bell"),
+    configuration("E-mail transacional", emailProvider, "mail", emailProvider === "mock" ? "Simulado" : process.env.RESEND_API_KEY ? "Configurado" : "Incompleto"),
+    configuration("Agendador de e-mail", process.env.EMAIL_NOTIFICATIONS_DISABLED === "1" ? "Desabilitado" : "Habilitado", "send"),
     configuration("Webhook de comprovantes", hasAllEnvironmentVariables(["WAHA_WEBHOOK_HMAC_KEY", "WAHA_API_BASE_URL", "WAHA_API_KEY", "WAHA_SESSION"]) ? "Configurado" : "Incompleto", "webhook"),
     configuration("Extração de comprovantes", process.env.OPENROUTER_API_KEY ? "Configurada via OpenRouter" : "Incompleta", "scan-text"),
     configuration("Logs operacionais", "log/", "file-text"),

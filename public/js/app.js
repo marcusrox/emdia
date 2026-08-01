@@ -75,6 +75,36 @@
     }
   }
 
+  function disableRepeatedSubmission(event) {
+    var form = event.target;
+
+    if (event.defaultPrevented || !form.matches("[data-disable-on-submit]")) {
+      return;
+    }
+
+    form.querySelectorAll("button[type='submit'], input[type='submit']").forEach(function (button) {
+      button.disabled = true;
+      button.setAttribute("aria-disabled", "true");
+    });
+  }
+
+  function fillSignupTimezone() {
+    var field = document.querySelector("[data-timezone-field]");
+
+    if (!field) {
+      return;
+    }
+
+    try {
+      var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (timezone) {
+        field.value = timezone;
+      }
+    } catch (error) {
+      // O valor seguro renderizado pelo servidor permanece como fallback.
+    }
+  }
+
   function autoSubmitOnChange(event) {
     var field = event.target;
     var form = field.matches("[data-auto-submit-on-change]")
@@ -495,6 +525,143 @@
     }
   }
 
+  function initializeCategoryIconPickers() {
+    document.querySelectorAll("[data-category-icon-picker]").forEach(function (picker) {
+      var nativeSelect = picker.querySelector("[data-category-icon-native]");
+      var enhanced = picker.querySelector("[data-category-icon-enhanced]");
+      var trigger = picker.querySelector("[data-category-icon-trigger]");
+      var current = picker.querySelector("[data-category-icon-current]");
+      var currentLabel = document.getElementById("category-icon-current-label");
+      var listbox = picker.querySelector("[data-category-icon-options]");
+      var options = Array.prototype.slice.call(picker.querySelectorAll("[data-category-icon-option]"));
+
+      if (!nativeSelect || !enhanced || !trigger || !current || !listbox || !options.length) {
+        return;
+      }
+
+      nativeSelect.classList.add("category-icon-native-enhanced");
+      nativeSelect.setAttribute("aria-hidden", "true");
+      nativeSelect.tabIndex = -1;
+      enhanced.hidden = false;
+
+      function selectedOption() {
+        return options.find(function (option) {
+          return option.getAttribute("data-value") === nativeSelect.value;
+        }) || options[0];
+      }
+
+      function syncSelection() {
+        var selected = selectedOption();
+        var selectedContent = selected.querySelectorAll(".category-icon-picker-icon, .category-icon-picker-label");
+        var selectedLabel = selected.querySelector(".category-icon-picker-label");
+
+        current.replaceChildren.apply(current, Array.prototype.map.call(selectedContent, function (node) {
+          return node.cloneNode(true);
+        }));
+
+        if (currentLabel && selectedLabel) {
+          currentLabel.textContent = selectedLabel.textContent;
+        }
+
+        options.forEach(function (option) {
+          option.setAttribute("aria-selected", option === selected ? "true" : "false");
+        });
+      }
+
+      function isOpen() {
+        return trigger.getAttribute("aria-expanded") === "true";
+      }
+
+      function openPicker() {
+        trigger.setAttribute("aria-expanded", "true");
+        listbox.hidden = false;
+        selectedOption().focus();
+      }
+
+      function closePicker(restoreFocus) {
+        trigger.setAttribute("aria-expanded", "false");
+        listbox.hidden = true;
+
+        if (restoreFocus) {
+          trigger.focus();
+        }
+      }
+
+      function chooseOption(option) {
+        nativeSelect.value = option.getAttribute("data-value") || "";
+        syncSelection();
+        nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        closePicker(true);
+      }
+
+      function focusRelativeOption(offset) {
+        var currentIndex = options.indexOf(document.activeElement);
+        var nextIndex = currentIndex < 0 ? 0 : (currentIndex + offset + options.length) % options.length;
+        options[nextIndex].focus();
+      }
+
+      trigger.addEventListener("click", function () {
+        if (isOpen()) {
+          closePicker(false);
+        } else {
+          openPicker();
+        }
+      });
+
+      trigger.addEventListener("keydown", function (event) {
+        if (["ArrowDown", "ArrowUp", "Enter", " "].indexOf(event.key) === -1) {
+          if (event.key === "Escape" && isOpen()) {
+            event.preventDefault();
+            closePicker(false);
+          }
+          return;
+        }
+
+        event.preventDefault();
+        openPicker();
+
+        if (event.key === "ArrowUp") {
+          focusRelativeOption(-1);
+        }
+      });
+
+      listbox.addEventListener("click", function (event) {
+        var option = event.target.closest("[data-category-icon-option]");
+
+        if (option) {
+          chooseOption(option);
+        }
+      });
+
+      listbox.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          focusRelativeOption(event.key === "ArrowDown" ? 1 : -1);
+        } else if (event.key === "Home" || event.key === "End") {
+          event.preventDefault();
+          options[event.key === "Home" ? 0 : options.length - 1].focus();
+        } else if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          chooseOption(document.activeElement);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          closePicker(true);
+        } else if (event.key === "Tab") {
+          closePicker(false);
+        }
+      });
+
+      nativeSelect.addEventListener("change", syncSelection);
+      document.addEventListener("click", function (event) {
+        if (isOpen() && !picker.contains(event.target)) {
+          closePicker(false);
+        }
+      });
+
+      syncSelection();
+    });
+  }
+
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
   document.addEventListener("click", closeParentDetails);
@@ -502,9 +669,12 @@
   document.addEventListener("input", updateSettlementProjectionOnInput);
   document.addEventListener("submit", validateForms);
   document.addEventListener("submit", confirmFormSubmission);
+  document.addEventListener("submit", disableRepeatedSubmission);
   document.querySelectorAll("[data-settlement-form]").forEach(updateSettlementProjection);
   restoreSettingsSections();
   collapseMobileEntryFilters();
   startOperationalLogPolling();
   loadWhatsAppStatus();
+  initializeCategoryIconPickers();
+  fillSignupTimezone();
 })();

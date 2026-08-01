@@ -23,6 +23,7 @@ baixas financeiras. O projeto foi implementado a partir do PRD técnico
 - 🔎 Busca e filtros de lançamentos por tipo, status, categoria e conta.
 - 📤 Exportação CSV conforme a competência e os filtros ativos.
 - 💬 Notificações por WhatsApp com `mock`, Evolution API ou WAHA.
+- ✉️ E-mail transacional de conta criada pelo Resend, com fila e cliente `mock`.
 - 🛡️ Login por sessão, proteção CSRF e administração de usuários.
 - 📜 Auditoria funcional, fila de notificações e logs operacionais.
 - 🧪 Testes unitários e de integração com banco SQLite isolado.
@@ -328,15 +329,40 @@ Exemplo:
   válidos até a próxima troca.
 - ✅ O login possui limite em memória por IP confiável e e-mail normalizado.
   Em múltiplas instâncias, substitua-o por armazenamento compartilhado.
+- ✅ Visitantes podem criar uma conta em `/signup`. O fluxo usa token CSRF
+  público assinado, limite por IP e cria o usuário comum com contas e categorias
+  iniciais próprias em uma única transação.
 - ✅ Sessões duram 8 horas, usam cookie `Secure` em produção e são removidas
   periodicamente quando expiradas ou revogadas.
 - ✅ A CSP permite apenas assets locais e imagens do Gravatar. HSTS só é
   enviado em produção quando `EMDIA_HTTPS_ENABLED=1`.
 
-Os limites, janelas de login, limpeza de sessões e timeout de readiness são
+Os limites, janelas de login e cadastro, limpeza de sessões e timeout de readiness são
 configuráveis pelas variáveis documentadas em `.env.example`.
 
 ---
+
+## ✉️ E-mail transacional pelo Resend
+
+O cadastro público enfileira um e-mail de conta criada sem aguardar o provedor.
+Em desenvolvimento use `EMAIL_PROVIDER=mock`. Em produção, verifique o domínio
+`idevs.com.br` no Resend, crie uma chave exclusiva de envio e configure:
+
+```dotenv
+EMAIL_PROVIDER=resend
+EMAIL_FROM=EmDia <nao-responda@idevs.com.br>
+RESEND_API_KEY=
+RESEND_BASE_URL=https://api.resend.com
+RESEND_REQUEST_TIMEOUT_MS=15000
+EMAIL_NOTIFICATIONS_DISABLED=0
+EMAIL_NOTIFICATION_INTERVAL_MS=60000
+EMAIL_NOTIFICATION_MAX_ATTEMPTS=5
+```
+
+Cadastre no DNS os registros SPF e DKIM fornecidos pelo Resend e adote uma
+política DMARC apropriada. Nunca versione a API key. O estado `SENT` na fila
+significa que o provedor aceitou o envio; confirmação de entrega por webhook
+ainda não faz parte deste MVP.
 
 ## 💬 Integração com WhatsApp
 
