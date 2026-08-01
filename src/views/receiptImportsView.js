@@ -71,7 +71,10 @@ function receiptImportDetailView({ user, receipt, categories, accounts, values =
     ? `<figure class="receipt-preview"><img src="/receipt-imports/${escapeHtml(receipt.id)}/media" alt="Imagem do comprovante recebido pelo WhatsApp"></figure>`
     : `<div class="empty-state">A imagem não está disponível.</div>`;
   const duplicateWarning = receipt.duplicate_of_id
-    ? `<div class="notification warning"><strong>Possível duplicidade.</strong> Uma imagem idêntica já foi recebida. Revise com atenção.</div>`
+    ? `<aside class="receipt-duplicate-warning" aria-labelledby="receipt-duplicate-warning-title">
+        <strong id="receipt-duplicate-warning-title">Possível duplicidade</strong>
+        <p>Uma imagem idêntica já foi recebida. Compare os dados e revise o comprovante antes de criar a despesa.</p>
+      </aside>`
     : "";
   const reviewForm = editable ? `<form method="post" action="/receipt-imports/${escapeHtml(receipt.id)}/approve" class="form-grid receipt-review-form">
       ${csrfInput(user)}
@@ -102,8 +105,8 @@ function receiptImportDetailView({ user, receipt, categories, accounts, values =
         ${fieldError(errors, "financial_account_id")}
       </label>
       ${receipt.duplicate_of_id ? `<label class="checkbox-field receipt-duplicate-confirm">
-        <input type="checkbox" name="confirm_duplicate" value="1"${String(form.confirm_duplicate) === "1" ? " checked" : ""}>
-        Confirmo que revisei a possível duplicidade e desejo criar a despesa.
+        <input type="checkbox" name="confirm_duplicate" value="1"${String(form.confirm_duplicate) === "1" ? " checked" : ""}${fieldErrorAttributes(errors, "confirm_duplicate")}>
+        <span>Confirmo que revisei a possível duplicidade e desejo criar a despesa.</span>
         ${fieldError(errors, "confirm_duplicate")}
       </label>` : ""}
       <div class="form-actions">

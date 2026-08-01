@@ -1124,3 +1124,25 @@ mínimo de raciocínio e limita configurações acidentais de custo excessivo.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao
+
+---
+
+## Atualização: apresentação da possível duplicidade
+
+O aviso de possível duplicidade deixou de reutilizar o componente global de
+notificação, cujo grid reservava uma coluna estreita para o botão de fechar e
+comprimia a descrição. A tela agora usa um alerta contextual próprio, com
+título, texto, contraste e espaçamento adequados.
+
+A confirmação também recebeu marcação e estilos específicos. O checkbox mantém
+tamanho nativo compacto, fica alinhado ao início do texto, possui área de clique
+confortável e associa o erro de validação por `aria-describedby`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 08:35
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

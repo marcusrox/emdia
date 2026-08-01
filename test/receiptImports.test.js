@@ -14,6 +14,7 @@ const {
 const { processReceipt, safeExtractionDiagnostics } = require("../src/services/receiptImportWorker");
 const { normalizeEvent } = require("../src/services/operationalLogger");
 const { detectImage, validateMediaUrl } = require("../src/services/receiptStorageService");
+const { receiptImportDetailView } = require("../src/views/receiptImportsView");
 const {
   acceptWebhook,
   directPhoneFromChatId,
@@ -177,6 +178,36 @@ test("possível duplicidade exige confirmação humana", () => {
   assert.equal(result.reason, "validation");
   assert.ok(result.errors.confirm_duplicate);
   assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries").get().total, 0);
+});
+
+test("possível duplicidade usa alerta e confirmação com marcação própria", () => {
+  const html = receiptImportDetailView({
+    user: {
+      id: "usr_view",
+      name: "Usuário",
+      email: "user@example.test",
+      timezone: "America/Sao_Paulo",
+      csrfToken: "csrf-test",
+    },
+    receipt: {
+      id: "rcp_view",
+      status: "NEEDS_REVIEW",
+      duplicate_of_id: "rcp_original",
+      merchant_name: "Mercado",
+      amount_cents: 1000,
+      confidence_json: "{}",
+      warnings_json: "[]",
+    },
+    categories: [],
+    accounts: [],
+    errors: { confirm_duplicate: "Confirme a revisão da possível duplicidade." },
+  });
+
+  assert.match(html, /class="receipt-duplicate-warning"/);
+  assert.match(html, /class="checkbox-field receipt-duplicate-confirm"/);
+  assert.match(html, /aria-describedby="confirm_duplicate-error"/);
+  assert.match(html, /<span>Confirmo que revisei a possível duplicidade/);
+  assert.doesNotMatch(html, /class="notification warning"/);
 });
 
 test("worker usa mocks, detecta hash e leva importação à revisão", async () => {
