@@ -1013,3 +1013,37 @@ de usuário identificado não recebem o telefone nos metadados.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao
+
+---
+
+## Atualização: compatibilidade com telefone brasileiro legado
+
+O cadastro continua recebendo somente o telefone oficial no formato E.164. Para
+celulares brasileiros atuais, o EmDia gera automaticamente e sem consulta ao
+WAHA uma segunda representação, removendo o nono dígito do assinante. Exemplo:
+`+5571992769969` gera o alias `+557192769969`.
+
+A migration `012_add_legacy_whatsapp_phone` adiciona
+`users.phone_whatsapp_legacy`, preenche cadastros existentes, cria índice único
+e triggers que impedem colisões entre telefones canônicos e aliases de usuários
+diferentes. O alias não é editável e não é criado para telefones fixos ou
+internacionais.
+
+O webhook procura usuário ativo nas duas colunas e registra
+`phoneMatchStrategy` como `exact` ou `legacy_alias`. O E.164 recebido continua
+visível no diagnóstico de `user_not_found`; após a identificação, o usuário e a
+estratégia de casamento bastam para a correlação sem repetir o telefone no log.
+Notificações de saída continuam usando exclusivamente o telefone canônico
+informado pelo usuário.
+
+Validações concluídas com `npm run check` e 104 testes automatizados, incluindo
+o cenário real de cadastro `+5571992769969` e recebimento `+557192769969`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 00:49
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

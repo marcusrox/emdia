@@ -44,7 +44,8 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
             </label>
             <label class="profile-field-wide">${fieldLabel("Telefone WhatsApp", "Use +5571999999999 ou (71) 99999-9999. O sistema salva no formato internacional E.164.")}
               <input name="phone_e164" value="${escapeHtml(profile.phone_e164 || "")}" placeholder="(71) 99999-9999" inputmode="tel" autocomplete="tel">
-              <small>Usado somente para notificações que você habilitar.</small>
+              <small>Usado para notificações habilitadas e para identificar comprovantes recebidos.</small>
+              ${profile.phone_whatsapp_legacy ? `<small>Formato legado reconhecido automaticamente: ${escapeHtml(profile.phone_whatsapp_legacy)}.</small>` : ""}
             </label>
           </div>
         </div>

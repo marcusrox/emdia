@@ -31,6 +31,7 @@ describe("migrations", () => {
     assert.ok(columnExists(database, "settlements", "closes_entry"));
     assert.ok(columnExists(database, "users", "last_entries_competence"));
     assert.ok(columnExists(database, "users", "last_competence"));
+    assert.ok(columnExists(database, "users", "phone_whatsapp_legacy"));
     assert.equal(database.isTransaction, false);
   });
 
@@ -82,6 +83,53 @@ describe("migrations", () => {
       database.prepare("SELECT last_competence FROM users WHERE id = ?").get("migration-user").last_competence,
       "2025-12"
     );
+  });
+
+  it("gera o telefone legado e protege representações equivalentes entre usuários", () => {
+    const database = createDatabase();
+    const migrations = loadProjectMigrations();
+    const aliasIndex = migrations.findIndex((migration) => migration.id === "012_add_legacy_whatsapp_phone");
+    const beforeAlias = migrations.slice(0, aliasIndex);
+    const now = new Date().toISOString();
+
+    runMigrations({ db: database, migrations: beforeAlias });
+    database.prepare(`
+      INSERT INTO users (id, name, email, password_hash, phone_e164, timezone, locale, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      "migration-phone-user",
+      "Usuário telefone",
+      "phone@example.test",
+      "hash",
+      "+5571992769969",
+      "America/Sao_Paulo",
+      "pt-BR",
+      now,
+      now
+    );
+
+    runMigrations({ db: database, migrations });
+
+    assert.equal(
+      database.prepare("SELECT phone_whatsapp_legacy FROM users WHERE id = ?").get("migration-phone-user").phone_whatsapp_legacy,
+      "+557192769969"
+    );
+    assert.throws(() => {
+      database.prepare(`
+        INSERT INTO users (id, name, email, password_hash, phone_e164, timezone, locale, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        "migration-conflicting-user",
+        "Usuário conflitante",
+        "conflict@example.test",
+        "hash",
+        "+557192769969",
+        "America/Sao_Paulo",
+        "pt-BR",
+        now,
+        now
+      );
+    }, /USER_PHONE_ALIAS_CONFLICT/);
   });
 
   it("rejeita IDs duplicados e migrations inválidas antes de aplicar", () => {

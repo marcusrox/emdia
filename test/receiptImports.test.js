@@ -39,6 +39,7 @@ test("webhook WAHA autenticado cria uma única importação para telefone ativo"
   assert.equal(first.created, true);
   assert.equal(first.userId, user.id);
   assert.equal(first.logDetails.senderPhoneE164, undefined);
+  assert.equal(first.logDetails.phoneMatchStrategy, "exact");
   assert.equal(second.duplicate, true);
   assert.equal(db.prepare("SELECT COUNT(*) AS total FROM receipt_imports").get().total, 1);
 });
@@ -103,6 +104,24 @@ test("telefone identifica usuário ativo por igualdade E.164 e permanece único"
   const user = createUser({ phoneE164: "+5571999999999" });
   assert.equal(User.findActiveByPhoneE164("+5571999999999").id, user.id);
   assert.throws(() => createUser({ phoneE164: "+5571999999999" }), /UNIQUE constraint failed/);
+});
+
+test("webhook reconhece celular brasileiro pelo formato legado sem consultar o WAHA", async () => {
+  const user = createUser({ phoneE164: "+5571992769969" });
+  const raw = webhookBody({ from: "557192769969@c.us", messageId: "message-legacy" });
+
+  const result = await acceptWebhook(raw, signedHeaders(raw));
+
+  assert.equal(user.phone_whatsapp_legacy, "+557192769969");
+  assert.equal(result.created, true);
+  assert.equal(result.userId, user.id);
+  assert.equal(result.logDetails.phoneMatchStrategy, "legacy_alias");
+});
+
+test("alias legado só é gerado para celular brasileiro no formato atual", () => {
+  assert.equal(User.legacyWhatsAppPhone("+5571992769969"), "+557192769969");
+  assert.equal(User.legacyWhatsAppPhone("+557132456789"), "");
+  assert.equal(User.legacyWhatsAppPhone("+351912345678"), "");
 });
 
 test("aprovação cria despesa paga e baixa dentro do vínculo da importação", () => {
@@ -215,14 +234,14 @@ function createReceipt(userId, providerMessageId = `msg-${crypto.randomUUID()}`)
   }).receipt;
 }
 
-function webhookBody() {
+function webhookBody({ from = "5511999999999@c.us", messageId = "message-1" } = {}) {
   return Buffer.from(JSON.stringify({
     id: "event-1",
     event: "message",
     session: "default",
     payload: {
-      id: "message-1",
-      from: "5511999999999@c.us",
+      id: messageId,
+      from,
       fromMe: false,
       hasMedia: true,
       timestamp: 1785456000,

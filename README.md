@@ -381,7 +381,8 @@ Foco atual: controle mensal de contas, receitas e despesas
 ## Comprovantes recebidos pelo WhatsApp
 
 O EmDia pode receber imagens JPEG/PNG por um webhook `message` do WAHA,
-identificar o usuário pelo `phone_e164`, extrair os dados com a Responses API
+identificar o usuário pelo telefone canônico ou pelo alias brasileiro legado,
+extrair os dados com a Responses API
 via OpenRouter e disponibilizar a importação em **Comprovantes** para revisão. A
 aprovação cria uma despesa paga e a respectiva baixa; nenhuma extração cria um
 lançamento definitivo sem confirmação humana.
@@ -400,7 +401,10 @@ OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
 No WAHA, configure `POST https://SEU-EMDIA/webhooks/whatsapp/waha`, somente o
 evento `message`, HMAC SHA-512 com a mesma chave do EmDia, download de mídia e
 retenção recomendada de pelo menos 900 segundos. Cada usuário que utilizar o
-recurso precisa ter um celular único cadastrado em E.164. Consulte
+recurso precisa ter um celular único cadastrado em E.164. Para celulares
+brasileiros atuais, o EmDia gera localmente o formato legado sem o nono dígito
+e consulta as duas representações no webhook, sem validar o cadastro no WAHA.
+Consulte
 `.env.example` para limites, timeouts, retenção e diretório de armazenamento.
 
 Crie uma chave exclusiva no OpenRouter, defina orçamento/limites, mantenha ZDR

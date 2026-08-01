@@ -527,8 +527,10 @@ camada de renderização.
 
 O endpoint público `POST /webhooks/whatsapp/waha` é registrado antes de sessão,
 autenticação e CSRF e usa um parser de corpo bruto dedicado. Depois de validar
-HMAC e anti-replay, identifica o usuário por telefone E.164 e persiste uma linha
-idempotente em `receipt_imports`. O webhook termina nesse ponto.
+HMAC e anti-replay, identifica o usuário pelo E.164 canônico ou pelo alias
+brasileiro legado gerado localmente e persiste uma linha idempotente em
+`receipt_imports`. O cadastro não consulta o WAHA. O webhook termina nesse
+ponto.
 
 O `receiptImportWorker` reivindica um item por vez em transação imediata, fecha
 a transação antes de qualquer I/O, baixa a imagem em armazenamento privado e

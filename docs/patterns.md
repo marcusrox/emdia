@@ -619,6 +619,11 @@ Regras do adaptador:
   para compatibilidade com números brasileiros;
 - aceitar do WAHA somente identificadores individuais numéricos com sufixo
   `@c.us` ou `@lid`, rejeitando grupos, canais e identificadores arbitrários;
+- no cadastro, persistir o celular brasileiro informado no formato canônico
+  E.164 e gerar localmente o alias legado sem o nono dígito; o alias não é
+  editável e não exige consulta ao WAHA;
+- na entrada, procurar usuário ativo pelas duas colunas, preservar unicidade
+  cruzada entre elas e registrar `exact` ou `legacy_alias` no diagnóstico;
 - usar timeout com `AbortController`;
 - nunca registrar chave ou texto integral da mensagem; telefone completo só é
   permitido na exceção documentada de `whatsapp.webhook.ignored` com motivo
@@ -681,7 +686,7 @@ Regras:
   assinatura binária e chave interna antes de armazenar ou servir.
 - Logs operacionais registram apenas IDs técnicos internos e códigos
   normalizados; payload, telefone, URL da mídia, valores e segredos são
-  proibidos.
+  proibidos, exceto pelo E.164 nos casos explicitamente permitidos abaixo.
 - Logs de webhook devem indicar etapa e resultado e podem registrar sessão
   WAHA, engine, flags de mídia, MIME, timestamp e referências técnicas. Quando
   a correlação do remetente for necessária, use HMAC local truncado. A única

@@ -65,7 +65,7 @@ function userAdminFormView({ user, target = {}, action, isNew = false, errors = 
         <h2 class="wide">Dados cadastrais</h2>
         <label>${fieldLabel("Nome")}<input name="name" value="${escapeHtml(target.name)}" required${fieldErrorAttributes(errors, "name")}>${fieldError(errors, "name")}</label>
         <label>${fieldLabel("E-mail")}<input type="email" name="email" value="${escapeHtml(target.email)}" required autocomplete="off"${fieldErrorAttributes(errors, "email")}>${fieldError(errors, "email")}</label>
-        <label>${fieldLabel("Telefone", "Informe no formato internacional ou com DDD brasileiro.")}<input name="phone_e164" value="${escapeHtml(target.phone_e164)}" placeholder="(71) 99999-9999"${fieldErrorAttributes(errors, "phone_e164")}>${fieldError(errors, "phone_e164")}</label>
+        <label>${fieldLabel("Telefone", "Informe no formato internacional ou com DDD brasileiro.")}<input name="phone_e164" value="${escapeHtml(target.phone_e164)}" placeholder="(71) 99999-9999"${fieldErrorAttributes(errors, "phone_e164")}>${fieldError(errors, "phone_e164")}${target.phone_whatsapp_legacy ? `<small>Formato legado reconhecido: ${escapeHtml(target.phone_whatsapp_legacy)}</small>` : `<small>O formato legado, quando aplicável, será gerado automaticamente.</small>`}</label>
         <label>${fieldLabel("Fuso horário")}<input name="timezone" value="${escapeHtml(target.timezone || "America/Sao_Paulo")}" required${fieldErrorAttributes(errors, "timezone")}>${fieldError(errors, "timezone")}</label>
         <label>${fieldLabel("Localidade")}<input name="locale" value="${escapeHtml(target.locale || "pt-BR")}" required${fieldErrorAttributes(errors, "locale")}>${fieldError(errors, "locale")}</label>
         <label>${fieldLabel("Perfil")}<select name="role"${fieldErrorAttributes(errors, "role")}>${option("user", "Usuário", target.is_admin ? "admin" : "user")}${option("admin", "Administrador", target.is_admin ? "admin" : "user")}</select>${fieldError(errors, "role")}</label>
@@ -101,7 +101,7 @@ function usersTable(user, users) {
   return `<div class="table-wrap"><table class="users-admin-table"><thead><tr><th>Usuário</th><th>Contato</th><th>Perfil</th><th>Estado</th><th>Cadastro</th><th class="record-actions-cell">Ações</th></tr></thead>
     <tbody>${users.map((target) => `<tr>
       <td><div class="user-admin-identity">${gravatarAvatar({ email: target.email, name: target.name, size: 40 })}<div><strong>${escapeHtml(target.name)}</strong><small>${escapeHtml(target.id)}</small></div></div></td>
-      <td>${escapeHtml(target.email)}${target.phone_e164 ? `<small>${escapeHtml(target.phone_e164)}</small>` : ""}</td>
+      <td>${escapeHtml(target.email)}${target.phone_e164 ? `<small>${escapeHtml(target.phone_e164)}</small>` : ""}${target.phone_whatsapp_legacy ? `<small>Legado: ${escapeHtml(target.phone_whatsapp_legacy)}</small>` : ""}</td>
       <td><span class="user-role user-role-${target.is_admin ? "admin" : "normal"}">${target.is_admin ? "Administrador" : "Usuário"}</span></td>
       <td>${statusBadge(target)}</td>
       <td>${escapeHtml(formatDate(target.created_at, user.timezone))}<small>Alterado ${escapeHtml(formatDate(target.updated_at, user.timezone))}</small></td>

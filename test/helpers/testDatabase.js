@@ -6,6 +6,7 @@ const crypto = require("node:crypto");
 const { dbPath, getDatabase } = require("../../src/database/connection");
 const { initializeDatabase } = require("../../src/database/schema");
 const { hashPassword } = require("../../src/services/authService");
+const { legacyWhatsAppPhone } = require("../../src/models/User");
 
 if (dbPath !== ":memory:") {
   throw new Error(`Testes recusaram banco não isolado: ${dbPath}`);
@@ -27,10 +28,10 @@ function createUser({ id, email, name = "Usuário de teste", password = "senha12
   const userId = id || `usr_${cryptoId()}`;
   const now = new Date().toISOString();
   db.prepare(`INSERT INTO users
-    (id,name,email,password_hash,phone_e164,timezone,locale,is_active,is_admin,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,?,1,?,?,?)`).run(
+    (id,name,email,password_hash,phone_e164,phone_whatsapp_legacy,timezone,locale,is_active,is_admin,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,1,?,?,?)`).run(
     userId, name, email || `${userId}@example.test`, hashPassword(password),
-    phoneE164, "America/Sao_Paulo", "pt-BR", isAdmin ? 1 : 0, now, now,
+    phoneE164, legacyWhatsAppPhone(phoneE164) || null, "America/Sao_Paulo", "pt-BR", isAdmin ? 1 : 0, now, now,
   );
   return db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
 }

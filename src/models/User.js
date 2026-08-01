@@ -39,9 +39,9 @@ function listForAdmin(filters = {}) {
   const q = String(filters.q || "").trim();
 
   if (q) {
-    clauses.push("(name LIKE ? OR email LIKE ? OR COALESCE(phone_e164, '') LIKE ?)");
+    clauses.push("(name LIKE ? OR email LIKE ? OR COALESCE(phone_e164, '') LIKE ? OR COALESCE(phone_whatsapp_legacy, '') LIKE ?)");
     const pattern = `%${q}%`;
-    params.push(pattern, pattern, pattern);
+    params.push(pattern, pattern, pattern, pattern);
   }
   if (filters.role === "admin") clauses.push("is_admin = 1");
   if (filters.role === "user") clauses.push("is_admin = 0");
@@ -49,14 +49,14 @@ function listForAdmin(filters = {}) {
   if (filters.status === "blocked") clauses.push("is_active = 0");
 
   return getDatabase().prepare(`
-    SELECT id, name, email, phone_e164, timezone, locale, is_active, is_admin, created_at, updated_at
+    SELECT id, name, email, phone_e164, phone_whatsapp_legacy, timezone, locale, is_active, is_admin, created_at, updated_at
     FROM users WHERE ${clauses.join(" AND ")} ORDER BY name, email
   `).all(...params);
 }
 
 function getAdminById(userId) {
   return getDatabase().prepare(`
-    SELECT id, name, email, phone_e164, timezone, locale, is_active, is_admin, created_at, updated_at
+    SELECT id, name, email, phone_e164, phone_whatsapp_legacy, timezone, locale, is_active, is_admin, created_at, updated_at
     FROM users WHERE id = ? LIMIT 1
   `).get(userId);
 }
@@ -69,10 +69,12 @@ function createAdmin(data) {
   const now = new Date().toISOString();
   const id = newId("usr");
   getDatabase().prepare(`
-    INSERT INTO users (id, name, email, password_hash, phone_e164, timezone, locale, is_active, is_admin, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO users (
+      id, name, email, password_hash, phone_e164, phone_whatsapp_legacy,
+      timezone, locale, is_active, is_admin, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(id, values.name, values.email, hashPassword(values.new_password), values.phone_e164 || null,
-    values.timezone, values.locale, values.is_active, values.is_admin, now, now);
+    values.phone_whatsapp_legacy || null, values.timezone, values.locale, values.is_active, values.is_admin, now, now);
   return { ok: true, user: getAdminById(id) };
 }
 
@@ -87,9 +89,9 @@ function updateAdmin(actorId, userId, data) {
       return { ok: false, errors, values: { ...current, ...values } };
     }
     db.prepare(`
-      UPDATE users SET name = ?, email = ?, phone_e164 = ?, timezone = ?, locale = ?, is_admin = ?, updated_at = ?
+      UPDATE users SET name = ?, email = ?, phone_e164 = ?, phone_whatsapp_legacy = ?, timezone = ?, locale = ?, is_admin = ?, updated_at = ?
       WHERE id = ?
-    `).run(values.name, values.email, values.phone_e164 || null, values.timezone, values.locale,
+    `).run(values.name, values.email, values.phone_e164 || null, values.phone_whatsapp_legacy || null, values.timezone, values.locale,
       values.is_admin, new Date().toISOString(), userId);
     return { ok: true, user: getAdminById(userId), previous: current };
   });
@@ -137,6 +139,7 @@ function normalizeAdminData(data, { current = null } = {}) {
     name: String(data.name || "").trim(),
     email: String(data.email || "").trim().toLowerCase(),
     phone_e164: phone.value,
+    phone_whatsapp_legacy: legacyWhatsAppPhone(phone.value),
     phone_error: phone.error,
     timezone: String(data.timezone || current?.timezone || "America/Sao_Paulo").trim(),
     locale: String(data.locale || current?.locale || "pt-BR").trim(),
@@ -156,7 +159,7 @@ function validateAdminData(values, { current = null, actorId = null, requirePass
     if (owner && owner.id !== current?.id) errors.email = "Este e-mail já está em uso.";
   }
   if (values.phone_error) errors.phone_e164 = values.phone_error;
-  else if (values.phone_e164 && phoneBelongsToAnotherUser(values.phone_e164, current?.id)) {
+  else if (values.phone_e164 && phoneBelongsToAnotherUser(values.phone_e164, values.phone_whatsapp_legacy, current?.id)) {
     errors.phone_e164 = "Este telefone já está em uso por outro usuário.";
   }
   if (!isValidTimeZone(values.timezone)) errors.timezone = "Informe um fuso horário válido.";
@@ -246,9 +249,14 @@ function findActiveByPhoneE164(phoneE164) {
   const normalized = normalizePhoneE164(phoneE164);
   if (normalized.error || !normalized.value) return undefined;
 
-  return getDatabase()
-    .prepare("SELECT * FROM users WHERE phone_e164 = ? AND is_active = 1 LIMIT 1")
-    .get(normalized.value);
+  return getDatabase().prepare(`
+    SELECT users.*,
+      CASE WHEN phone_e164 = ? THEN 'exact' ELSE 'legacy_alias' END AS phone_match_strategy
+    FROM users
+    WHERE is_active = 1
+      AND (phone_e164 = ? OR phone_whatsapp_legacy = ?)
+    LIMIT 1
+  `).get(normalized.value, normalized.value, normalized.value);
 }
 
 function updateProfile(userId, data) {
@@ -271,10 +279,11 @@ function updateProfile(userId, data) {
     db.prepare(
       `
         UPDATE users
-        SET name = ?, email = ?, phone_e164 = ?, password_hash = ?, updated_at = ?
+        SET name = ?, email = ?, phone_e164 = ?, phone_whatsapp_legacy = ?, password_hash = ?, updated_at = ?
         WHERE id = ? AND is_active = 1
       `
-    ).run(profile.name, profile.email, profile.phone_e164 || null, passwordHash, now, userId);
+    ).run(profile.name, profile.email, profile.phone_e164 || null, profile.phone_whatsapp_legacy || null,
+      passwordHash, now, userId);
 
     if (profile.new_password) {
       db.prepare("UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL").run(now, userId);
@@ -291,6 +300,7 @@ function normalizeProfile(data) {
     name: String(data.name || "").trim(),
     email: String(data.email || "").trim().toLowerCase(),
     phone_e164: phone.value,
+    phone_whatsapp_legacy: legacyWhatsAppPhone(phone.value),
     phone_error: phone.error,
     current_password: String(data.current_password || ""),
     new_password: String(data.new_password || ""),
@@ -317,7 +327,11 @@ function validateProfile(current, profile) {
 
   if (profile.phone_error) {
     errors.push(profile.phone_error);
-  } else if (profile.phone_e164 && phoneBelongsToAnotherUser(profile.phone_e164, current.id)) {
+  } else if (profile.phone_e164 && phoneBelongsToAnotherUser(
+    profile.phone_e164,
+    profile.phone_whatsapp_legacy,
+    current.id
+  )) {
     errors.push("Este telefone já está em uso por outro usuário.");
   }
 
@@ -341,11 +355,17 @@ function validateProfile(current, profile) {
   return errors;
 }
 
-function phoneBelongsToAnotherUser(phoneE164, currentUserId) {
-  const owner = getDatabase()
-    .prepare("SELECT id FROM users WHERE phone_e164 = ? LIMIT 1")
-    .get(phoneE164);
-  return Boolean(owner && owner.id !== currentUserId);
+function phoneBelongsToAnotherUser(phoneE164, legacyPhone, currentUserId) {
+  if (!phoneE164 && !legacyPhone) return false;
+  const canonical = phoneE164 || "__none__";
+  const legacy = legacyPhone || "__none__";
+  const owner = getDatabase().prepare(`
+    SELECT id FROM users
+    WHERE id <> ?
+      AND (phone_e164 IN (?, ?) OR phone_whatsapp_legacy IN (?, ?))
+    LIMIT 1
+  `).get(currentUserId || "", canonical, legacy, canonical, legacy);
+  return Boolean(owner);
 }
 
 function isValidEmail(email) {
@@ -375,6 +395,11 @@ function normalizePhoneE164(value) {
   }
 
   return { value: withCountry };
+}
+
+function legacyWhatsAppPhone(phoneE164) {
+  const match = /^\+55(\d{2})(9\d{8})$/.exec(String(phoneE164 || ""));
+  return match ? `+55${match[1]}${match[2].slice(1)}` : "";
 }
 
 function updateFontScale(userId, fontScale) {
@@ -445,6 +470,7 @@ module.exports = {
   normalizeFontScale,
   normalizeListDensity,
   normalizePhoneE164,
+  legacyWhatsAppPhone,
   getLastCompetence,
   updateLastCompetence,
   updateFontScale,
