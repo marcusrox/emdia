@@ -6,6 +6,7 @@ const {
   escapeHtml,
   fieldError,
   fieldErrorAttributes,
+  lucideIcon,
   moneyInput,
   option,
   pageHeading,
@@ -39,12 +40,23 @@ function receiptImportsListView({ user, imports, filters, notifications = [] }) 
     icon: "receipt-text",
     description: "Confira os dados extraídos antes de criar a despesa e registrar o pagamento.",
   })}
-    <section class="panel receipt-filter-panel">
-      <form method="get" action="/receipt-imports" class="inline-form">
-        <label>Status <select name="status">${statusOptions}</select></label>
-        <button type="submit" class="ghost-button">${buttonContent("Filtrar", "list-filter")}</button>
-      </form>
-    </section>
+    <div class="receipt-overview-grid">
+      <section class="panel receipt-info-panel" aria-labelledby="receipt-info-title">
+        <span class="receipt-info-icon" aria-hidden="true">${lucideIcon("message-circle")}</span>
+        <div>
+          <h2 id="receipt-info-title">Como funciona o envio pelo WhatsApp</h2>
+          <p>Envie uma imagem JPEG ou PNG do comprovante para o WhatsApp do EmDia <a href="https://wa.me/5571996631800" target="_blank" rel="noopener noreferrer">(71) 99663-1800</a>. O sistema identifica o remetente pelo número do telefone, recebe a imagem e extrai automaticamente os principais dados do pagamento usando inteligência artificial.</p>
+          <p>Aqui você poderá acompanhar o processamento e conferir os dados extraídos através de IA. Abra o comprovante para conferir as informações, escolher a conta e a categoria, aprovar, rejeitar ou reprocessar. A despesa paga e sua baixa só são criadas depois da sua aprovação.</p>
+        </div>
+      </section>
+      <section class="panel receipt-filter-panel" aria-labelledby="receipt-filter-title">
+        <h2 id="receipt-filter-title">Filtrar comprovantes</h2>
+        <form method="get" action="/receipt-imports" class="receipt-filter-form">
+          <label>Status <select name="status">${statusOptions}</select></label>
+          <button type="submit">${buttonContent("Filtrar", "filter")}</button>
+        </form>
+      </section>
+    </div>
     <section class="panel list-panel">
       <div class="table-scroll"><table>
         <thead><tr><th>Favorecido</th><th>Pagamento</th><th>Valor</th><th>Status</th><th>Recebido</th></tr></thead>

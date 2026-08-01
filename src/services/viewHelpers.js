@@ -275,7 +275,7 @@ function renderNotifications(notifications = []) {
 
       return `<div class="notification notification-${type}" role="${role}">
         <p>${escapeHtml(notification.message)}</p>
-        <button type="button" class="notification-close" aria-label="Fechar mensagem">X</button>
+        <button type="button" class="notification-close" aria-label="Fechar mensagem">${lucideIcon("x")}</button>
       </div>`;
     }).join("")}
   </div>`;

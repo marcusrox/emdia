@@ -15,8 +15,100 @@
 }
 
 /* Caixa de comprovantes recebidos pelo WhatsApp */
-.receipt-filter-panel {
+.receipt-overview-grid {
+  align-items: stretch;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 2fr) minmax(20rem, .8fr);
   margin-bottom: 1rem;
+}
+
+.panel.receipt-info-panel {
+  background: linear-gradient(135deg, var(--surface), #eef8f6);
+  border-color: #b9d7d2;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 16px 18px;
+}
+
+.receipt-info-icon {
+  align-items: center;
+  background: #dff3ef;
+  border-radius: 8px;
+  color: var(--primary-dark);
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.receipt-info-icon svg {
+  height: 21px;
+  width: 21px;
+}
+
+.receipt-info-panel h2 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+.receipt-info-panel p {
+  color: var(--muted);
+  font-size: .875em;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 100ch;
+}
+
+.receipt-info-panel p + p {
+  margin-top: 8px;
+}
+
+.receipt-info-panel strong {
+  color: var(--text);
+}
+
+.receipt-info-panel a {
+  color: var(--primary-dark);
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.receipt-info-panel a:hover {
+  color: var(--primary);
+  text-decoration-thickness: 2px;
+}
+
+.receipt-info-panel a:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
+.panel.receipt-filter-panel {
+  display: grid;
+  padding: 16px 18px;
+}
+
+.receipt-filter-panel h2 {
+  align-self: start;
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+.receipt-filter-form {
+  align-items: end;
+  align-self: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.receipt-filter-form button {
+  white-space: nowrap;
 }
 
 .receipt-detail-grid {
@@ -130,6 +222,23 @@
 }
 
 @media (max-width: 800px) {
+  .receipt-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-info-panel {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .receipt-filter-form {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-filter-form button {
+    justify-self: start;
+  }
+
   .receipt-detail-grid {
     grid-template-columns: 1fr;
   }
@@ -323,7 +432,7 @@ button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-cl
   padding: 0 28px;
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 40;
 }
 
 .mobile-top-row {
@@ -361,6 +470,10 @@ td small {
   overflow-x: auto;
 }
 
+.desktop-nav {
+  gap: 3px;
+}
+
 .mobile-nav-menu {
   display: none;
 }
@@ -370,6 +483,11 @@ td small {
   color: var(--muted);
   padding: 10px 12px;
   white-space: nowrap;
+}
+
+.desktop-nav a {
+  font-size: .875em;
+  padding: 8px 10px;
 }
 
 .main-nav a.active,
@@ -898,6 +1016,12 @@ td small {
 .notification-close:hover,
 .notification-close:focus-visible {
   background: rgba(15, 23, 42, 0.08);
+}
+
+.notification-close svg {
+  height: 18px;
+  stroke-width: 2.25;
+  width: 18px;
 }
 
 .page {

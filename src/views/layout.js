@@ -29,6 +29,7 @@ function layout({ title, user, active, body, notifications = [] }) {
   const listDensity = normalizeListDensity(user?.list_density);
   const systemDateTime = formatSystemDateTime(user?.timezone);
   const userMenu = userMenuItems(user, active);
+  const userFirstName = String(user?.name || "Usuário").trim().split(/\s+/)[0] || "Usuário";
   const publishedCommit = readPublishedCommit();
 
   return `<!doctype html>
@@ -82,9 +83,9 @@ function layout({ title, user, active, body, notifications = [] }) {
       ${nav.map(([href, label]) => `<a href="${href}" class="${active === href ? "active" : ""}">${label}</a>`).join("")}
     </nav>
     <details class="user-menu desktop-user-menu">
-      <summary class="user-chip desktop-user-chip">
+      <summary class="user-chip desktop-user-chip" aria-label="Abrir menu do usuário">
         ${gravatarAvatar({ email: user.email, name: user.name, size: 32, className: "topbar-avatar", loading: "eager" })}
-        <span>${escapeHtml(user.name)}</span>
+        <span>${escapeHtml(userFirstName)}</span>
       </summary>
       <div class="user-menu-panel">
         ${userMenu}
