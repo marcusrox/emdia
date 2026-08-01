@@ -523,3 +523,22 @@ variáveis permitidas e configurações seguras. A view
 O limite de segurança fica no service: segredos, URLs, caminhos absolutos,
 identificadores da máquina e variáveis desconhecidas não são devolvidos para a
 camada de renderização.
+## Recebimento de comprovantes (WAHA)
+
+O endpoint público `POST /webhooks/whatsapp/waha` é registrado antes de sessão,
+autenticação e CSRF e usa um parser de corpo bruto dedicado. Depois de validar
+HMAC e anti-replay, identifica o usuário por telefone E.164 e persiste uma linha
+idempotente em `receipt_imports`. O webhook termina nesse ponto.
+
+O `receiptImportWorker` reivindica um item por vez em transação imediata, fecha
+a transação antes de qualquer I/O, baixa a imagem em armazenamento privado e
+chama a Responses API com Structured Outputs. A interface autenticada permite
+revisar, rejeitar ou reprocessar. A aprovação usa uma única transação imediata
+para criar `financial_entries`, `settlements`, auditorias e marcar a importação
+como `APPROVED`. A competência é o mês civil da data de pagamento.
+
+```text
+WAHA -> webhook HMAC -> receipt_imports(RECEIVED) -> worker
+     -> mídia privada -> OpenRouter -> NEEDS_REVIEW -> aprovação humana
+     -> financial_entries(PAID) + settlements
+```

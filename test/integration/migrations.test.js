@@ -54,7 +54,8 @@ describe("migrations", () => {
   it("preserva a preferência criada antes da generalização", () => {
     const database = createDatabase();
     const migrations = loadProjectMigrations();
-    const beforeGeneralization = migrations.slice(0, -1);
+    const generalizationIndex = migrations.findIndex((migration) => migration.id === "009_generalize_last_competence");
+    const beforeGeneralization = migrations.slice(0, generalizationIndex);
 
     runMigrations({ db: database, migrations: beforeGeneralization });
     const now = new Date().toISOString();

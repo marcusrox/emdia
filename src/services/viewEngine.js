@@ -10,6 +10,7 @@ const { operationalLogsView } = require("../views/operationalLogsView");
 const { notificationQueueView } = require("../views/notificationQueueView");
 const { profileView } = require("../views/profileView");
 const { recurrenceFormView, recurrencesListView } = require("../views/recurrencesView");
+const { receiptImportDetailView, receiptImportsListView } = require("../views/receiptImportsView");
 const { runtimeEnvironmentView } = require("../views/runtimeEnvironmentView");
 const { settingsView } = require("../views/settingsView");
 const { userAdminFormView, usersAdminListView } = require("../views/usersAdminView");
@@ -35,6 +36,8 @@ module.exports = {
   profileView,
   recurrenceFormView,
   recurrencesListView,
+  receiptImportDetailView,
+  receiptImportsListView,
   runtimeEnvironmentView,
   settingsView,
   userAdminFormView,

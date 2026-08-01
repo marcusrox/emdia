@@ -669,3 +669,17 @@ Regras:
 - tratar indisponibilidade parcial sem devolver stack trace ou detalhes
   internos;
 - manter a view responsável apenas pela apresentação e pelo escape HTML.
+## Padrão para webhooks e arquivos de comprovantes
+
+- Webhooks públicos usam parser bruto específico, HMAC antes do JSON e limite
+  de corpo; não passam por sessão ou CSRF.
+- O handler persiste idempotentemente e responde sem executar download ou IA.
+- Chamadas externas nunca ocorrem dentro de transação SQLite.
+- Arquivos recebidos não ficam em `public/`: valide origem, tamanho, MIME,
+  assinatura binária e chave interna antes de armazenar ou servir.
+- Logs operacionais registram apenas IDs técnicos internos e códigos
+  normalizados; payload, telefone, URL da mídia, valores e segredos são
+  proibidos.
+- Extrações automatizadas sempre exigem conferência humana antes de criar
+  lançamento financeiro. Pagamentos confirmados geram uma linha em
+  `settlements` e usam centavos inteiros.

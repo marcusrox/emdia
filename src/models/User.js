@@ -156,6 +156,9 @@ function validateAdminData(values, { current = null, actorId = null, requirePass
     if (owner && owner.id !== current?.id) errors.email = "Este e-mail já está em uso.";
   }
   if (values.phone_error) errors.phone_e164 = values.phone_error;
+  else if (values.phone_e164 && phoneBelongsToAnotherUser(values.phone_e164, current?.id)) {
+    errors.phone_e164 = "Este telefone já está em uso por outro usuário.";
+  }
   if (!isValidTimeZone(values.timezone)) errors.timezone = "Informe um fuso horário válido.";
   if (!isValidLocale(values.locale)) errors.locale = "Informe uma localidade válida, como pt-BR.";
   if (requirePassword) {
@@ -239,6 +242,15 @@ function getById(userId) {
     .get(userId);
 }
 
+function findActiveByPhoneE164(phoneE164) {
+  const normalized = normalizePhoneE164(phoneE164);
+  if (normalized.error || !normalized.value) return undefined;
+
+  return getDatabase()
+    .prepare("SELECT * FROM users WHERE phone_e164 = ? AND is_active = 1 LIMIT 1")
+    .get(normalized.value);
+}
+
 function updateProfile(userId, data) {
   const current = getById(userId);
   if (!current) {
@@ -305,6 +317,8 @@ function validateProfile(current, profile) {
 
   if (profile.phone_error) {
     errors.push(profile.phone_error);
+  } else if (profile.phone_e164 && phoneBelongsToAnotherUser(profile.phone_e164, current.id)) {
+    errors.push("Este telefone já está em uso por outro usuário.");
   }
 
   if (wantsPasswordChange) {
@@ -325,6 +339,13 @@ function validateProfile(current, profile) {
   }
 
   return errors;
+}
+
+function phoneBelongsToAnotherUser(phoneE164, currentUserId) {
+  const owner = getDatabase()
+    .prepare("SELECT id FROM users WHERE phone_e164 = ? LIMIT 1")
+    .get(phoneE164);
+  return Boolean(owner && owner.id !== currentUserId);
 }
 
 function isValidEmail(email) {
@@ -409,6 +430,7 @@ module.exports = {
   FONT_SCALE_OPTIONS: Array.from(FONT_SCALE_OPTIONS),
   LIST_DENSITY_OPTIONS: Array.from(LIST_DENSITY_OPTIONS),
   findByEmail,
+  findActiveByPhoneE164,
   ensureDefaultUser,
   getById,
   getDefaultUser,
@@ -422,6 +444,7 @@ module.exports = {
   resetPasswordAdmin,
   normalizeFontScale,
   normalizeListDensity,
+  normalizePhoneE164,
   getLastCompetence,
   updateLastCompetence,
   updateFontScale,

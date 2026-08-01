@@ -19,6 +19,7 @@ function layout({ title, user, active, body, notifications = [] }) {
     ["/dashboard", "Dashboard"],
     ["/calendar", "Agenda"],
     ["/entries", "Lançamentos"],
+    ["/receipt-imports", "Comprovantes"],
     ["/recurrences", "Recorrências"],
     ["/accounts", "Contas"],
     ["/categories", "Categorias"],

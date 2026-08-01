@@ -9,6 +9,7 @@ const JSON_RESPONSE_PATHS = new Set([
   "/ready",
   "/settings/whatsapp-status",
   "/operational-logs/events",
+  "/webhooks/whatsapp/waha",
 ]);
 
 function markResponseFormat(req, res, next) {

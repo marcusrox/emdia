@@ -10,6 +10,7 @@ const { RELEASE_LABEL } = require("./src/config/release");
 const { acquireDatabaseLock } = require("./src/services/databaseLockService");
 const { logError, logInfo } = require("./src/services/operationalLogger");
 const { startNotificationScheduler } = require("./src/services/notificationScheduler");
+const { startReceiptImportWorker } = require("./src/services/receiptImportWorker");
 const { startSessionCleanupScheduler } = require("./src/services/sessionCleanupService");
 
 const port = Number(process.env.PORT || 3000);
@@ -45,6 +46,7 @@ try {
     console.log(startupMessage(port));
   });
   startNotificationScheduler();
+  startReceiptImportWorker();
   startSessionCleanupScheduler();
 } catch (error) {
   releaseDatabaseLock();

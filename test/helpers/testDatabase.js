@@ -17,20 +17,20 @@ const db = getDatabase();
 function resetDatabase() {
   db.exec(`
     DELETE FROM notifications; DELETE FROM notification_preferences;
-    DELETE FROM audit_logs; DELETE FROM settlement_reversals; DELETE FROM settlements; DELETE FROM financial_entries;
+    DELETE FROM audit_logs; DELETE FROM receipt_imports; DELETE FROM settlement_reversals; DELETE FROM settlements; DELETE FROM financial_entries;
     DELETE FROM recurrences; DELETE FROM parties; DELETE FROM categories;
     DELETE FROM financial_accounts; DELETE FROM sessions; DELETE FROM users;
   `);
 }
 
-function createUser({ id, email, name = "Usuário de teste", password = "senha123", isAdmin = false } = {}) {
+function createUser({ id, email, name = "Usuário de teste", password = "senha123", isAdmin = false, phoneE164 = null } = {}) {
   const userId = id || `usr_${cryptoId()}`;
   const now = new Date().toISOString();
   db.prepare(`INSERT INTO users
-    (id,name,email,password_hash,timezone,locale,is_active,is_admin,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,1,?,?,?)`).run(
+    (id,name,email,password_hash,phone_e164,timezone,locale,is_active,is_admin,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,1,?,?,?)`).run(
     userId, name, email || `${userId}@example.test`, hashPassword(password),
-    "America/Sao_Paulo", "pt-BR", isAdmin ? 1 : 0, now, now,
+    phoneE164, "America/Sao_Paulo", "pt-BR", isAdmin ? 1 : 0, now, now,
   );
   return db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
 }

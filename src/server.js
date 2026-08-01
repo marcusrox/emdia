@@ -27,7 +27,9 @@ const {
 } = require("./routes/operationalRoutes");
 const { registerProfileRoutes } = require("./routes/profileRoutes");
 const { registerRecurrenceRoutes } = require("./routes/recurrenceRoutes");
+const { registerReceiptImportRoutes } = require("./routes/receiptImportRoutes");
 const { registerSettlementRoutes } = require("./routes/settlementRoutes");
+const { registerWhatsAppWebhookRoutes } = require("./routes/whatsappWebhookRoutes");
 const { createLoginRateLimiter } = require("./services/loginRateLimitService");
 const { checkReadiness } = require("./services/readinessService");
 
@@ -39,10 +41,10 @@ function createServer(options = {}) {
   app.disable("x-powered-by");
   app.set("trust proxy", "loopback");
   app.use(securityHeaders);
+  app.use(markResponseFormat);
+  registerWhatsAppWebhookRoutes(app, options.whatsappWebhook || {});
   app.use("/public", express.static(path.join(__dirname, "..", "public")));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
-  app.use(markResponseFormat);
-
   registerPublicOperationalRoutes(app, { readinessCheck });
 
   app.use(loadSession);
@@ -61,6 +63,7 @@ function createServer(options = {}) {
   registerCategoryRoutes(app, protectedMiddleware);
   registerProfileRoutes(app, protectedMiddleware);
   registerRecurrenceRoutes(app, protectedMiddleware);
+  registerReceiptImportRoutes(app, protectedMiddleware);
   registerEntryRoutes(app, protectedMiddleware);
   registerSettlementRoutes(app, protectedMiddleware);
   registerAdminRoutes(app, protectedMiddleware);

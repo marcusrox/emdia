@@ -2701,3 +2701,12 @@ Não implementar todas as funcionalidades em uma única alteração.
 ## 35. Definição resumida do produto
 
 > EmDia é uma aplicação web pessoal para registrar receitas e despesas, gerar contas recorrentes, acompanhar vencimentos, registrar pagamentos, armazenar comprovantes e usar WhatsApp para receber documentos e enviar lembretes, com confirmação humana dos dados extraídos automaticamente.
+## Incremento MVP: comprovantes via WhatsApp
+
+O MVP passa a aceitar imagens JPEG/PNG recebidas exclusivamente pelo WAHA. O
+usuário é identificado pelo celular E.164 único, a imagem é processada
+assincronamente via OpenRouter e o resultado permanece em uma caixa de revisão. A
+aprovação humana cria uma despesa já paga, com baixa em `settlements` e
+competência derivada da data civil de pagamento. PDFs, criação automática sem
+revisão, arquivo fiscal de longo prazo e administração da sessão WAHA continuam
+fora do escopo.

@@ -378,3 +378,38 @@ Persistência: SQLite local
 Interface: server-rendered HTML
 Foco atual: controle mensal de contas, receitas e despesas
 ```
+## Comprovantes recebidos pelo WhatsApp
+
+O EmDia pode receber imagens JPEG/PNG por um webhook `message` do WAHA,
+identificar o usuário pelo `phone_e164`, extrair os dados com a Responses API
+via OpenRouter e disponibilizar a importação em **Comprovantes** para revisão. A
+aprovação cria uma despesa paga e a respectiva baixa; nenhuma extração cria um
+lançamento definitivo sem confirmação humana.
+
+Configuração mínima adicional:
+
+```env
+WAHA_API_BASE_URL=https://waha.exemplo.com
+WAHA_API_KEY=
+WAHA_SESSION=default
+WAHA_WEBHOOK_HMAC_KEY=
+OPENROUTER_API_KEY=
+OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
+```
+
+No WAHA, configure `POST https://SEU-EMDIA/webhooks/whatsapp/waha`, somente o
+evento `message`, HMAC SHA-512 com a mesma chave do EmDia, download de mídia e
+retenção recomendada de pelo menos 900 segundos. Cada usuário que utilizar o
+recurso precisa ter um celular único cadastrado em E.164. Consulte
+`.env.example` para limites, timeouts, retenção e diretório de armazenamento.
+
+Crie uma chave exclusiva no OpenRouter, defina orçamento/limites, mantenha ZDR
+habilitado e guarde a chave somente no ambiente. O modelo é configurável e o
+default `openai/gpt-5-mini` aceita imagem e Structured Outputs. O MVP sempre
+envia `store: false`, `provider.zdr: true` e `data_collection: deny`. Testes
+automatizados usam mocks e não consomem WAHA ou OpenRouter reais.
+
+As imagens ficam em `uploads/receipts`, fora de `public/`, e são removidas após
+a retenção configurada quando aprovadas ou rejeitadas. O backup SQLite atual
+**não inclui esses arquivos**; não trate esse diretório como arquivo fiscal de
+longo prazo sem implantar uma estratégia própria de backup dos anexos.
