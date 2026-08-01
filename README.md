@@ -407,11 +407,12 @@ e consulta as duas representações no webhook, sem validar o cadastro no WAHA.
 Consulte
 `.env.example` para limites, timeouts, retenção e diretório de armazenamento.
 
-Crie uma chave exclusiva no OpenRouter, defina orçamento/limites, mantenha ZDR
-habilitado e guarde a chave somente no ambiente. O modelo é configurável e o
-default `openai/gpt-5-mini` aceita imagem e Structured Outputs. O MVP sempre
-envia `store: false`, `provider.zdr: true` e `data_collection: deny`. Testes
-automatizados usam mocks e não consomem WAHA ou OpenRouter reais.
+Crie uma chave exclusiva no OpenRouter, defina orçamento/limites e guarde a
+chave somente no ambiente. O modelo é configurável e o default
+`openai/gpt-5-mini` aceita imagem e Structured Outputs. O MVP sempre envia
+`store: false`, `provider.require_parameters: true` e
+`provider.data_collection: deny`; ZDR não é exigido. Testes automatizados usam
+mocks e não consomem WAHA ou OpenRouter reais.
 
 As imagens ficam em `uploads/receipts`, fora de `public/`, e são removidas após
 a retenção configurada quando aprovadas ou rejeitadas. O backup SQLite atual

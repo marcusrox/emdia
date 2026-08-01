@@ -94,7 +94,6 @@ function buildRequest(model, mimeType, image, categories) {
     provider: {
       require_parameters: true,
       data_collection: "deny",
-      zdr: true,
     },
     input: [{
       role: "user",

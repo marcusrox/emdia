@@ -435,14 +435,14 @@ Usar:
 - `text.format` com `type: "json_schema"` e `strict: true`;
 - `store: false` no request;
 - `provider.require_parameters: true` para evitar rota incompatível;
-- `provider.data_collection: deny` e `provider.zdr: true` para restringir o
-  processamento a endpoints Zero Data Retention;
+- `provider.data_collection: deny` para excluir provedores classificados como
+  coletores de dados;
 - timeout com `AbortController`;
 - limite de saída suficiente apenas para o schema;
 - captura de ID da resposta, modelo efetivo e usage quando disponíveis;
 - mensagens de erro sanitizadas, sem copiar resposta bruta para log.
 
-O comportamento seguro permanece `store: false` e ZDR obrigatório no MVP.
+O comportamento seguro permanece `store: false`; ZDR não é obrigatório no MVP.
 
 ### Prompt de extração
 
@@ -644,7 +644,7 @@ que revele existência ou inexistência de cadastro.
 - não enviar telefone, email, ID do usuário, conta financeira ou histórico
   desnecessário ao OpenRouter ou ao provedor roteado;
 - enviar somente a imagem e o contexto mínimo de categorias;
-- manter `store: false`, `data_collection: deny` e `zdr: true` nas chamadas;
+- manter `store: false` e `data_collection: deny` nas chamadas;
 - manter desabilitadas as opções de logging de prompt e uso de dados no painel
   do OpenRouter;
 - definir política de retenção e informar o usuário de que o comprovante será
@@ -948,7 +948,7 @@ O request exige suporte aos parâmetros enviados e aplica por padrão:
 - `store: false`;
 - `provider.require_parameters: true`;
 - `provider.data_collection: deny`;
-- `provider.zdr: true`.
+- ZDR não é exigido, evitando eliminar todos os provedores compatíveis.
 
 A migration `011_generalize_receipt_ai_metadata` renomeia os campos específicos
 da OpenAI para `extraction_model` e `extraction_response_id`, preservando bancos
@@ -1074,6 +1074,29 @@ Validações concluídas com `npm run check` e 106 testes automatizados.
 ## Assinatura da LLM
 
 - Data: 01/08/2026 01:00
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao
+
+---
+
+## Atualização: remoção da exigência de ZDR
+
+Por decisão do responsável pelo EmDia, as chamadas ao OpenRouter deixam de
+enviar `provider.zdr: true`. A restrição eliminava todos os provedores elegíveis
+em determinados roteamentos do `openai/gpt-5-mini`, resultando em HTTP 404 antes
+da extração.
+
+Permanecem ativos `store: false`, `provider.data_collection: deny` e
+`provider.require_parameters: true`. Assim, o EmDia continua sem solicitar
+armazenamento da resposta, exclui provedores classificados como coletores de
+dados e exige suporte aos parâmetros usados pelo schema estruturado.
+
+---
+
+## Assinatura da LLM
+
+- Data: 01/08/2026 07:59
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao

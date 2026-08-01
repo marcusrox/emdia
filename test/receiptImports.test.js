@@ -195,10 +195,11 @@ test("worker usa mocks, detecta hash e leva importação à revisão", async () 
   assert.equal(ReceiptImport.getById(receipt.id).status, "NEEDS_REVIEW");
 });
 
-test("requisição OpenRouter exige ZDR, schema estruturado e imagem com detalhe alto", () => {
+test("requisição OpenRouter desabilita armazenamento e exige schema estruturado", () => {
   const requestBody = buildRequest("gpt-test", "image/jpeg", Buffer.from([0xff, 0xd8, 0xff]), []);
   assert.equal(requestBody.store, false);
-  assert.equal(requestBody.provider.zdr, true);
+  assert.equal(requestBody.provider.zdr, undefined);
+  assert.equal(requestBody.provider.data_collection, "deny");
   assert.equal(requestBody.provider.data_collection, "deny");
   assert.equal(requestBody.provider.require_parameters, true);
   assert.equal(requestBody.text.format.strict, true);
