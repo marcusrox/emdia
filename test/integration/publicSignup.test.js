@@ -90,10 +90,14 @@ describe("cadastro público", () => {
     assert.ok(accounts.every((account) => account.institution_name === null));
 
     const categories = db.prepare(`
-      SELECT name, entry_type, color FROM categories WHERE user_id = ? ORDER BY name
+      SELECT name, entry_type, icon, color FROM categories WHERE user_id = ? ORDER BY name
     `).all(user.id);
-    assert.equal(categories.length, 7);
-    assert.ok(categories.some((category) => category.name === "Salário" && category.entry_type === "INCOME"));
+    assert.equal(categories.length, 18);
+    assert.ok(categories.some((category) => category.name === "Água"
+      && category.entry_type === "EXPENSE" && category.icon === "droplets" && category.color === "#0284C7"));
+    assert.ok(categories.some((category) => category.name === "Rendimentos"
+      && category.entry_type === "INCOME" && category.icon === "chart-no-axes-combined" && category.color === "#15803D"));
+    assert.equal(categories.filter((category) => category.name === "Outros").length, 2);
     assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries WHERE user_id = ?").get(user.id).total, 0);
     assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_accounts WHERE user_id = ? AND name = 'Conta privada'").get(user.id).total, 0);
 
@@ -170,7 +174,7 @@ describe("cadastro público", () => {
     provisionInitialUserData(user);
 
     assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_accounts WHERE user_id = ?").get(user.id).total, 2);
-    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM categories WHERE user_id = ?").get(user.id).total, 7);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM categories WHERE user_id = ?").get(user.id).total, 18);
   });
 
   it("não permite cadastro adicional durante uma sessão autenticada", async () => {
