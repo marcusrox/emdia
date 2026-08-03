@@ -5,11 +5,13 @@ const { readStoredReceipt } = require("./receiptStorageService");
 const DOCUMENT_TYPES = ["payment_receipt", "scheduled_payment", "bill", "transfer", "unreadable", "unrelated"];
 const PAYMENT_METHODS = ["PIX", "TED", "DOC", "boleto", "cartao", "dinheiro", "debito_conta", "outro"];
 const CURRENCIES = ["BRL", "USD", "EUR", "other"];
+const DEFAULT_RECEIPT_MODEL = "qwen/qwen3-vl-32b-instruct";
+const REASONING_EFFORTS = new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 async function extractReceipt(receipt, options = {}) {
   const apiKey = String(process.env.OPENROUTER_API_KEY || "").trim();
   if (!apiKey) throw extractionError("OPENROUTER_NOT_CONFIGURED", false);
-  const model = String(process.env.OPENROUTER_RECEIPT_MODEL || "openai/gpt-5-mini").trim();
+  const model = String(process.env.OPENROUTER_RECEIPT_MODEL || DEFAULT_RECEIPT_MODEL).trim();
   const timeoutMs = positiveNumber(process.env.OPENROUTER_REQUEST_TIMEOUT_MS, 30000);
   const endpoint = openRouterEndpoint();
   const categories = Category.byType(receipt.user_id, "EXPENSE").filter((item) => item.is_active);
@@ -87,6 +89,7 @@ async function extractReceipt(receipt, options = {}) {
 
 function buildRequest(model, mimeType, image, categories) {
   const categoryNames = categories.map((category) => category.name.slice(0, 80));
+  const reasoningEffort = optionalReasoningEffort();
   const maxOutputTokens = boundedNumber(
     process.env.OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS,
     4000,
@@ -97,9 +100,7 @@ function buildRequest(model, mimeType, image, categories) {
     model,
     store: false,
     max_output_tokens: maxOutputTokens,
-    reasoning: {
-      effort: "minimal",
-    },
+    ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
     provider: {
       require_parameters: true,
       data_collection: "deny",
@@ -120,6 +121,11 @@ function buildRequest(model, mimeType, image, categories) {
       },
     },
   };
+}
+
+function optionalReasoningEffort() {
+  const effort = String(process.env.OPENROUTER_RECEIPT_REASONING_EFFORT || "").trim().toLowerCase();
+  return REASONING_EFFORTS.has(effort) ? effort : "";
 }
 
 function extractionPrompt(categoryNames) {

@@ -101,7 +101,12 @@ function environmentVariablesPanel(variables) {
     ${panelTitle("Variáveis de ambiente", "list-checks", "Lista permitida e valores protegidos")}
     <p class="runtime-section-help">Somente chaves conhecidas pelo EmDia são listadas. Segredos, URLs e caminhos têm seus valores omitidos antes da renderização.</p>
     <div class="table-wrap">
-      <table class="runtime-table">
+      <table class="runtime-table runtime-environment-table">
+        <colgroup>
+          <col class="runtime-environment-variable-column">
+          <col class="runtime-environment-state-column">
+          <col class="runtime-environment-value-column">
+        </colgroup>
         <thead><tr><th>Variável</th><th>Estado</th><th>Valor público</th></tr></thead>
         <tbody>
           ${variables.map((variable) => `<tr>

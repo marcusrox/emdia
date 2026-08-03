@@ -258,12 +258,29 @@ test("requisição OpenRouter desabilita armazenamento e exige schema estruturad
   assert.equal(requestBody.provider.data_collection, "deny");
   assert.equal(requestBody.provider.require_parameters, true);
   assert.equal(requestBody.max_output_tokens, 4000);
-  assert.equal(requestBody.reasoning.effort, "minimal");
+  assert.equal(requestBody.reasoning, undefined);
   assert.equal(requestBody.text.format.strict, true);
   assert.equal(requestBody.text.format.schema.additionalProperties, false);
   assert.equal(requestBody.input[0].content[1].detail, "high");
   assert.equal(extractionSchema().properties.amount_cents.type[0], "integer");
   assert.equal(openRouterEndpoint(), "https://openrouter.ai/api/v1/responses");
+});
+
+test("requisição OpenRouter inclui reasoning somente quando configurado", () => {
+  const previousEffort = process.env.OPENROUTER_RECEIPT_REASONING_EFFORT;
+
+  try {
+    process.env.OPENROUTER_RECEIPT_REASONING_EFFORT = "minimal";
+    const configured = buildRequest("openai/gpt-5-mini", "image/jpeg", Buffer.from([0xff, 0xd8, 0xff]), []);
+    assert.deepEqual(configured.reasoning, { effort: "minimal" });
+
+    process.env.OPENROUTER_RECEIPT_REASONING_EFFORT = "não-suportado";
+    const invalid = buildRequest("gpt-test", "image/jpeg", Buffer.from([0xff, 0xd8, 0xff]), []);
+    assert.equal(invalid.reasoning, undefined);
+  } finally {
+    if (previousEffort === undefined) delete process.env.OPENROUTER_RECEIPT_REASONING_EFFORT;
+    else process.env.OPENROUTER_RECEIPT_REASONING_EFFORT = previousEffort;
+  }
 });
 
 test("resposta OpenRouter inválida informa a etapa sem registrar conteúdo do modelo", () => {

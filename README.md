@@ -421,7 +421,11 @@ WAHA_API_KEY=
 WAHA_SESSION=default
 WAHA_WEBHOOK_HMAC_KEY=
 OPENROUTER_API_KEY=
-OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
+# Modelos homologados: mantenha somente uma opção ativa
+#OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
+#OPENROUTER_RECEIPT_MODEL=google/gemini-2.5-flash-lite
+OPENROUTER_RECEIPT_MODEL=qwen/qwen3-vl-32b-instruct
+OPENROUTER_RECEIPT_REASONING_EFFORT=
 OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS=4000
 ```
 
@@ -435,15 +439,31 @@ Consulte
 `.env.example` para limites, timeouts, retenção e diretório de armazenamento.
 
 Crie uma chave exclusiva no OpenRouter, defina orçamento/limites e guarde a
-chave somente no ambiente. O modelo é configurável e o default
-`openai/gpt-5-mini` aceita imagem e Structured Outputs. O MVP sempre envia
-`store: false`, `provider.require_parameters: true` e
+chave somente no ambiente. O modelo é configurável; as opções homologadas
+abaixo aceitam imagem e Structured Outputs. Mantenha somente uma linha
+`OPENROUTER_RECEIPT_MODEL` ativa. O padrão é
+`qwen/qwen3-vl-32b-instruct`. O MVP sempre envia `store: false`,
+`provider.require_parameters: true` e
 `provider.data_collection: deny`; ZDR não é exigido. Testes automatizados usam
 mocks e não consomem WAHA ou OpenRouter reais.
 
-Para reservar espaço ao JSON após os tokens internos de raciocínio, o request
-usa esforço `minimal` e 4.000 tokens de saída por padrão. O limite pode ser
-ajustado entre 2.048 e 16.000 por `OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS`.
+Modelos homologados para extração de comprovantes:
+
+| Modelo | `OPENROUTER_RECEIPT_REASONING_EFFORT` |
+| --- | --- |
+| `qwen/qwen3-vl-32b-instruct` (padrão) | vazio |
+| `google/gemini-2.5-flash-lite` | vazio |
+| `openai/gpt-5-mini` | `minimal` |
+
+O parâmetro de raciocínio é opcional porque nem todos os modelos o aceitam.
+Quando `OPENROUTER_RECEIPT_REASONING_EFFORT` estiver vazio ou contiver um valor
+não reconhecido, o EmDia omite `reasoning` da requisição. Os valores reconhecidos
+são `none`, `minimal`, `low`, `medium`, `high`, `xhigh` e `max`; o valor escolhido
+ainda precisa ser suportado pelo modelo configurado. Para modelos com raciocínio,
+`minimal` reduz tokens internos e preserva espaço para o JSON estruturado.
+
+O limite de saída é 4.000 tokens por padrão e pode ser ajustado entre 2.048 e
+16.000 por `OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS`.
 
 As imagens ficam em `uploads/receipts`, fora de `public/`, e são removidas após
 a retenção configurada quando aprovadas ou rejeitadas. O backup SQLite atual
