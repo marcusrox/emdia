@@ -14,8 +14,10 @@ function getOrCreate(userId) {
       INSERT INTO notification_preferences (
         id, user_id, whatsapp_enabled, daily_summary_enabled,
         daily_summary_time, due_reminder_offsets_json,
-        overdue_reminder_interval_days, created_at, updated_at
-      ) VALUES (?, ?, 0, 1, '08:00', ?, 3, ?, ?)
+        overdue_reminder_interval_days, receipt_queue_failure_enabled,
+        receipt_processing_failure_enabled, receipt_ready_review_enabled,
+        receipt_approved_enabled, created_at, updated_at
+      ) VALUES (?, ?, 0, 1, '08:00', ?, 3, 1, 1, 1, 1, ?, ?)
     `
     )
     .run(newId("npr"), userId, JSON.stringify(DEFAULT_OFFSETS), now, now);
@@ -39,7 +41,9 @@ function update(userId, data) {
       UPDATE notification_preferences
       SET whatsapp_enabled = ?, daily_summary_enabled = ?,
         daily_summary_time = ?, due_reminder_offsets_json = ?,
-        overdue_reminder_interval_days = ?, updated_at = ?
+        overdue_reminder_interval_days = ?, receipt_queue_failure_enabled = ?,
+        receipt_processing_failure_enabled = ?, receipt_ready_review_enabled = ?,
+        receipt_approved_enabled = ?, updated_at = ?
       WHERE user_id = ?
     `
     )
@@ -49,6 +53,10 @@ function update(userId, data) {
       normalized.daily_summary_time,
       JSON.stringify(normalized.due_reminder_offsets),
       normalized.overdue_reminder_interval_days,
+      normalized.receipt_queue_failure_enabled ? 1 : 0,
+      normalized.receipt_processing_failure_enabled ? 1 : 0,
+      normalized.receipt_ready_review_enabled ? 1 : 0,
+      normalized.receipt_approved_enabled ? 1 : 0,
       new Date().toISOString(),
       userId
     );
@@ -66,7 +74,15 @@ function normalizePreferences(data = {}, current = {}) {
       data.overdue_reminder_interval_days || current.overdue_reminder_interval_days,
       3
     ),
+    receipt_queue_failure_enabled: checkboxValue(data.receipt_queue_failure_enabled),
+    receipt_processing_failure_enabled: checkboxValue(data.receipt_processing_failure_enabled),
+    receipt_ready_review_enabled: checkboxValue(data.receipt_ready_review_enabled),
+    receipt_approved_enabled: checkboxValue(data.receipt_approved_enabled),
   };
+}
+
+function checkboxValue(value) {
+  return value === "on" || value === "1" || value === true;
 }
 
 function normalizeTime(value) {

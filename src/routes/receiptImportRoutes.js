@@ -5,6 +5,10 @@ const { logInfo } = require("../services/operationalLogger");
 const { queryValue, redirect, sendHtml } = require("../services/http");
 const { getStoredReceipt } = require("../services/receiptStorageService");
 const { wakeReceiptImportWorker } = require("../services/receiptImportWorker");
+const {
+  EVENT_TYPES,
+  enqueueReceiptNotificationSafely,
+} = require("../services/receiptNotificationService");
 const { notFoundView, receiptImportDetailView, receiptImportsListView } = require("../services/viewEngine");
 
 function registerReceiptImportRoutes(app, { requireCsrf }) {
@@ -43,6 +47,11 @@ function registerReceiptImportRoutes(app, { requireCsrf }) {
       user: req.user,
       entity: "receipt_import",
       entityId: req.params.id,
+    });
+    enqueueReceiptNotificationSafely({
+      eventType: EVENT_TYPES.APPROVED,
+      userId: req.user.id,
+      receiptId: req.params.id,
     });
     return redirect(res, `/receipt-imports/${encodeURIComponent(req.params.id)}?approved=1`);
   });

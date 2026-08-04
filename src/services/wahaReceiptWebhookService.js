@@ -1,6 +1,10 @@
 const crypto = require("node:crypto");
 const ReceiptImport = require("../models/ReceiptImport");
 const User = require("../models/User");
+const {
+  EVENT_TYPES,
+  enqueueReceiptNotification,
+} = require("./receiptNotificationService");
 
 function verifyWebhook(rawBody, headers, now = Date.now()) {
   const secret = String(process.env.WAHA_WEBHOOK_HMAC_KEY || "");
@@ -31,9 +35,17 @@ async function acceptWebhook(rawBody, headers, options = {}) {
   const requestId = safeId(header(headers, "x-webhook-request-id"));
   const logDetails = webhookLogDetails(event);
   const validation = validateEvent(event);
-  if (!validation.ok) return { ...validation, requestId, eventName: safeId(event?.event), logDetails };
-  if (validation.ignored) {
-    return { ok: true, ignored: true, reason: validation.reason, requestId, eventName: "message", logDetails };
+  if (!validation.ok || validation.ignored) {
+    const notificationContext = validation.queueFailure
+      ? await notifyQueueFailure(validation.payload, options, logDetails)
+      : {};
+    return {
+      ...validation,
+      requestId,
+      eventName: safeId(event?.event),
+      userId: notificationContext.userId,
+      logDetails: notificationContext.logDetails || logDetails,
+    };
   }
 
   let senderPhone;
@@ -87,6 +99,34 @@ async function acceptWebhook(rawBody, headers, options = {}) {
     logDetails: {
       ...logDetails,
       stage: "persisted",
+      userMatchStrategy: user.phone_match_strategy || "exact",
+    },
+  };
+}
+
+async function notifyQueueFailure(payload, options, logDetails) {
+  let senderPhone;
+  try {
+    senderPhone = await resolveSenderPhone(payload.from, options.fetchImpl || fetch);
+  } catch (error) {
+    error.webhookLogDetails = { ...logDetails, stage: "sender_resolution" };
+    throw error;
+  }
+  if (!senderPhone) return {};
+  const user = User.findActiveByPhoneE164(senderPhone);
+  if (!user) return {};
+
+  enqueueReceiptNotification({
+    eventType: EVENT_TYPES.QUEUE_FAILED,
+    userId: user.id,
+    provider: "WAHA",
+    providerMessageId: safeId(payload.id),
+  });
+  return {
+    userId: user.id,
+    logDetails: {
+      ...logDetails,
+      stage: "queue_rejected",
       userMatchStrategy: user.phone_match_strategy || "exact",
     },
   };
@@ -152,13 +192,15 @@ function validateEvent(event) {
   if (!payload || typeof payload !== "object") return { ok: false, status: 400, reason: "missing_payload" };
   if (payload.fromMe === true) return { ok: true, ignored: true, reason: "own_message" };
   if (!safeId(payload.id) || typeof payload.from !== "string") return { ok: false, status: 400, reason: "missing_message_fields" };
-  if (payload.hasMedia !== true) return { ok: true, ignored: true, reason: "without_media" };
+  if (payload.hasMedia !== true) {
+    return { ok: true, ignored: true, reason: "without_media", queueFailure: true, payload };
+  }
   if (!payload.media || typeof payload.media.url !== "string" || !payload.media.url) {
-    return { ok: false, status: 400, reason: "missing_media_url" };
+    return { ok: false, status: 400, reason: "missing_media_url", queueFailure: true, payload };
   }
   const mime = String(payload.media.mimetype || payload.media.mimeType || "").toLowerCase();
   if (mime && !["image/jpeg", "image/png"].includes(mime)) {
-    return { ok: true, ignored: true, reason: "unsupported_media_type" };
+    return { ok: true, ignored: true, reason: "unsupported_media_type", queueFailure: true, payload };
   }
   return { ok: true, payload };
 }

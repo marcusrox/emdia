@@ -301,3 +301,34 @@ número sequencial em 1 e usando a data/hora atual do ambiente.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação concluída
+
+- migration `013_add_receipt_notification_preferences` com quatro preferências
+  individuais, habilitadas por padrão e subordinadas a `whatsapp_enabled`;
+- seção **Notificações por WhatsApp** ampliada com controles para falha antes
+  da fila, falha definitiva do processamento, item pronto para revisão e
+  comprovante aprovado;
+- serviço central de notificações de comprovantes usando a outbox
+  `notifications`, mensagens curtas, link de revisão validado e chaves
+  idempotentes sem telefone ou conteúdo sensível;
+- recebimento bem-sucedido mantido silencioso e falhas permanentes de mídia
+  notificadas somente após identificação segura do usuário;
+- worker configurado para ignorar retries intermediários e notificar apenas
+  `FAILED` definitivo ou `NEEDS_REVIEW` persistido;
+- aprovação configurada para enfileirar o aviso somente depois do commit
+  financeiro, sem desfazer despesa, baixa ou auditoria quando a notificação
+  falhar;
+- arquitetura e padrões atualizados para documentar o novo contrato da outbox;
+- validações concluídas com `npm run check` e 142 testes automatizados.
+
+---
+
+## Assinatura da LLM
+
+- Data: 03/08/2026 23:11
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

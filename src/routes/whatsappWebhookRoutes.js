@@ -46,6 +46,7 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
           logInfo("whatsapp.webhook.ignored", "Webhook WAHA ignorado.", {
             requestId,
             allowWebhookSenderE164: result.reason === "user_not_found",
+            user: result.userId ? { id: result.userId } : null,
             details: {
               ...result.logDetails,
               outcome: "ignored",

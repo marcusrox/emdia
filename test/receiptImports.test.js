@@ -3,6 +3,7 @@ const crypto = require("node:crypto");
 const { beforeEach, test } = require("node:test");
 const request = require("supertest");
 const ReceiptImport = require("../src/models/ReceiptImport");
+const NotificationPreference = require("../src/models/NotificationPreference");
 const User = require("../src/models/User");
 const { createServer } = require("../src/server");
 const {
@@ -12,6 +13,7 @@ const {
   parseStructuredOutput,
 } = require("../src/services/receiptExtractionService");
 const { processReceipt, safeExtractionDiagnostics } = require("../src/services/receiptImportWorker");
+const { EVENT_TYPES } = require("../src/services/receiptNotificationService");
 const { normalizeEvent } = require("../src/services/operationalLogger");
 const { detectImage, validateMediaUrl } = require("../src/services/receiptStorageService");
 const { receiptImportDetailView } = require("../src/views/receiptImportsView");
@@ -22,6 +24,7 @@ const {
   webhookLogDetails,
 } = require("../src/services/wahaReceiptWebhookService");
 const { createFinancialFixture, createUser, db, resetDatabase } = require("./helpers/testDatabase");
+const { csrfFrom, login } = require("./helpers/http");
 
 beforeEach(() => {
   resetDatabase();
@@ -32,6 +35,7 @@ beforeEach(() => {
   process.env.WAHA_WEBHOOK_MAX_AGE_SECONDS = "300";
   process.env.RECEIPT_WORKER_DISABLED = "1";
   delete process.env.OPENROUTER_BASE_URL;
+  delete process.env.APP_BASE_URL;
 });
 
 test("webhook WAHA autenticado cria uma única importação para telefone ativo", async () => {
@@ -48,6 +52,34 @@ test("webhook WAHA autenticado cria uma única importação para telefone ativo"
   assert.equal(first.logDetails.userMatchStrategy, "exact");
   assert.equal(second.duplicate, true);
   assert.equal(db.prepare("SELECT COUNT(*) AS total FROM receipt_imports").get().total, 1);
+  assert.equal(db.prepare("SELECT COUNT(*) AS total FROM notifications").get().total, 0);
+});
+
+test("webhook avisa uma única vez quando mídia não suportada não entra na fila", async () => {
+  const user = createUser({ phoneE164: "+5511999999999" });
+  enableReceiptNotifications(user.id);
+  const raw = webhookBody({ messageId: "message-unsupported", mimeType: "application/pdf" });
+
+  const first = await acceptWebhook(raw, signedHeaders(raw));
+  const second = await acceptWebhook(raw, signedHeaders(raw));
+
+  assert.equal(first.ignored, true);
+  assert.equal(first.reason, "unsupported_media_type");
+  assert.equal(second.ignored, true);
+  assert.equal(db.prepare("SELECT COUNT(*) AS total FROM receipt_imports").get().total, 0);
+  const notifications = db.prepare("SELECT * FROM notifications WHERE user_id = ?").all(user.id);
+  assert.equal(notifications.length, 1);
+  assert.equal(notifications[0].event_type, EVENT_TYPES.QUEUE_FAILED);
+  assert.doesNotMatch(notifications[0].idempotency_key, /5511999999999|message-unsupported/);
+});
+
+test("webhook não responde a remetente desconhecido em falha anterior à fila", async () => {
+  const raw = webhookBody({ messageId: "message-unknown", mimeType: "application/pdf" });
+  const result = await acceptWebhook(raw, signedHeaders(raw));
+
+  assert.equal(result.ignored, true);
+  assert.equal(result.reason, "unsupported_media_type");
+  assert.equal(db.prepare("SELECT COUNT(*) AS total FROM notifications").get().total, 0);
 });
 
 test("webhook recusa assinatura inválida e timestamp fora da janela", () => {
@@ -235,8 +267,9 @@ test("pontos de atenção explicam códigos conhecidos e desconhecidos", () => {
   assert.match(html, /NEW_WARNING<\/code><small>Aviso gerado durante a leitura automática/);
 });
 
-test("worker usa mocks, detecta hash e leva importação à revisão", async () => {
-  const user = createUser();
+test("worker usa mocks, detecta hash, leva importação à revisão e avisa uma vez", async () => {
+  const user = createUser({ phoneE164: "+5511999999999" });
+  enableReceiptNotifications(user.id);
   const receipt = createReceipt(user.id);
   const claimed = ReceiptImport.claimNext();
   await processReceipt(claimed, {
@@ -249,6 +282,132 @@ test("worker usa mocks, detecta hash e leva importação à revisão", async () 
     }),
   });
   assert.equal(ReceiptImport.getById(receipt.id).status, "NEEDS_REVIEW");
+  const notification = db.prepare("SELECT * FROM notifications WHERE user_id = ?").get(user.id);
+  assert.equal(notification.event_type, EVENT_TYPES.READY_FOR_REVIEW);
+  assert.match(JSON.parse(notification.payload_json).message, /pronto para revisão/);
+});
+
+test("worker permanece silencioso durante retry e avisa somente na falha definitiva", async () => {
+  const previousMaxAttempts = process.env.RECEIPT_WORKER_MAX_ATTEMPTS;
+  const user = createUser({ phoneE164: "+5511999999999" });
+  enableReceiptNotifications(user.id);
+  const receipt = createReceipt(user.id);
+  const processingError = new Error("falha controlada");
+  processingError.code = "OPENROUTER_UNAVAILABLE";
+  processingError.retryable = true;
+  process.env.RECEIPT_WORKER_MAX_ATTEMPTS = "2";
+
+  try {
+    await processReceipt(ReceiptImport.claimNext(), {
+      downloadReceiptMedia: async () => ({
+        storageKey: `${receipt.id}-abcdef123456.jpg`,
+        mimeType: "image/jpeg",
+        sizeBytes: 3,
+        sha256: "retry-hash",
+      }),
+      extractReceipt: async () => { throw processingError; },
+    });
+    assert.equal(ReceiptImport.getById(receipt.id).status, "RECEIVED");
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM notifications").get().total, 0);
+
+    db.prepare("UPDATE receipt_imports SET next_attempt_at = ? WHERE id = ?")
+      .run("2000-01-01T00:00:00.000Z", receipt.id);
+    await processReceipt(ReceiptImport.claimNext(), {
+      extractReceipt: async () => { throw processingError; },
+    });
+
+    assert.equal(ReceiptImport.getById(receipt.id).status, "FAILED");
+    const notifications = db.prepare("SELECT * FROM notifications WHERE user_id = ?").all(user.id);
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].event_type, EVENT_TYPES.PROCESSING_FAILED);
+  } finally {
+    if (previousMaxAttempts === undefined) delete process.env.RECEIPT_WORKER_MAX_ATTEMPTS;
+    else process.env.RECEIPT_WORKER_MAX_ATTEMPTS = previousMaxAttempts;
+  }
+});
+
+test("aprovação HTTP conclui finanças antes de enfileirar o aviso configurado", async () => {
+  const { user, accountId, categoryId } = createFinancialFixture({
+    user: {
+      email: "receipt-approval@example.test",
+      password: "senha123",
+      phoneE164: "+5511999999999",
+    },
+  });
+  enableReceiptNotifications(user.id);
+  const receipt = createReceipt(user.id, "message-http-approval");
+  db.prepare(`
+    UPDATE receipt_imports
+    SET status = 'NEEDS_REVIEW', merchant_name = 'Loja', payment_date = '2026-07-30', amount_cents = 2500
+    WHERE id = ?
+  `).run(receipt.id);
+
+  const app = createServer();
+  const agent = request.agent(app);
+  await login(agent, { email: user.email, password: "senha123" });
+  const detail = await agent.get(`/receipt-imports/${receipt.id}`).expect(200);
+  await agent.post(`/receipt-imports/${receipt.id}/approve`).type("form").send({
+    _csrf: csrfFrom(detail.text),
+    description: "Compra aprovada",
+    party_name: "Loja",
+    payment_date: "2026-07-30",
+    amount: "25,00",
+    category_id: categoryId,
+    financial_account_id: accountId,
+  }).expect(303);
+
+  const approved = ReceiptImport.getById(receipt.id);
+  assert.equal(approved.status, "APPROVED");
+  assert.ok(db.prepare("SELECT id FROM settlements WHERE financial_entry_id = ?").get(approved.financial_entry_id));
+  const notification = db.prepare("SELECT * FROM notifications WHERE user_id = ?").get(user.id);
+  assert.equal(notification.event_type, EVENT_TYPES.APPROVED);
+});
+
+test("falha ao enfileirar aviso não desfaz a aprovação financeira", async () => {
+  const { user, accountId } = createFinancialFixture({
+    user: {
+      email: "receipt-notification-failure@example.test",
+      password: "senha123",
+      phoneE164: "+5511999999999",
+    },
+  });
+  enableReceiptNotifications(user.id);
+  const receipt = createReceipt(user.id, "message-notification-failure");
+  db.prepare(`
+    UPDATE receipt_imports
+    SET status = 'NEEDS_REVIEW', payment_date = '2026-07-30', amount_cents = 1000
+    WHERE id = ?
+  `).run(receipt.id);
+  db.exec(`
+    CREATE TRIGGER fail_receipt_approved_notification
+    BEFORE INSERT ON notifications
+    WHEN NEW.event_type = 'RECEIPT_APPROVED'
+    BEGIN
+      SELECT RAISE(ABORT, 'NOTIFICATION_INSERT_BLOCKED');
+    END;
+  `);
+
+  try {
+    const app = createServer();
+    const agent = request.agent(app);
+    await login(agent, { email: user.email, password: "senha123" });
+    const detail = await agent.get(`/receipt-imports/${receipt.id}`).expect(200);
+    await agent.post(`/receipt-imports/${receipt.id}/approve`).type("form").send({
+      _csrf: csrfFrom(detail.text),
+      description: "Compra sem aviso",
+      payment_date: "2026-07-30",
+      amount: "10,00",
+      financial_account_id: accountId,
+    }).expect(303);
+  } finally {
+    db.exec("DROP TRIGGER IF EXISTS fail_receipt_approved_notification");
+  }
+
+  const approved = ReceiptImport.getById(receipt.id);
+  assert.equal(approved.status, "APPROVED");
+  assert.ok(db.prepare("SELECT id FROM financial_entries WHERE id = ?").get(approved.financial_entry_id));
+  assert.ok(db.prepare("SELECT id FROM settlements WHERE financial_entry_id = ?").get(approved.financial_entry_id));
+  assert.equal(db.prepare("SELECT COUNT(*) AS total FROM notifications").get().total, 0);
 });
 
 test("requisição OpenRouter desabilita armazenamento e exige schema estruturado", () => {
@@ -359,7 +518,11 @@ function createReceipt(userId, providerMessageId = `msg-${crypto.randomUUID()}`)
   }).receipt;
 }
 
-function webhookBody({ from = "5511999999999@c.us", messageId = "message-1" } = {}) {
+function webhookBody({
+  from = "5511999999999@c.us",
+  messageId = "message-1",
+  mimeType = "image/jpeg",
+} = {}) {
   return Buffer.from(JSON.stringify({
     id: "event-1",
     event: "message",
@@ -370,9 +533,19 @@ function webhookBody({ from = "5511999999999@c.us", messageId = "message-1" } = 
       fromMe: false,
       hasMedia: true,
       timestamp: 1785456000,
-      media: { url: "https://waha.example.test/api/files/receipt.jpg", mimetype: "image/jpeg", filename: "receipt.jpg" },
+      media: { url: "https://waha.example.test/api/files/receipt.jpg", mimetype: mimeType, filename: "receipt.jpg" },
     },
   }));
+}
+
+function enableReceiptNotifications(userId) {
+  return NotificationPreference.update(userId, {
+    whatsapp_enabled: "on",
+    receipt_queue_failure_enabled: "on",
+    receipt_processing_failure_enabled: "on",
+    receipt_ready_review_enabled: "on",
+    receipt_approved_enabled: "on",
+  });
 }
 
 function signedHeaders(raw) {

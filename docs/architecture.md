@@ -514,6 +514,13 @@ Evolution API e WAHA mantêm seus próprios endpoints, headers, payloads e estad
 de sessão. Ambos retornam o mesmo contrato interno para que troca de provedor
 não altere geração de lembretes, idempotência, persistência ou interface.
 
+`receiptNotificationService.js` também produz itens `WHATSAPP` na mesma outbox
+para falha definitiva antes da fila de comprovantes, falha definitiva do
+worker, item pronto para revisão e aprovação. As quatro preferências são
+independentes e subordinadas a `whatsapp_enabled`. A inclusão bem-sucedida na
+fila não gera confirmação. Worker e rota financeira somente persistem a
+mensagem; o envio externo continua responsabilidade do scheduler outbound.
+
 ## 15.1. E-mail transacional pelo Resend
 
 `emailNotificationService.js` consome somente itens `EMAIL` já enfileirados. O
@@ -563,6 +570,11 @@ chama a Responses API com Structured Outputs. A interface autenticada permite
 revisar, rejeitar ou reprocessar. A aprovação usa uma única transação imediata
 para criar `financial_entries`, `settlements`, auditorias e marcar a importação
 como `APPROVED`. A competência é o mês civil da data de pagamento.
+
+Depois das transições persistidas, eventos configurados são inseridos de forma
+idempotente em `notifications`. Tentativas intermediárias permanecem
+silenciosas, e falhas da notificação não alteram `FAILED`, `NEEDS_REVIEW` ou
+`APPROVED` nem desfazem lançamento e baixa já confirmados.
 
 ```text
 WAHA -> webhook HMAC -> receipt_imports(RECEIVED) -> worker

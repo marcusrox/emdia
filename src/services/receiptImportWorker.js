@@ -2,6 +2,10 @@ const ReceiptImport = require("../models/ReceiptImport");
 const { extractReceipt } = require("./receiptExtractionService");
 const { deleteStoredReceipt, downloadReceiptMedia } = require("./receiptStorageService");
 const { logInfo, logWarn } = require("./operationalLogger");
+const {
+  EVENT_TYPES,
+  enqueueReceiptNotificationSafely,
+} = require("./receiptNotificationService");
 
 let scheduler = null;
 let running = false;
@@ -56,7 +60,7 @@ async function processReceipt(receipt, options = {}) {
 
     const duplicate = ReceiptImport.findDuplicateByHash(current.user_id, current.media_sha256, current.id);
     const extraction = await (options.extractReceipt || extractReceipt)(current);
-    ReceiptImport.markExtracted(current.id, {
+    const extracted = ReceiptImport.markExtracted(current.id, {
       ...extraction,
       duplicateOfId: duplicate?.id || null,
     });
@@ -71,6 +75,13 @@ async function processReceipt(receipt, options = {}) {
         possibleDuplicate: Boolean(duplicate),
       },
     });
+    if (extracted?.status === ReceiptImport.STATUS.NEEDS_REVIEW) {
+      enqueueReceiptNotificationSafely({
+        eventType: EVENT_TYPES.READY_FOR_REVIEW,
+        userId: extracted.user_id,
+        receiptId: extracted.id,
+      });
+    }
   } catch (error) {
     const failed = ReceiptImport.markFailure(receipt.id, error, {
       maxAttempts: positiveNumber(process.env.RECEIPT_WORKER_MAX_ATTEMPTS, 3),
@@ -88,6 +99,13 @@ async function processReceipt(receipt, options = {}) {
         ...safeExtractionDiagnostics(error),
       },
     });
+    if (failed?.status === ReceiptImport.STATUS.FAILED) {
+      enqueueReceiptNotificationSafely({
+        eventType: EVENT_TYPES.PROCESSING_FAILED,
+        userId: failed.user_id,
+        receiptId: failed.id,
+      });
+    }
   }
 }
 

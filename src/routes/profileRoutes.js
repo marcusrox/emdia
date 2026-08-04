@@ -93,6 +93,10 @@ function registerProfileRoutes(app, { requireCsrf }) {
       list_density: req.body.list_density,
       whatsapp_enabled: Boolean(notificationPreferences.whatsapp_enabled),
       daily_summary_enabled: Boolean(notificationPreferences.daily_summary_enabled),
+      receipt_queue_failure_enabled: Boolean(notificationPreferences.receipt_queue_failure_enabled),
+      receipt_processing_failure_enabled: Boolean(notificationPreferences.receipt_processing_failure_enabled),
+      receipt_ready_review_enabled: Boolean(notificationPreferences.receipt_ready_review_enabled),
+      receipt_approved_enabled: Boolean(notificationPreferences.receipt_approved_enabled),
     });
     logInfo("sensitive.settings.updated", "Preferências de interface atualizadas.", {
       user: req.user,

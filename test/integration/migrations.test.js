@@ -32,6 +32,10 @@ describe("migrations", () => {
     assert.ok(columnExists(database, "users", "last_entries_competence"));
     assert.ok(columnExists(database, "users", "last_competence"));
     assert.ok(columnExists(database, "users", "phone_whatsapp_legacy"));
+    assert.ok(columnExists(database, "notification_preferences", "receipt_queue_failure_enabled"));
+    assert.ok(columnExists(database, "notification_preferences", "receipt_processing_failure_enabled"));
+    assert.ok(columnExists(database, "notification_preferences", "receipt_ready_review_enabled"));
+    assert.ok(columnExists(database, "notification_preferences", "receipt_approved_enabled"));
     assert.equal(database.isTransaction, false);
   });
 
@@ -130,6 +134,43 @@ describe("migrations", () => {
         now
       );
     }, /USER_PHONE_ALIAS_CONFLICT/);
+  });
+
+  it("preserva o canal geral e habilita os eventos de comprovantes na migration", () => {
+    const database = createDatabase();
+    const migrations = loadProjectMigrations();
+    const preferencesIndex = migrations.findIndex((migration) => migration.id === "013_add_receipt_notification_preferences");
+    const beforePreferences = migrations.slice(0, preferencesIndex);
+    const now = new Date().toISOString();
+
+    runMigrations({ db: database, migrations: beforePreferences });
+    for (const [id, enabled] of [["enabled", 1], ["disabled", 0]]) {
+      database.prepare(`
+        INSERT INTO users (id, name, email, password_hash, timezone, locale, created_at, updated_at)
+        VALUES (?, ?, ?, 'hash', 'America/Sao_Paulo', 'pt-BR', ?, ?)
+      `).run(`user-${id}`, `Usuário ${id}`, `${id}@example.test`, now, now);
+      database.prepare(`
+        INSERT INTO notification_preferences (
+          id, user_id, whatsapp_enabled, daily_summary_enabled, daily_summary_time,
+          due_reminder_offsets_json, overdue_reminder_interval_days, created_at, updated_at
+        ) VALUES (?, ?, ?, 1, '08:00', '[5,2,0]', 3, ?, ?)
+      `).run(`preference-${id}`, `user-${id}`, enabled, now, now);
+    }
+
+    runMigrations({ db: database, migrations });
+    const preferences = database.prepare(`
+      SELECT whatsapp_enabled, receipt_queue_failure_enabled,
+        receipt_processing_failure_enabled, receipt_ready_review_enabled,
+        receipt_approved_enabled
+      FROM notification_preferences ORDER BY user_id
+    `).all();
+    assert.deepEqual(preferences.map((item) => item.whatsapp_enabled), [0, 1]);
+    for (const item of preferences) {
+      assert.equal(item.receipt_queue_failure_enabled, 1);
+      assert.equal(item.receipt_processing_failure_enabled, 1);
+      assert.equal(item.receipt_ready_review_enabled, 1);
+      assert.equal(item.receipt_approved_enabled, 1);
+    }
   });
 
   it("rejeita IDs duplicados e migrations inválidas antes de aplicar", () => {

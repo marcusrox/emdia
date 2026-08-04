@@ -635,6 +635,15 @@ Regras do adaptador:
   permitido na exceção documentada de `whatsapp.webhook.ignored` com motivo
   `user_not_found`;
 - manter segredos apenas no ambiente e valores vazios no `.env.example`.
+- eventos do fluxo de comprovantes usam a outbox `notifications`, nunca envio
+  direto dentro do webhook, worker ou transação financeira;
+- a entrada bem-sucedida em `receipt_imports` permanece silenciosa; somente
+  falha definitiva antes da fila, falha definitiva de processamento,
+  `NEEDS_REVIEW` e `APPROVED` são eventos configuráveis;
+- retries intermediários não geram alerta e cada evento usa chave idempotente
+  sem telefone ou conteúdo da mensagem;
+- falha ao criar ou enviar o aviso não pode reverter status já persistido nem a
+  aprovação financeira.
 
 ## 19.1. E-mail transacional
 
