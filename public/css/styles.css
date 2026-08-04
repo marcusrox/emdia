@@ -441,11 +441,7 @@
 .receipt-new-entry-fields {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.receipt-new-entry-fields label:last-child {
-  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .receipt-excess-confirm {
@@ -570,10 +566,6 @@
   .receipt-new-entry-fields,
   .receipt-entry-card-facts {
     grid-template-columns: 1fr;
-  }
-
-  .receipt-new-entry-fields label:last-child {
-    grid-column: auto;
   }
 
   .receipt-entry-card-heading {

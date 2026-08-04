@@ -207,7 +207,6 @@ function receiptImportDetailView({
       <section class="receipt-mode-panel wide" data-receipt-mode-panel="NEW"${action === "NEW" ? "" : " hidden"}>
         <div class="receipt-mode-heading">
           <div><span class="receipt-mode-icon" aria-hidden="true">${lucideIcon("file-plus-2")}</span><h2>Dados da nova despesa</h2></div>
-          <p>Este é o fluxo atual de criação de uma despesa já paga.</p>
         </div>
         <div class="receipt-new-entry-fields">
           <label>Descrição
