@@ -11,7 +11,7 @@ const {
   pageHeading,
   renderNotifications,
 } = require("../services/viewHelpers");
-const { RELEASE_LABEL } = require("../config/release");
+const { RELEASE_LABEL, versionedAssetPath } = require("../config/release");
 const { readPublishedCommit } = require("../services/deploymentInfoService");
 
 function layout({ title, user, active, body, notifications = [] }) {
@@ -38,8 +38,8 @@ function layout({ title, user, active, body, notifications = [] }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)} · EmDia</title>
-  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
-  <link rel="stylesheet" href="/public/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="${versionedAssetPath("/public/favicon.svg")}">
+  <link rel="stylesheet" href="${versionedAssetPath("/public/css/styles.css")}">
 </head>
 <body class="font-scale-${fontScale} list-density-${listDensity}">
   <header class="topbar">
@@ -102,7 +102,7 @@ function layout({ title, user, active, body, notifications = [] }) {
       ${publishedCommit ? `<div><small class="footer-commit">${escapeHtml(publishedCommit)}</small></div>` : ""}
     </div>
   </footer>
-  <script src="/public/js/app.js"></script>
+  <script src="${versionedAssetPath("/public/js/app.js")}"></script>
 </body>
 </html>`;
 }

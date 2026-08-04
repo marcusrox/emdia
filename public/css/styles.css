@@ -355,6 +355,65 @@
   font-weight: 700;
 }
 
+@media (min-width: 981px) {
+  .receipt-manual-picker {
+    gap: .5rem;
+  }
+
+  .receipt-manual-picker > label {
+    gap: .3rem;
+  }
+
+  .receipt-manual-picker > label input[type="search"] {
+    min-height: 42px;
+    padding: .55rem .75rem;
+  }
+
+  .receipt-manual-picker .receipt-entry-list {
+    gap: .4rem;
+  }
+
+  .receipt-manual-picker .receipt-entry-card {
+    align-items: center;
+    gap: .65rem;
+    padding: .55rem .7rem;
+  }
+
+  .receipt-manual-picker .receipt-entry-card > input {
+    margin-top: 0;
+  }
+
+  .receipt-manual-picker .receipt-entry-card-content {
+    align-items: center;
+    gap: 1rem;
+    grid-template-columns: minmax(180px, 1.15fr) minmax(0, 3fr);
+  }
+
+  .receipt-manual-picker .receipt-entry-card-heading {
+    display: block;
+  }
+
+  .receipt-manual-picker .receipt-entry-card-heading strong {
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .receipt-manual-picker .receipt-entry-card-facts {
+    gap: .75rem;
+    grid-template-columns: minmax(105px, .7fr) minmax(120px, .8fr) minmax(200px, 1.8fr);
+  }
+
+  .receipt-manual-picker .receipt-entry-card-facts > span {
+    font-size: 13px;
+    gap: .05rem;
+    line-height: 1.25;
+  }
+
+  .receipt-manual-picker .receipt-entry-card-facts small {
+    font-size: 10px;
+  }
+}
+
 .receipt-manual-details {
   border-top: 1px solid var(--line);
   padding-top: .85rem;

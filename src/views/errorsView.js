@@ -1,5 +1,6 @@
 const { layout } = require("./layout");
 const { buttonLink, escapeHtml, lucideIcon, pageHeading } = require("../services/viewHelpers");
+const { versionedAssetPath } = require("../config/release");
 
 function notFoundView(user) {
   return layout({
@@ -37,8 +38,8 @@ function unexpectedErrorView({ user = null, errorId }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Operação indisponível · EmDia</title>
-  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
-  <link rel="stylesheet" href="/public/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="${versionedAssetPath("/public/favicon.svg")}">
+  <link rel="stylesheet" href="${versionedAssetPath("/public/css/styles.css")}">
 </head>
 <body class="auth-page">
   <main class="auth-shell">

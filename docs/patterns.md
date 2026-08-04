@@ -360,6 +360,9 @@ Padrões:
 - Use `src/services/http.js` para respostas HTML, redirects 303, JSON
   pretty-print, query string escalar e detalhes normalizados da requisição.
 - Sirva assets com o prefixo `/public` por `express.static`.
+- Referencie CSS, JavaScript e favicon das views com
+  `versionedAssetPath`, de `src/config/release.js`. A versão deriva do
+  sequencial da release e evita reutilização de assets antigos após publicação.
 - Preserve URLs com `competence` quando a tela fizer parte do fluxo mensal.
 - Em `GET /dashboard`, `GET /calendar` e `GET /entries`, uma competência válida
   da URL tem precedência e atualiza `users.last_competence`; sem valor válido,

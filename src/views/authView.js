@@ -6,6 +6,7 @@ const {
   lucideIcon,
   renderNotifications,
 } = require("../services/viewHelpers");
+const { versionedAssetPath } = require("../config/release");
 
 function loginView({ email = "", error = "" } = {}) {
   return authPage({
@@ -79,9 +80,9 @@ function authPage({ title, notifications = [], form }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)} · EmDia</title>
-  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg">
-  <link rel="stylesheet" href="/public/css/styles.css">
-  <script src="/public/js/app.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="${versionedAssetPath("/public/favicon.svg")}">
+  <link rel="stylesheet" href="${versionedAssetPath("/public/css/styles.css")}">
+  <script src="${versionedAssetPath("/public/js/app.js")}" defer></script>
 </head>
 <body class="auth-page">
   ${renderNotifications(notifications)}
