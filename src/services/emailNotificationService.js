@@ -46,7 +46,7 @@ async function processNotification(notification, options) {
     });
     Notification.markSent(notification.id, result.providerMessageId);
     logInfo("email.notification.sent", "Notificação por e-mail aceita pelo provedor.", {
-      user: { id: notification.user_id }, entity: "notification", entityId: notification.id,
+      user: { id: notification.user_id, email: notification.user_email }, entity: "notification", entityId: notification.id,
       details: { provider: options.client.provider, eventType: notification.event_type, attempt },
     });
   } catch (error) {
@@ -59,7 +59,7 @@ async function processNotification(notification, options) {
       attemptCount: canRetry ? attempt : options.maxAttempts,
     });
     const context = {
-      user: { id: notification.user_id }, entity: "notification", entityId: notification.id,
+      user: { id: notification.user_id, email: notification.user_email }, entity: "notification", entityId: notification.id,
       details: {
         provider: options.client.provider,
         eventType: notification.event_type,

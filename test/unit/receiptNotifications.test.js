@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { beforeEach, describe, it } = require("node:test");
+const Notification = require("../../src/models/Notification");
 const NotificationPreference = require("../../src/models/NotificationPreference");
 const {
   EVENT_TYPES,
@@ -68,6 +69,7 @@ describe("notificações de comprovantes pelo WhatsApp", () => {
     const second = enqueueReceiptNotification(input);
     assert.equal(first.id, second.id);
     assert.equal(db.prepare("SELECT COUNT(*) AS total FROM notifications").get().total, 1);
+    assert.equal(Notification.listPending(1)[0].user_email, user.email);
 
     db.prepare("UPDATE notification_preferences SET whatsapp_enabled = 0 WHERE user_id = ?").run(user.id);
     const blocked = enqueueReceiptNotification({

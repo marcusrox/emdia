@@ -1,7 +1,10 @@
 const crypto = require("node:crypto");
 const Notification = require("../models/Notification");
 const NotificationPreference = require("../models/NotificationPreference");
+const ReceiptImport = require("../models/ReceiptImport");
 const User = require("../models/User");
+const { formatCivilDate } = require("./dateService");
+const { formatMoney } = require("./moneyService");
 const { normalizeAppBaseUrl } = require("./notificationService");
 const { logInfo, logWarn } = require("./operationalLogger");
 
@@ -43,6 +46,9 @@ function enqueueReceiptNotification(input) {
   if (!user?.phone_e164) return null;
   const preferences = NotificationPreference.getOrCreate(user.id);
   if (!preferences.whatsapp_enabled || !preferences[configuration.preference]) return null;
+  const receipt = input.receiptId
+    ? ReceiptImport.getNotificationContext(user.id, input.receiptId)
+    : null;
 
   const notification = Notification.createPending({
     user_id: user.id,
@@ -50,10 +56,10 @@ function enqueueReceiptNotification(input) {
     event_type: input.eventType,
     scheduled_at: new Date().toISOString(),
     idempotency_key: idempotencyKey(input, configuration.suffix),
-    payload: { message: buildMessage(input, configuration.message) },
+    payload: { message: buildMessage(input, configuration.message, receipt) },
   });
   logInfo("whatsapp.receipt.notification_queued", "Notificação de comprovante garantida na fila.", {
-    user: { id: user.id },
+    user: { id: user.id, email: user.email },
     entity: "notification",
     entityId: notification?.id,
     details: { eventType: input.eventType },
@@ -78,12 +84,94 @@ function enqueueReceiptNotificationSafely(input) {
   }
 }
 
-function buildMessage(input, baseMessage) {
-  if (input.eventType !== EVENT_TYPES.READY_FOR_REVIEW || !input.receiptId) return baseMessage;
+function buildMessage(input, baseMessage, receipt = null) {
+  if (input.eventType === EVENT_TYPES.QUEUE_FAILED) {
+    return [
+      "Não foi possível receber seu comprovante pelo WhatsApp.",
+      `Motivo: ${queueFailureReason(input.failureReason)}`,
+      "Como resolver: envie novamente uma foto em formato JPEG ou PNG. Se o problema continuar, confira o EmDia.",
+    ].join("\n");
+  }
+
+  if (input.eventType === EVENT_TYPES.PROCESSING_FAILED) {
+    return [
+      "Não foi possível concluir o processamento do seu comprovante.",
+      receipt?.last_error_message ? `Motivo: ${singleLine(receipt.last_error_message, 240)}` : "",
+      receipt?.attempt_count ? `Tentativas automáticas realizadas: ${Number(receipt.attempt_count)}.` : "",
+      "Você pode conferir o comprovante e solicitar um novo processamento no EmDia.",
+      secureLink("Abrir comprovante", `/receipt-imports/${encodeURIComponent(input.receiptId || "")}`),
+    ].filter(Boolean).join("\n");
+  }
+
+  if (input.eventType === EVENT_TYPES.READY_FOR_REVIEW) {
+    return [
+      "Seu comprovante foi processado e está pronto para revisão no EmDia.",
+      detailLine("Estabelecimento", receipt?.merchant_name),
+      moneyLine("Valor identificado", receipt?.amount_cents),
+      dateLine("Data identificada", receipt?.payment_date),
+      detailLine("Categoria sugerida", receipt?.suggested_category_name),
+      receipt?.duplicate_of_id ? "Atenção: este comprovante pode estar duplicado." : "",
+      "Revise os dados antes de aprovar. A despesa e o pagamento ainda não foram registrados.",
+      secureLink("Abrir revisão", `/receipt-imports/${encodeURIComponent(input.receiptId || "")}`),
+    ].filter(Boolean).join("\n");
+  }
+
+  if (input.eventType === EVENT_TYPES.APPROVED) {
+    return [
+      "Seu comprovante foi aprovado e registrado no EmDia.",
+      detailLine("Descrição", receipt?.entry_description),
+      detailLine("Favorecido", receipt?.party_name),
+      moneyLine("Valor pago", receipt?.entry_amount_cents),
+      dateLine("Data do pagamento", receipt?.entry_payment_date),
+      detailLine("Conta", receipt?.account_name),
+      detailLine("Categoria", receipt?.category_name),
+      "A despesa e o pagamento foram registrados com sucesso.",
+      receipt?.financial_entry_id
+        ? secureLink("Abrir lançamento", `/entries/${encodeURIComponent(receipt.financial_entry_id)}`)
+        : "",
+    ].filter(Boolean).join("\n");
+  }
+
+  return baseMessage;
+}
+
+function secureLink(label, pathname) {
+  if (!pathname || pathname.endsWith("/")) return "";
   const baseUrl = normalizeAppBaseUrl(process.env.APP_BASE_URL);
-  return baseUrl
-    ? `${baseMessage}\nAbrir: ${baseUrl}/receipt-imports/${encodeURIComponent(input.receiptId)}`
-    : baseMessage;
+  return baseUrl ? `${label}: ${baseUrl}${pathname}` : "";
+}
+
+function detailLine(label, value) {
+  const clean = singleLine(value, 160);
+  return clean ? `${label}: ${clean}` : "";
+}
+
+function moneyLine(label, cents) {
+  return Number.isSafeInteger(Number(cents)) && Number(cents) > 0
+    ? `${label}: ${formatMoney(Number(cents))}`
+    : "";
+}
+
+function dateLine(label, value) {
+  const formatted = formatCivilDate(value, "");
+  return formatted ? `${label}: ${formatted}` : "";
+}
+
+function singleLine(value, maxLength) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+}
+
+function queueFailureReason(reason) {
+  const reasons = {
+    without_media: "a mensagem não continha uma imagem.",
+    missing_media_url: "não foi possível acessar a imagem enviada.",
+    unsupported_media_type: "o formato do arquivo não é aceito.",
+  };
+  return reasons[reason] || "o arquivo não pôde ser validado para processamento.";
 }
 
 function idempotencyKey(input, suffix) {

@@ -520,6 +520,10 @@ worker, item pronto para revisão e aprovação. As quatro preferências são
 independentes e subordinadas a `whatsapp_enabled`. A inclusão bem-sucedida na
 fila não gera confirmação. Worker e rota financeira somente persistem a
 mensagem; o envio externo continua responsabilidade do scheduler outbound.
+O conteúdo é montado a partir do estado já persistido: falhas usam motivos
+seguros, a revisão usa os campos identificados na importação e a aprovação usa
+o lançamento financeiro confirmado. Dados textuais são normalizados e links
+somente são incluídos quando `APP_BASE_URL` é válida.
 
 ## 15.1. E-mail transacional pelo Resend
 

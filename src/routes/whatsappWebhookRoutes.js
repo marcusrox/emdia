@@ -46,7 +46,7 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
           logInfo("whatsapp.webhook.ignored", "Webhook WAHA ignorado.", {
             requestId,
             allowWebhookSenderE164: result.reason === "user_not_found",
-            user: result.userId ? { id: result.userId } : null,
+            user: result.userId ? { id: result.userId, email: result.userEmail } : null,
             details: {
               ...result.logDetails,
               outcome: "ignored",
@@ -61,7 +61,7 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
             requestId,
             entity: "receipt_import",
             entityId: result.receiptId,
-            user: result.userId ? { id: result.userId } : null,
+            user: result.userId ? { id: result.userId, email: result.userEmail } : null,
             details: { ...result.logDetails, outcome: "duplicate" },
           });
           return res.status(200).json({ ok: true });
@@ -70,7 +70,7 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
           requestId,
           entity: "receipt_import",
           entityId: result.receiptId,
-          user: result.userId ? { id: result.userId } : null,
+          user: result.userId ? { id: result.userId, email: result.userEmail } : null,
           details: { ...result.logDetails, outcome: "queued" },
         });
         wakeReceiptImportWorker();

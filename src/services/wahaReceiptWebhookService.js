@@ -37,7 +37,7 @@ async function acceptWebhook(rawBody, headers, options = {}) {
   const validation = validateEvent(event);
   if (!validation.ok || validation.ignored) {
     const notificationContext = validation.queueFailure
-      ? await notifyQueueFailure(validation.payload, options, logDetails)
+      ? await notifyQueueFailure(validation.payload, validation.reason, options, logDetails)
       : {};
     return {
       ...validation,
@@ -94,6 +94,7 @@ async function acceptWebhook(rawBody, headers, options = {}) {
     duplicate: !inserted.created,
     receiptId: inserted.receipt?.id,
     userId: user.id,
+    userEmail: user.email,
     requestId,
     eventName: "message",
     logDetails: {
@@ -104,7 +105,7 @@ async function acceptWebhook(rawBody, headers, options = {}) {
   };
 }
 
-async function notifyQueueFailure(payload, options, logDetails) {
+async function notifyQueueFailure(payload, failureReason, options, logDetails) {
   let senderPhone;
   try {
     senderPhone = await resolveSenderPhone(payload.from, options.fetchImpl || fetch);
@@ -121,9 +122,11 @@ async function notifyQueueFailure(payload, options, logDetails) {
     userId: user.id,
     provider: "WAHA",
     providerMessageId: safeId(payload.id),
+    failureReason,
   });
   return {
     userId: user.id,
+    userEmail: user.email,
     logDetails: {
       ...logDetails,
       stage: "queue_rejected",

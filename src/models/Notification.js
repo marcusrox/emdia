@@ -53,7 +53,8 @@ function listPending(limit = 25) {
   return getDatabase()
     .prepare(
       `
-      SELECT notifications.*, users.phone_e164, users.name AS user_name, users.timezone
+      SELECT notifications.*, users.phone_e164, users.email AS user_email,
+        users.name AS user_name, users.timezone
       FROM notifications
       JOIN users ON users.id = notifications.user_id
       WHERE notifications.channel = 'WHATSAPP'

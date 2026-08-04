@@ -69,6 +69,28 @@ function getForUser(userId, id) {
   `).get(userId, id);
 }
 
+function getNotificationContext(userId, id) {
+  return getDatabase().prepare(`
+    SELECT r.id, r.status, r.merchant_name, r.payment_date, r.amount_cents,
+      r.suggested_category_name, r.duplicate_of_id, r.attempt_count,
+      r.last_error_message, r.financial_entry_id,
+      e.description AS entry_description,
+      e.realized_amount_cents AS entry_amount_cents,
+      e.settled_at AS entry_payment_date,
+      c.name AS category_name, a.name AS account_name, p.name AS party_name
+    FROM receipt_imports r
+    LEFT JOIN financial_entries e
+      ON e.id = r.financial_entry_id AND e.user_id = r.user_id
+    LEFT JOIN categories c
+      ON c.id = e.category_id AND c.user_id = r.user_id
+    LEFT JOIN financial_accounts a
+      ON a.id = e.financial_account_id AND a.user_id = r.user_id
+    LEFT JOIN parties p
+      ON p.id = e.party_id AND p.user_id = r.user_id
+    WHERE r.user_id = ? AND r.id = ?
+  `).get(userId, id);
+}
+
 function listForUser(userId, filters = {}) {
   const clauses = ["r.user_id = ?"];
   const params = [userId];
@@ -390,6 +412,7 @@ module.exports = {
   findDuplicateByHash,
   getById,
   getForUser,
+  getNotificationContext,
   listExpiredMedia,
   listForUser,
   markExtracted,

@@ -48,6 +48,7 @@ test("webhook WAHA autenticado cria uma única importação para telefone ativo"
 
   assert.equal(first.created, true);
   assert.equal(first.userId, user.id);
+  assert.equal(first.userEmail, user.email);
   assert.equal(first.logDetails.senderPhoneE164, undefined);
   assert.equal(first.logDetails.userMatchStrategy, "exact");
   assert.equal(second.duplicate, true);
@@ -70,6 +71,8 @@ test("webhook avisa uma única vez quando mídia não suportada não entra na fi
   const notifications = db.prepare("SELECT * FROM notifications WHERE user_id = ?").all(user.id);
   assert.equal(notifications.length, 1);
   assert.equal(notifications[0].event_type, EVENT_TYPES.QUEUE_FAILED);
+  assert.match(JSON.parse(notifications[0].payload_json).message, /formato do arquivo não é aceito/);
+  assert.match(JSON.parse(notifications[0].payload_json).message, /JPEG ou PNG/);
   assert.doesNotMatch(notifications[0].idempotency_key, /5511999999999|message-unsupported/);
 });
 
@@ -153,6 +156,7 @@ test("webhook reconhece celular brasileiro pelo formato legado sem consultar o W
   assert.equal(user.phone_whatsapp_legacy, "+557192769969");
   assert.equal(result.created, true);
   assert.equal(result.userId, user.id);
+  assert.equal(result.userEmail, user.email);
   assert.equal(result.logDetails.userMatchStrategy, "legacy_alias");
 });
 
@@ -284,7 +288,12 @@ test("worker usa mocks, detecta hash, leva importação à revisão e avisa uma 
   assert.equal(ReceiptImport.getById(receipt.id).status, "NEEDS_REVIEW");
   const notification = db.prepare("SELECT * FROM notifications WHERE user_id = ?").get(user.id);
   assert.equal(notification.event_type, EVENT_TYPES.READY_FOR_REVIEW);
-  assert.match(JSON.parse(notification.payload_json).message, /pronto para revisão/);
+  const message = JSON.parse(notification.payload_json).message;
+  assert.match(message, /pronto para revisão/);
+  assert.match(message, /Estabelecimento: Loja/);
+  assert.match(message, /Valor identificado:.*5,00/);
+  assert.match(message, /Data identificada: 30\/07\/2026/);
+  assert.match(message, /ainda não foram registrados/);
 });
 
 test("worker permanece silencioso durante retry e avisa somente na falha definitiva", async () => {
@@ -320,6 +329,10 @@ test("worker permanece silencioso durante retry e avisa somente na falha definit
     const notifications = db.prepare("SELECT * FROM notifications WHERE user_id = ?").all(user.id);
     assert.equal(notifications.length, 1);
     assert.equal(notifications[0].event_type, EVENT_TYPES.PROCESSING_FAILED);
+    const message = JSON.parse(notifications[0].payload_json).message;
+    assert.match(message, /não foi possível concluir o processamento/i);
+    assert.match(message, /Tentativas automáticas realizadas: 2/);
+    assert.match(message, /solicitar um novo processamento/);
   } finally {
     if (previousMaxAttempts === undefined) delete process.env.RECEIPT_WORKER_MAX_ATTEMPTS;
     else process.env.RECEIPT_WORKER_MAX_ATTEMPTS = previousMaxAttempts;
@@ -361,6 +374,12 @@ test("aprovação HTTP conclui finanças antes de enfileirar o aviso configurado
   assert.ok(db.prepare("SELECT id FROM settlements WHERE financial_entry_id = ?").get(approved.financial_entry_id));
   const notification = db.prepare("SELECT * FROM notifications WHERE user_id = ?").get(user.id);
   assert.equal(notification.event_type, EVENT_TYPES.APPROVED);
+  const message = JSON.parse(notification.payload_json).message;
+  assert.match(message, /Descrição: Compra aprovada/);
+  assert.match(message, /Favorecido: Loja/);
+  assert.match(message, /Valor pago:.*25,00/);
+  assert.match(message, /Data do pagamento: 30\/07\/2026/);
+  assert.match(message, /despesa e o pagamento foram registrados com sucesso/i);
 });
 
 test("falha ao enfileirar aviso não desfaz a aprovação financeira", async () => {

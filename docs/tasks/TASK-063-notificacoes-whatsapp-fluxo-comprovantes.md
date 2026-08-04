@@ -332,3 +332,38 @@ número sequencial em 1 e usando a data/hora atual do ambiente.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: atualizacao
+
+---
+
+## Aprimoramento posterior das mensagens
+
+Por solicitação posterior do usuário, as mensagens deixaram de usar apenas o
+texto mínimo originalmente previsto e passaram a apresentar dados pertinentes
+ao momento do fluxo:
+
+- falha antes da fila: motivo compreensível e orientação objetiva para novo
+  envio em JPEG ou PNG;
+- falha no processamento: motivo seguro persistido, quantidade de tentativas e
+  orientação para solicitar reprocessamento;
+- pronto para revisão: estabelecimento, valor e data identificados, categoria
+  sugerida e alerta de possível duplicidade, sem afirmar que a despesa existe;
+- aprovado: descrição, favorecido, valor pago, data, conta e categoria obtidos
+  do lançamento financeiro já persistido;
+- links diretos para revisão, comprovante ou lançamento continuam condicionados
+  a uma `APP_BASE_URL` HTTP(S) válida;
+- textos provenientes de dados persistidos são normalizados em uma única linha
+  e limitados antes de compor a mensagem.
+
+Esta ampliação substitui, para o conteúdo das mensagens, a restrição original
+que não autorizava dados financeiros. Permanecem proibidos imagem, Base64,
+telefone, corpo bruto do webhook, respostas brutas de provedores, segredos,
+stack traces e detalhes técnicos internos.
+
+---
+
+## Assinatura da LLM
+
+- Data: 04/08/2026 00:18
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

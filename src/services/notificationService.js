@@ -164,7 +164,7 @@ async function sendPendingNotifications() {
       const result = await client.sendText({ to, message });
       Notification.markSent(notification.id, result.providerMessageId);
       logInfo("whatsapp.notification.sent", "Notificação WhatsApp enviada.", {
-        user: { id: notification.user_id },
+        user: { id: notification.user_id, email: notification.user_email },
         entity: "notification",
         entityId: notification.id,
         details: {
@@ -175,7 +175,7 @@ async function sendPendingNotifications() {
     } catch (error) {
       Notification.markFailed(notification.id, error.message);
       logError("whatsapp.notification.failed", "Falha ao enviar notificação WhatsApp.", {
-        user: { id: notification.user_id },
+        user: { id: notification.user_id, email: notification.user_email },
         entity: "notification",
         entityId: notification.id,
         details: { message: error.message },

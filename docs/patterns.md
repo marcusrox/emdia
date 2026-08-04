@@ -644,6 +644,12 @@ Regras do adaptador:
   sem telefone ou conteúdo da mensagem;
 - falha ao criar ou enviar o aviso não pode reverter status já persistido nem a
   aprovação financeira.
+- mensagens de comprovantes podem apresentar os dados pertinentes já
+  persistidos para aquele usuário: campos identificados em `NEEDS_REVIEW` e
+  dados finais do lançamento em `APPROVED`; normalizar textos em uma linha,
+  omitir campos ausentes e nunca usar resposta bruta do provedor;
+- links de revisão, comprovante ou lançamento devem derivar somente de
+  `APP_BASE_URL` validada e de IDs cuja propriedade foi confirmada no model.
 
 ## 19.1. E-mail transacional
 
