@@ -154,21 +154,23 @@ function receiptImportDetailView({
         </div>
         ${fieldError(errors, "approval_action")}
       </fieldset>
-      <label>Data do pagamento
-        <input type="date" name="payment_date" required value="${escapeHtml(form.payment_date)}"${fieldErrorAttributes(errors, "payment_date")}>
-        ${fieldError(errors, "payment_date")}
-      </label>
-      <label>Valor pago
-        <input name="amount" inputmode="decimal" required data-validate-money data-error-message="Informe um valor válido, como 100,00." value="${escapeHtml(form.amount)}"${fieldErrorAttributes(errors, "amount")}>
-        ${fieldError(errors, "amount")}
-      </label>
-      <label>Conta usada no pagamento
-        <select name="financial_account_id" required${fieldErrorAttributes(errors, "financial_account_id")}>
-          ${option("", "Selecione a conta", form.financial_account_id)}
-          ${accounts.map((account) => option(account.id, account.name, form.financial_account_id)).join("")}
-        </select>
-        ${fieldError(errors, "financial_account_id")}
-      </label>
+      <div class="receipt-payment-fields wide">
+        <label>Data do pagamento
+          <input type="date" name="payment_date" required value="${escapeHtml(form.payment_date)}"${fieldErrorAttributes(errors, "payment_date")}>
+          ${fieldError(errors, "payment_date")}
+        </label>
+        <label>Valor pago
+          <input name="amount" inputmode="decimal" required data-validate-money data-error-message="Informe um valor válido, como 100,00." value="${escapeHtml(form.amount)}"${fieldErrorAttributes(errors, "amount")}>
+          ${fieldError(errors, "amount")}
+        </label>
+        <label>Conta usada no pagamento
+          <select name="financial_account_id" required${fieldErrorAttributes(errors, "financial_account_id")}>
+            ${option("", "Selecione a conta", form.financial_account_id)}
+            ${accounts.map((account) => option(account.id, account.name, form.financial_account_id)).join("")}
+          </select>
+          ${fieldError(errors, "financial_account_id")}
+        </label>
+      </div>
       <section class="receipt-mode-panel wide" data-receipt-mode-panel="EXISTING"${action === "EXISTING" ? "" : " hidden"}>
         <div class="receipt-mode-heading">
           <div><span class="receipt-mode-icon" aria-hidden="true">${lucideIcon("link")}</span><h2>Vincular a lançamento existente</h2></div>

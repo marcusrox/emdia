@@ -182,6 +182,12 @@
   margin-top: 1rem;
 }
 
+.receipt-payment-fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .receipt-approval-choice,
 .receipt-settlement-completion {
   border: 0;
@@ -443,11 +449,35 @@
 }
 
 .receipt-excess-confirm {
+  align-items: center;
   background: #fffbeb;
   border: 1px solid #fde68a;
   border-radius: .75rem;
   color: #78350f;
+  cursor: pointer;
+  display: grid;
+  gap: .25rem .75rem;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  line-height: 1.45;
   padding: .85rem;
+}
+
+.receipt-excess-confirm input[type="checkbox"] {
+  accent-color: var(--primary);
+  border-radius: .2rem;
+  height: 1.1rem;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  width: 1.1rem;
+}
+
+.receipt-excess-confirm span {
+  min-width: 0;
+}
+
+.receipt-excess-confirm .field-error {
+  grid-column: 2;
 }
 
 .receipt-duplicate-warning {
@@ -536,6 +566,7 @@
 
   .receipt-action-options,
   .receipt-settlement-completion,
+  .receipt-payment-fields,
   .receipt-new-entry-fields,
   .receipt-entry-card-facts {
     grid-template-columns: 1fr;
