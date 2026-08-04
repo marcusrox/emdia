@@ -36,6 +36,7 @@ describe("migrations", () => {
     assert.ok(columnExists(database, "notification_preferences", "receipt_processing_failure_enabled"));
     assert.ok(columnExists(database, "notification_preferences", "receipt_ready_review_enabled"));
     assert.ok(columnExists(database, "notification_preferences", "receipt_approved_enabled"));
+    assert.ok(columnExists(database, "receipt_imports", "settlement_id"));
     assert.equal(database.isTransaction, false);
   });
 
@@ -54,6 +55,7 @@ describe("migrations", () => {
     assert.equal(columnExists(database, "settlements", "closes_entry"), true);
     assert.equal(columnExists(database, "users", "last_entries_competence"), true);
     assert.equal(columnExists(database, "users", "last_competence"), true);
+    assert.equal(columnExists(database, "receipt_imports", "settlement_id"), true);
   });
 
   it("preserva a preferência criada antes da generalização", () => {

@@ -82,6 +82,26 @@ function list(user, filters = {}) {
     .all(...params);
 }
 
+function listOpenExpenses(userOrId) {
+  refreshOverdueStatuses(userOrId);
+  const userId = userIdFrom(userOrId);
+  return getDatabase().prepare(`
+    SELECT e.*, p.name AS party_name, a.name AS financial_account_name,
+      EXISTS (
+        SELECT 1 FROM settlements s
+        LEFT JOIN settlement_reversals sr ON sr.settlement_id = s.id
+        WHERE s.user_id = e.user_id AND s.financial_entry_id = e.id
+          AND s.closes_entry = 1 AND s.reversed_at IS NULL AND sr.id IS NULL
+      ) AS has_active_closing_settlement
+    FROM financial_entries e
+    LEFT JOIN parties p ON p.id = e.party_id
+    LEFT JOIN financial_accounts a ON a.id = e.financial_account_id
+    WHERE e.user_id = ? AND e.deleted_at IS NULL AND e.entry_type = 'EXPENSE'
+      AND e.status IN ('PENDING', 'OVERDUE', 'PARTIALLY_PAID')
+    ORDER BY e.due_date ASC, e.description ASC, e.id ASC
+  `).all(userId);
+}
+
 function getById(userOrId, id) {
   refreshOverdueStatuses(userOrId);
 
@@ -304,32 +324,44 @@ function duplicate(user, id) {
 function settle(user, id, data) {
   const db = getDatabase();
   return withImmediateTransaction(db, () => {
-    const entry = getById(user.id, id);
-    if (!entry) return null;
+    const result = settleWithinTransaction(user, id, data);
+    return result?.entry || null;
+  });
+}
 
-    const eligibility = settlementEligibility(entry);
-    if (!eligibility.allowed) {
-      throw settlementNotAllowedError(data, eligibility);
-    }
+function settleWithinTransaction(user, id, data) {
+  const db = getDatabase();
+  if (!db.isTransaction) {
+    const error = new Error("A baixa interna exige uma transação SQLite ativa.");
+    error.code = "SETTLEMENT_TRANSACTION_REQUIRED";
+    throw error;
+  }
+  const entry = getById(user.id, id);
+  if (!entry) return null;
 
-    const validation = validateSettlementPayload(user, data, {
-      getAccount: Account.getById,
-    });
-    if (!validation.ok) {
-      throw validationError(validation);
-    }
+  const eligibility = settlementEligibility(entry);
+  if (!eligibility.allowed) {
+    throw settlementNotAllowedError(data, eligibility);
+  }
 
-    const projectedRealizedCents = entry.realized_amount_cents + validation.normalized.totalCents;
-    const excessCents = Math.max(0, projectedRealizedCents - entry.expected_amount_cents);
-    const differenceCents = Math.max(0, entry.expected_amount_cents - projectedRealizedCents);
-    const closesEntry = differenceCents > 0 && validation.normalized.settlementCompletion === "FINAL";
+  const validation = validateSettlementPayload(user, data, {
+    getAccount: Account.getById,
+  });
+  if (!validation.ok) {
+    throw validationError(validation);
+  }
 
-    if (excessCents > 0 && data.confirm_excess !== "yes") {
-      validation.errors.confirm_excess = `Confirme a baixa com ${formatCentsForMessage(excessCents)} acima do valor previsto.`;
-      throw validationError(validation);
-    }
+  const projectedRealizedCents = entry.realized_amount_cents + validation.normalized.totalCents;
+  const excessCents = Math.max(0, projectedRealizedCents - entry.expected_amount_cents);
+  const differenceCents = Math.max(0, entry.expected_amount_cents - projectedRealizedCents);
+  const closesEntry = differenceCents > 0 && validation.normalized.settlementCompletion === "FINAL";
 
-    const settlement = Settlement.create(user.id, id, {
+  if (excessCents > 0 && data.confirm_excess !== "yes") {
+    validation.errors.confirm_excess = `Confirme a baixa com ${formatCentsForMessage(excessCents)} acima do valor previsto.`;
+    throw validationError(validation);
+  }
+
+  const settlement = Settlement.create(user.id, id, {
       ...data,
       financial_account_id: validation.normalized.account.id,
       settlement_type: entry.entry_type === "INCOME" ? "RECEIPT" : "PAYMENT",
@@ -341,45 +373,47 @@ function settle(user, id, data) {
       total_cents: validation.normalized.totalCents,
       settled_at: validation.normalized.settledAt,
       closes_entry: closesEntry,
-    });
+  });
 
-    const realized = entry.realized_amount_cents + settlement.total_cents;
-    const updated = {
-      ...entry,
-      realized_amount_cents: realized,
-      has_active_closing_settlement: closesEntry ? 1 : entry.has_active_closing_settlement,
-      status: entry.status,
-    };
-    updated.status = deriveStatus(updated, user.timezone);
+  const realized = entry.realized_amount_cents + settlement.total_cents;
+  const updated = {
+    ...entry,
+    realized_amount_cents: realized,
+    has_active_closing_settlement: closesEntry ? 1 : entry.has_active_closing_settlement,
+    status: entry.status,
+  };
+  updated.status = deriveStatus(updated, user.timezone);
 
-    db.prepare(`
+  db.prepare(`
         UPDATE financial_entries
         SET realized_amount_cents = ?, settled_at = ?,
           status = ?, updated_at = ?
         WHERE user_id = ? AND id = ?
       `)
-      .run(
-        realized,
-        validation.normalized.settledAt || todayIso(user.timezone),
-        updated.status,
-        new Date().toISOString(),
-        user.id,
-        id
-      );
+    .run(
+      realized,
+      validation.normalized.settledAt || todayIso(user.timezone),
+      updated.status,
+      new Date().toISOString(),
+      user.id,
+      id
+    );
 
-    AuditLog.record(user.id, "financial_entry", id, "settled", {
-      settlement_id: settlement.id,
-      total_cents: settlement.total_cents,
-      settlement_completion: closesEntry ? "FINAL" : "PARTIAL",
-      expected_amount_cents: entry.expected_amount_cents,
-      projected_realized_cents: projectedRealizedCents,
-      difference_cents: differenceCents,
-      closes_entry: closesEntry,
-      excess_cents: excessCents,
-    });
-
-    return getById(user.id, id);
+  AuditLog.record(user.id, "financial_entry", id, "settled", {
+    settlement_id: settlement.id,
+    total_cents: settlement.total_cents,
+    settlement_completion: closesEntry ? "FINAL" : "PARTIAL",
+    expected_amount_cents: entry.expected_amount_cents,
+    projected_realized_cents: projectedRealizedCents,
+    difference_cents: differenceCents,
+    closes_entry: closesEntry,
+    excess_cents: excessCents,
   });
+
+  return {
+    entry: getById(user.id, id),
+    settlement,
+  };
 }
 
 function settlementNotAllowedError(data, eligibility) {
@@ -541,7 +575,9 @@ module.exports = {
   duplicate,
   getById,
   list,
+  listOpenExpenses,
   reverseSettlement,
   settle,
+  settleWithinTransaction,
   update,
 };

@@ -571,9 +571,20 @@ ponto.
 O `receiptImportWorker` reivindica um item por vez em transação imediata, fecha
 a transação antes de qualquer I/O, baixa a imagem em armazenamento privado e
 chama a Responses API com Structured Outputs. A interface autenticada permite
-revisar, rejeitar ou reprocessar. A aprovação usa uma única transação imediata
-para criar `financial_entries`, `settlements`, auditorias e marcar a importação
-como `APPROVED`. A competência é o mês civil da data de pagamento.
+revisar, rejeitar ou reprocessar. Antes da aprovação, o
+`receiptMatchingService` compara o favorecido normalizado por similaridade local
+e o valor do comprovante com tolerância de 20% sobre o valor total das despesas
+em aberto de qualquer competência. As compatibilidades são sugestões e nunca
+substituem a confirmação humana; o usuário também pode escolher manualmente
+outra despesa aberta.
+
+A aprovação usa uma única transação imediata. Ela pode criar
+`financial_entries` e `settlements` como no fluxo original ou criar somente uma
+baixa para um lançamento existente, reutilizando o núcleo transacional de
+`FinancialEntry.settle`. Em ambos os casos, `receipt_imports` referencia
+`financial_entry_id` e `settlement_id`, as auditorias são gravadas e a importação
+é marcada como `APPROVED` atomicamente. Quando uma nova despesa é criada, sua
+competência é o mês civil da data de pagamento.
 
 Depois das transições persistidas, eventos configurados são inseridos de forma
 idempotente em `notifications`. Tentativas intermediárias permanecem
@@ -583,5 +594,5 @@ silenciosas, e falhas da notificação não alteram `FAILED`, `NEEDS_REVIEW` ou
 ```text
 WAHA -> webhook HMAC -> receipt_imports(RECEIVED) -> worker
      -> mídia privada -> OpenRouter -> NEEDS_REVIEW -> aprovação humana
-     -> financial_entries(PAID) + settlements
+     -> nova financial_entry + settlement | settlement em entry existente
 ```

@@ -182,6 +182,215 @@
   margin-top: 1rem;
 }
 
+.receipt-approval-choice,
+.receipt-settlement-completion {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.receipt-approval-choice > legend,
+.receipt-settlement-completion > legend {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: .65rem;
+}
+
+.receipt-action-options,
+.receipt-settlement-completion {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.receipt-settlement-completion > legend,
+.receipt-settlement-completion > .field-error,
+.receipt-settlement-completion > .receipt-settlement-projection {
+  grid-column: 1 / -1;
+}
+
+.receipt-settlement-completion[hidden],
+.receipt-excess-confirm[hidden] {
+  display: none;
+}
+
+.receipt-settlement-projection {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.receipt-mode-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.receipt-mode-panel[hidden],
+.receipt-entry-card[hidden] {
+  display: none;
+}
+
+.receipt-mode-heading {
+  display: grid;
+  gap: .35rem;
+}
+
+.receipt-mode-heading > div {
+  align-items: center;
+  display: flex;
+  gap: .55rem;
+}
+
+.receipt-mode-heading h2,
+.receipt-match-section h3 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.receipt-mode-heading p,
+.receipt-match-empty,
+.receipt-entry-search-empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.receipt-mode-icon {
+  color: var(--primary);
+  display: inline-flex;
+}
+
+.receipt-mode-icon svg,
+.receipt-best-match svg {
+  height: 18px;
+  width: 18px;
+}
+
+.receipt-match-section,
+.receipt-manual-picker {
+  display: grid;
+  gap: .75rem;
+}
+
+.receipt-entry-list {
+  display: grid;
+  gap: .65rem;
+}
+
+.receipt-entry-card {
+  align-items: start;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  gap: .8rem;
+  padding: .85rem;
+}
+
+.receipt-entry-card:has(input:checked) {
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.receipt-entry-card > input {
+  flex: 0 0 auto;
+  margin-top: .2rem;
+  width: auto;
+}
+
+.receipt-entry-card-content,
+.receipt-entry-card-heading {
+  display: grid;
+  gap: .65rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.receipt-entry-card-heading {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.receipt-entry-card-heading strong {
+  overflow-wrap: anywhere;
+}
+
+.receipt-best-match {
+  align-items: center;
+  background: #ecfdf5;
+  border-radius: 999px;
+  color: #047857;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: .3rem;
+  padding: .3rem .55rem;
+  white-space: nowrap;
+}
+
+.receipt-entry-card-facts {
+  display: grid;
+  gap: .65rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.receipt-entry-card-facts > span {
+  display: grid;
+  font-size: 13px;
+  gap: .15rem;
+  overflow-wrap: anywhere;
+}
+
+.receipt-entry-card-facts small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.receipt-manual-details {
+  border-top: 1px solid var(--line);
+  padding-top: .85rem;
+}
+
+.receipt-manual-details summary {
+  align-items: center;
+  color: var(--primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 800;
+  gap: .4rem;
+}
+
+.receipt-manual-details[open] summary {
+  margin-bottom: .85rem;
+}
+
+.receipt-new-entry-fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.receipt-new-entry-fields label:last-child {
+  grid-column: 1 / -1;
+}
+
+.receipt-excess-confirm {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: .75rem;
+  color: #78350f;
+  padding: .85rem;
+}
+
 .receipt-duplicate-warning {
   background: #fffbeb;
   border: 1px solid #fde68a;
@@ -264,6 +473,26 @@
 
   .receipt-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .receipt-action-options,
+  .receipt-settlement-completion,
+  .receipt-new-entry-fields,
+  .receipt-entry-card-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-new-entry-fields label:last-child {
+    grid-column: auto;
+  }
+
+  .receipt-entry-card-heading {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-best-match {
+    justify-self: start;
   }
 }
 

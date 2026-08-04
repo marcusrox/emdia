@@ -662,6 +662,87 @@
     });
   }
 
+  function initializeReceiptReviewForms() {
+    document.querySelectorAll("[data-receipt-review-form]").forEach(function (form) {
+      var actionFields = form.querySelectorAll("input[name='approval_action']");
+      var panels = form.querySelectorAll("[data-receipt-mode-panel]");
+      var submitLabel = form.querySelector("[data-receipt-submit-label]");
+      var search = form.querySelector("[data-receipt-entry-search]");
+
+      function currentAction() {
+        var checked = form.querySelector("input[name='approval_action']:checked");
+        return checked ? checked.value : "NEW";
+      }
+
+      function updateMode() {
+        var action = currentAction();
+        panels.forEach(function (panel) {
+          panel.hidden = panel.getAttribute("data-receipt-mode-panel") !== action;
+        });
+        if (submitLabel) {
+          submitLabel.textContent = action === "EXISTING"
+            ? "Aprovar e registrar baixa"
+            : "Aprovar e criar despesa";
+        }
+        updateReceiptSettlementProjection();
+      }
+
+      function updateReceiptSettlementProjection() {
+        var selectedEntry = form.querySelector("input[name='financial_entry_id']:checked");
+        var amountField = form.elements.amount;
+        var shortfall = form.querySelector("[data-receipt-shortfall]");
+        var shortfallValue = form.querySelector("[data-receipt-shortfall-value]");
+        var excess = form.querySelector("[data-receipt-excess]");
+        var excessMessage = form.querySelector("[data-receipt-excess-message]");
+        var excessConfirmation = form.elements.confirm_excess;
+        if (!selectedEntry || !amountField || !shortfall || !excess) return;
+
+        var expectedCents = Number(selectedEntry.getAttribute("data-entry-expected-cents")) || 0;
+        var realizedCents = Number(selectedEntry.getAttribute("data-entry-realized-cents")) || 0;
+        var projectedCents = realizedCents + moneyToCents(amountField.value);
+        var shortfallCents = Math.max(0, expectedCents - projectedCents);
+        var excessCents = Math.max(0, projectedCents - expectedCents);
+        shortfall.hidden = shortfallCents <= 0;
+        excess.hidden = excessCents <= 0;
+        if (shortfallValue) shortfallValue.textContent = formatCents(shortfallCents);
+        if (excessMessage) {
+          excessMessage.textContent = "Confirmo que o total realizado ficará "
+            + formatCents(excessCents) + " acima do valor previsto.";
+        }
+        if (excessConfirmation) {
+          excessConfirmation.required = excessCents > 0 && currentAction() === "EXISTING";
+          if (excessCents <= 0) excessConfirmation.checked = false;
+        }
+      }
+
+      function normalizeSearch(value) {
+        return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      }
+
+      function filterEntries() {
+        if (!search) return;
+        var query = normalizeSearch(search.value).trim();
+        var list = form.querySelector("[data-receipt-entry-list]");
+        var empty = form.querySelector("[data-receipt-entry-search-empty]");
+        var visible = 0;
+        if (!list) return;
+        list.querySelectorAll("[data-receipt-entry-card]").forEach(function (card) {
+          var matches = !query || normalizeSearch(card.getAttribute("data-search")).includes(query);
+          card.hidden = !matches;
+          if (matches) visible += 1;
+        });
+        if (empty) empty.hidden = visible > 0;
+      }
+
+      actionFields.forEach(function (field) { field.addEventListener("change", updateMode); });
+      form.addEventListener("input", updateReceiptSettlementProjection);
+      form.addEventListener("change", updateReceiptSettlementProjection);
+      if (search) search.addEventListener("input", filterEntries);
+      updateMode();
+      filterEntries();
+    });
+  }
+
   document.addEventListener("click", closeDetailsOnOutsideClick);
   document.addEventListener("click", closeNotification);
   document.addEventListener("click", closeParentDetails);
@@ -676,5 +757,6 @@
   startOperationalLogPolling();
   loadWhatsAppStatus();
   initializeCategoryIconPickers();
+  initializeReceiptReviewForms();
   fillSignupTimezone();
 })();

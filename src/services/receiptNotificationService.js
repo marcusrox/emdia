@@ -117,6 +117,7 @@ function buildMessage(input, baseMessage, receipt = null) {
   }
 
   if (input.eventType === EVENT_TYPES.APPROVED) {
+    const createdFromReceipt = receipt?.entry_origin === "WHATSAPP_RECEIPT";
     return [
       "Seu comprovante foi aprovado e registrado no EmDia.",
       detailLine("Descrição", receipt?.entry_description),
@@ -125,7 +126,9 @@ function buildMessage(input, baseMessage, receipt = null) {
       dateLine("Data do pagamento", receipt?.entry_payment_date),
       detailLine("Conta", receipt?.account_name),
       detailLine("Categoria", receipt?.category_name),
-      "A despesa e o pagamento foram registrados com sucesso.",
+      createdFromReceipt
+        ? "A despesa e o pagamento foram registrados com sucesso."
+        : "A baixa foi vinculada ao lançamento existente com sucesso.",
       receipt?.financial_entry_id
         ? secureLink("Abrir lançamento", `/entries/${encodeURIComponent(receipt.financial_entry_id)}`)
         : "",

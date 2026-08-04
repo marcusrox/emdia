@@ -2,7 +2,9 @@ const { getDatabase } = require("../database/connection");
 const { withImmediateTransaction } = require("../database/transaction");
 const { newId } = require("../services/id");
 const { toCents } = require("../services/moneyService");
+const { findReceiptMatches } = require("../services/receiptMatchingService");
 const AuditLog = require("./AuditLog");
+const FinancialEntry = require("./FinancialEntry");
 const Party = require("./Party");
 const Settlement = require("./Settlement");
 
@@ -60,11 +62,16 @@ function getById(id) {
 function getForUser(userId, id) {
   return getDatabase().prepare(`
     SELECT r.*, c.name AS category_name, a.name AS account_name,
-      d.provider_message_id AS duplicate_provider_message_id
+      d.provider_message_id AS duplicate_provider_message_id,
+      e.description AS linked_entry_description,
+      s.total_cents AS linked_settlement_total_cents,
+      s.settled_at AS linked_settlement_date
     FROM receipt_imports r
     LEFT JOIN categories c ON c.id = r.suggested_category_id
     LEFT JOIN financial_accounts a ON a.id = r.suggested_financial_account_id
     LEFT JOIN receipt_imports d ON d.id = r.duplicate_of_id
+    LEFT JOIN financial_entries e ON e.id = r.financial_entry_id AND e.user_id = r.user_id
+    LEFT JOIN settlements s ON s.id = r.settlement_id AND s.user_id = r.user_id
     WHERE r.user_id = ? AND r.id = ?
   `).get(userId, id);
 }
@@ -73,11 +80,13 @@ function getNotificationContext(userId, id) {
   return getDatabase().prepare(`
     SELECT r.id, r.status, r.merchant_name, r.payment_date, r.amount_cents,
       r.suggested_category_name, r.duplicate_of_id, r.attempt_count,
-      r.last_error_message, r.financial_entry_id,
+      r.last_error_message, r.financial_entry_id, r.settlement_id,
       e.description AS entry_description,
-      e.realized_amount_cents AS entry_amount_cents,
-      e.settled_at AS entry_payment_date,
-      c.name AS category_name, a.name AS account_name, p.name AS party_name
+      e.origin AS entry_origin,
+      COALESCE(s.total_cents, e.realized_amount_cents) AS entry_amount_cents,
+      COALESCE(s.settled_at, e.settled_at) AS entry_payment_date,
+      c.name AS category_name, COALESCE(sa.name, a.name) AS account_name,
+      p.name AS party_name
     FROM receipt_imports r
     LEFT JOIN financial_entries e
       ON e.id = r.financial_entry_id AND e.user_id = r.user_id
@@ -85,6 +94,10 @@ function getNotificationContext(userId, id) {
       ON c.id = e.category_id AND c.user_id = r.user_id
     LEFT JOIN financial_accounts a
       ON a.id = e.financial_account_id AND a.user_id = r.user_id
+    LEFT JOIN settlements s
+      ON s.id = r.settlement_id AND s.user_id = r.user_id
+    LEFT JOIN financial_accounts sa
+      ON sa.id = s.financial_account_id AND sa.user_id = r.user_id
     LEFT JOIN parties p
       ON p.id = e.party_id AND p.user_id = r.user_id
     WHERE r.user_id = ? AND r.id = ?
@@ -263,18 +276,34 @@ function reprocess(userId, id) {
 
 function approve(user, id, data) {
   const db = getDatabase();
-  return withImmediateTransaction(db, () => {
-    const receipt = db.prepare("SELECT * FROM receipt_imports WHERE user_id = ? AND id = ?").get(user.id, id);
-    if (!receipt) return { ok: false, reason: "not-found" };
-    if (receipt.status !== STATUS.NEEDS_REVIEW) return { ok: false, reason: "invalid-status" };
+  try {
+    return withImmediateTransaction(db, () => {
+      const receipt = db.prepare("SELECT * FROM receipt_imports WHERE user_id = ? AND id = ?").get(user.id, id);
+      if (!receipt) return { ok: false, reason: "not-found" };
+      if (receipt.status !== STATUS.NEEDS_REVIEW) return { ok: false, reason: "invalid-status" };
 
-    const validation = validateApproval(db, user.id, receipt, data);
-    if (!validation.ok) return validation;
+      const validation = validateApproval(db, user.id, receipt, data);
+      if (!validation.ok) return validation;
 
-    const now = new Date().toISOString();
-    const entryId = newId("ent");
-    const party = Party.findOrCreate(user.id, validation.partyName, "PAYEE");
-    db.prepare(`
+      return validation.action === "EXISTING"
+        ? approveExistingEntry(db, user, receipt, validation, data)
+        : approveNewEntry(db, user, receipt, validation);
+    });
+  } catch (error) {
+    if (error?.name !== "ValidationError") throw error;
+    return {
+      ok: false,
+      reason: "validation",
+      errors: receiptSettlementErrors(error.errors),
+    };
+  }
+}
+
+function approveNewEntry(db, user, receipt, validation) {
+  const now = new Date().toISOString();
+  const entryId = newId("ent");
+  const party = Party.findOrCreate(user.id, validation.partyName, "PAYEE");
+  db.prepare(`
       INSERT INTO financial_entries (
         id, user_id, entry_type, description, category_id, party_id,
         financial_account_id, expected_amount_cents, realized_amount_cents,
@@ -282,60 +311,111 @@ function approve(user, id, data) {
       ) VALUES (?, ?, 'EXPENSE', ?, ?, ?, ?, ?, 0, ?, ?, NULL, 'PENDING',
         'WHATSAPP_RECEIPT', ?, ?, ?)
     `).run(
-      entryId,
-      user.id,
-      validation.description,
-      validation.categoryId,
-      party?.id || null,
-      validation.accountId,
-      validation.amountCents,
-      validation.paymentDate.slice(0, 7),
-      validation.paymentDate,
-      `Importado do comprovante ${id}.`,
-      now,
-      now,
-    );
+    entryId,
+    user.id,
+    validation.description,
+    validation.categoryId,
+    party?.id || null,
+    validation.accountId,
+    validation.amountCents,
+    validation.paymentDate.slice(0, 7),
+    validation.paymentDate,
+    `Importado do comprovante ${receipt.id}.`,
+    now,
+    now,
+  );
 
-    Settlement.create(user.id, entryId, {
-      financial_account_id: validation.accountId,
-      settlement_type: "PAYMENT",
-      principal_cents: validation.amountCents,
-      total_cents: validation.amountCents,
-      settled_at: validation.paymentDate,
-      closes_entry: true,
-      notes: "Baixa criada a partir de comprovante recebido via WhatsApp.",
-    });
-    db.prepare(`
+  const settlement = Settlement.create(user.id, entryId, {
+    financial_account_id: validation.accountId,
+    settlement_type: "PAYMENT",
+    principal_cents: validation.amountCents,
+    total_cents: validation.amountCents,
+    settled_at: validation.paymentDate,
+    closes_entry: true,
+    notes: "Baixa criada a partir de comprovante recebido via WhatsApp.",
+  });
+  db.prepare(`
       UPDATE financial_entries
       SET realized_amount_cents = ?, settled_at = ?, status = 'PAID', updated_at = ?
       WHERE id = ? AND user_id = ?
     `).run(validation.amountCents, validation.paymentDate, now, entryId, user.id);
-    db.prepare(`
+  db.prepare(`
       UPDATE receipt_imports
-      SET status = 'APPROVED', financial_entry_id = ?, approved_at = ?, updated_at = ?
+      SET status = 'APPROVED', financial_entry_id = ?, settlement_id = ?, approved_at = ?, updated_at = ?
       WHERE id = ? AND user_id = ? AND status = 'NEEDS_REVIEW'
-    `).run(entryId, now, now, id, user.id);
+    `).run(entryId, settlement.id, now, now, receipt.id, user.id);
 
-    AuditLog.record(user.id, "financial_entry", entryId, "created", { origin: "WHATSAPP_RECEIPT", receipt_import_id: id });
-    AuditLog.record(user.id, "receipt_import", id, "approved", { financial_entry_id: entryId });
-    return { ok: true, entryId };
+  AuditLog.record(user.id, "financial_entry", entryId, "created", {
+    origin: "WHATSAPP_RECEIPT",
+    receipt_import_id: receipt.id,
   });
+  AuditLog.record(user.id, "receipt_import", receipt.id, "approved", {
+    approval_action: "NEW",
+    financial_entry_id: entryId,
+    settlement_id: settlement.id,
+  });
+  return { ok: true, action: "NEW", entryId, settlementId: settlement.id };
+}
+
+function approveExistingEntry(db, user, receipt, validation, data) {
+  const matches = findReceiptMatches({
+    merchant_name: validation.partyName || receipt.merchant_name,
+    payment_date: validation.paymentDate,
+    amount_cents: validation.amountCents,
+  }, FinancialEntry.listOpenExpenses(user));
+  const selectionSource = matches.some((entry) => entry.id === validation.entryId) ? "SUGGESTED" : "MANUAL";
+  const result = FinancialEntry.settleWithinTransaction(user, validation.entryId, {
+    financial_account_id: validation.accountId,
+    principal: data.amount,
+    interest: "0,00",
+    penalty: "0,00",
+    discount: "0,00",
+    other_adjustment: "0,00",
+    settled_at: validation.paymentDate,
+    settlement_completion: validation.settlementCompletion,
+    confirm_excess: data.confirm_excess,
+    notes: `Baixa criada a partir do comprovante ${receipt.id} recebido via WhatsApp.`,
+  });
+  if (!result) {
+    return { ok: false, reason: "validation", errors: { financial_entry_id: "Selecione uma despesa em aberto válida." } };
+  }
+
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE receipt_imports
+    SET status = 'APPROVED', financial_entry_id = ?, settlement_id = ?, approved_at = ?, updated_at = ?
+    WHERE id = ? AND user_id = ? AND status = 'NEEDS_REVIEW'
+  `).run(result.entry.id, result.settlement.id, now, now, receipt.id, user.id);
+  AuditLog.record(user.id, "receipt_import", receipt.id, "approved", {
+    approval_action: "EXISTING",
+    selection_source: selectionSource,
+    financial_entry_id: result.entry.id,
+    settlement_id: result.settlement.id,
+  });
+  return {
+    ok: true,
+    action: "EXISTING",
+    entryId: result.entry.id,
+    settlementId: result.settlement.id,
+  };
 }
 
 function validateApproval(db, userId, receipt, data) {
   const errors = {};
+  const action = String(data.approval_action || "NEW").trim().toUpperCase();
   const description = String(data.description || "").trim();
   const partyName = String(data.party_name || "").trim();
   const paymentDate = String(data.payment_date || "").trim();
   let amountCents = 0;
   try { amountCents = toCents(data.amount); } catch (error) { errors.amount = error.message; }
-  if (!description) errors.description = "Informe a descrição da despesa.";
-  if (description.length > 200) errors.description = "Use no máximo 200 caracteres na descrição.";
+  if (!["NEW", "EXISTING"].includes(action)) errors.approval_action = "Selecione como deseja registrar o comprovante.";
+  if (action === "NEW" && !description) errors.description = "Informe a descrição da despesa.";
+  if (action === "NEW" && description.length > 200) errors.description = "Use no máximo 200 caracteres na descrição.";
   if (!isIsoDate(paymentDate)) errors.payment_date = "Informe uma data de pagamento válida.";
   if (!amountCents || amountCents < 1) errors.amount = "Informe um valor maior que zero.";
 
   const categoryId = String(data.category_id || "").trim() || null;
-  if (categoryId) {
+  if (action === "NEW" && categoryId) {
     const category = db.prepare(`
       SELECT id FROM categories
       WHERE id = ? AND user_id = ? AND deleted_at IS NULL AND is_active = 1
@@ -349,13 +429,45 @@ function validateApproval(db, userId, receipt, data) {
     WHERE id = ? AND user_id = ? AND deleted_at IS NULL AND is_active = 1
   `).get(accountId, userId);
   if (!account) errors.financial_account_id = "Selecione a conta usada no pagamento.";
+  const entryId = String(data.financial_entry_id || "").trim();
+  const settlementCompletion = String(data.settlement_completion || "PARTIAL").trim().toUpperCase();
+  if (action === "EXISTING") {
+    const entry = db.prepare(`
+      SELECT id FROM financial_entries
+      WHERE id = ? AND user_id = ? AND entry_type = 'EXPENSE' AND deleted_at IS NULL
+    `).get(entryId, userId);
+    if (!entry) errors.financial_entry_id = "Selecione uma despesa em aberto válida.";
+    if (!["PARTIAL", "FINAL"].includes(settlementCompletion)) {
+      errors.settlement_completion = "Selecione como uma eventual diferença deve ser tratada.";
+    }
+  }
   if (receipt.duplicate_of_id && String(data.confirm_duplicate || "") !== "1") {
     errors.confirm_duplicate = "Confirme que deseja aprovar este possível comprovante duplicado.";
   }
 
   return Object.keys(errors).length
     ? { ok: false, reason: "validation", errors }
-    : { ok: true, description, partyName, paymentDate, amountCents, categoryId, accountId };
+    : {
+        ok: true,
+        action,
+        description,
+        partyName,
+        paymentDate,
+        amountCents,
+        categoryId,
+        accountId,
+        entryId,
+        settlementCompletion,
+      };
+}
+
+function receiptSettlementErrors(errors = {}) {
+  return {
+    ...errors,
+    amount: errors.amount || errors.principal,
+    payment_date: errors.payment_date || errors.settled_at,
+    financial_entry_id: errors.financial_entry_id || errors.settlement,
+  };
 }
 
 function listExpiredMedia(cutoffIso) {

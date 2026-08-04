@@ -731,6 +731,15 @@ Regras:
 - Extrações automatizadas sempre exigem conferência humana antes de criar
   lançamento financeiro. Pagamentos confirmados geram uma linha em
   `settlements` e usam centavos inteiros.
+- O pareamento de comprovantes usa serviço local e determinístico: normalize o
+  favorecido, aplique o limiar fuzzy centralizado e compare o valor com a margem
+  definida sobre o total previsto. A busca automática e a seleção manual devem
+  ser isoladas por usuário e considerar somente despesas elegíveis à baixa.
+- Ao vincular comprovante a lançamento existente, reutilize o núcleo
+  transacional de baixa. `receipt_imports.financial_entry_id` e
+  `receipt_imports.settlement_id`, status, auditorias e settlement devem ser
+  persistidos na mesma transação; notificações continuam somente depois do
+  commit.
 - Falhas do OpenRouter devem distinguir request, decodificação HTTP, erro do
   provedor, saída estruturada e validação de schema. Registre somente códigos,
   status, tipos, tamanhos, modelo e duração; nunca corpo da resposta, prompt ou

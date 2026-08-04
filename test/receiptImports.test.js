@@ -13,6 +13,7 @@ const {
   parseStructuredOutput,
 } = require("../src/services/receiptExtractionService");
 const { processReceipt, safeExtractionDiagnostics } = require("../src/services/receiptImportWorker");
+const { findReceiptMatches } = require("../src/services/receiptMatchingService");
 const { EVENT_TYPES } = require("../src/services/receiptNotificationService");
 const { normalizeEvent } = require("../src/services/operationalLogger");
 const { detectImage, validateMediaUrl } = require("../src/services/receiptStorageService");
@@ -197,6 +198,86 @@ test("aprovação cria despesa paga e baixa dentro do vínculo da importação",
   assert.equal(settlement.closes_entry, 1);
   assert.equal(imported.status, "APPROVED");
   assert.equal(imported.financial_entry_id, result.entryId);
+  assert.equal(imported.settlement_id, settlement.id);
+});
+
+test("aprovação vincula comprovante à baixa de despesa existente de outra competência", () => {
+  const { user, accountId } = createFinancialFixture();
+  const entry = createOpenExpense(user.id, accountId, {
+    description: "Energia julho",
+    partyName: "Neoenergia Coelba SA",
+    expectedAmountCents: 10000,
+    competenceMonth: "2026-06",
+  });
+  const receipt = createReceipt(user.id, "message-existing-entry");
+  db.prepare(`
+    UPDATE receipt_imports
+    SET status = 'NEEDS_REVIEW', merchant_name = 'Neoenergia Coelba',
+      payment_date = '2026-07-30', amount_cents = 8000
+    WHERE id = ?
+  `).run(receipt.id);
+
+  const matches = findReceiptMatches(ReceiptImport.getById(receipt.id), require("../src/models/FinancialEntry").listOpenExpenses(user));
+  assert.equal(matches[0].id, entry.id);
+
+  const result = ReceiptImport.approve(user, receipt.id, {
+    approval_action: "EXISTING",
+    financial_entry_id: entry.id,
+    payment_date: "2026-07-30",
+    amount: "80,00",
+    financial_account_id: accountId,
+    settlement_completion: "PARTIAL",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.action, "EXISTING");
+  assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries").get().total, 1);
+  const updatedEntry = db.prepare("SELECT * FROM financial_entries WHERE id = ?").get(entry.id);
+  const settlement = db.prepare("SELECT * FROM settlements WHERE id = ?").get(result.settlementId);
+  const imported = ReceiptImport.getById(receipt.id);
+  assert.equal(updatedEntry.description, "Energia julho");
+  assert.equal(updatedEntry.competence_month, "2026-06");
+  assert.equal(updatedEntry.expected_amount_cents, 10000);
+  assert.equal(updatedEntry.realized_amount_cents, 8000);
+  assert.equal(updatedEntry.status, "PARTIALLY_PAID");
+  assert.equal(settlement.financial_entry_id, entry.id);
+  assert.equal(settlement.total_cents, 8000);
+  assert.equal(imported.financial_entry_id, entry.id);
+  assert.equal(imported.settlement_id, settlement.id);
+});
+
+test("seleção manual permite lançamento aberto fora da compatibilidade e bloqueia outro usuário", () => {
+  const { user, accountId } = createFinancialFixture();
+  const manualEntry = createOpenExpense(user.id, accountId, {
+    partyName: "Favorecido diferente",
+    expectedAmountCents: 50000,
+  });
+  const other = createFinancialFixture();
+  const foreignEntry = createOpenExpense(other.user.id, other.accountId, { partyName: "Loja" });
+  const receipt = createReceipt(user.id, "message-manual-entry");
+  db.prepare(`UPDATE receipt_imports SET status = 'NEEDS_REVIEW', merchant_name = 'Loja',
+    payment_date = '2026-07-30', amount_cents = 1000 WHERE id = ?`).run(receipt.id);
+
+  const rejected = ReceiptImport.approve(user, receipt.id, {
+    approval_action: "EXISTING",
+    financial_entry_id: foreignEntry.id,
+    payment_date: "2026-07-30",
+    amount: "10,00",
+    financial_account_id: accountId,
+  });
+  assert.equal(rejected.reason, "validation");
+  assert.ok(rejected.errors.financial_entry_id);
+
+  const approved = ReceiptImport.approve(user, receipt.id, {
+    approval_action: "EXISTING",
+    financial_entry_id: manualEntry.id,
+    payment_date: "2026-07-30",
+    amount: "10,00",
+    financial_account_id: accountId,
+    settlement_completion: "PARTIAL",
+  });
+  assert.equal(approved.ok, true);
+  assert.equal(approved.entryId, manualEntry.id);
 });
 
 test("possível duplicidade exige confirmação humana", () => {
@@ -382,6 +463,59 @@ test("aprovação HTTP conclui finanças antes de enfileirar o aviso configurado
   assert.match(message, /despesa e o pagamento foram registrados com sucesso/i);
 });
 
+test("tela HTTP destaca melhor compatibilidade e notifica a baixa vinculada", async () => {
+  const { user, accountId } = createFinancialFixture({
+    user: {
+      email: "receipt-existing-http@example.test",
+      password: "senha123",
+      phoneE164: "+5511988888888",
+    },
+  });
+  enableReceiptNotifications(user.id);
+  const entry = createOpenExpense(user.id, accountId, {
+    description: "Internet residencial",
+    partyName: "Provedor Exemplo LTDA",
+    expectedAmountCents: 12000,
+    competenceMonth: "2026-03",
+    dueDate: "2026-04-10",
+  });
+  const receipt = createReceipt(user.id, "message-http-existing");
+  db.prepare(`UPDATE receipt_imports SET status = 'NEEDS_REVIEW',
+    merchant_name = 'Provedor Exemplo', payment_date = '2026-04-10', amount_cents = 12000
+    WHERE id = ?`).run(receipt.id);
+
+  const app = createServer();
+  const agent = request.agent(app);
+  await login(agent, { email: user.email, password: "senha123" });
+  const detail = await agent.get(`/receipt-imports/${receipt.id}`).expect(200);
+  assert.match(detail.text, /Internet residencial/);
+  assert.match(detail.text, /Mais provável/);
+  assert.match(detail.text, /Vencimento/);
+  assert.match(detail.text, /10\/04\/2026/);
+  assert.match(detail.text, /120,00/);
+  assert.match(detail.text, /name="approval_action" value="EXISTING" checked/);
+
+  const response = await agent.post(`/receipt-imports/${receipt.id}/approve`).type("form").send({
+    _csrf: csrfFrom(detail.text),
+    approval_action: "EXISTING",
+    financial_entry_id: entry.id,
+    party_name: "Provedor Exemplo",
+    payment_date: "2026-04-10",
+    amount: "120,00",
+    financial_account_id: accountId,
+    settlement_completion: "PARTIAL",
+  }).expect(303);
+  assert.match(response.headers.location, /approved=existing/);
+
+  const imported = ReceiptImport.getById(receipt.id);
+  assert.equal(imported.financial_entry_id, entry.id);
+  assert.ok(imported.settlement_id);
+  const notification = db.prepare("SELECT * FROM notifications WHERE user_id = ?").get(user.id);
+  const message = JSON.parse(notification.payload_json).message;
+  assert.match(message, /baixa foi vinculada ao lançamento existente/i);
+  assert.match(message, /Valor pago:.*120,00/);
+});
+
 test("falha ao enfileirar aviso não desfaz a aprovação financeira", async () => {
   const { user, accountId } = createFinancialFixture({
     user: {
@@ -535,6 +669,29 @@ function createReceipt(userId, providerMessageId = `msg-${crypto.randomUUID()}`)
     source_chat_id: "5511999999999@c.us",
     sender_phone_e164: "+5511999999999",
   }).receipt;
+}
+
+function createOpenExpense(userId, accountId, {
+  description = "Despesa em aberto",
+  partyName = "Loja Exemplo",
+  expectedAmountCents = 10000,
+  competenceMonth = "2026-05",
+  dueDate = "2026-07-29",
+} = {}) {
+  const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
+  const partyId = `pty_${suffix}`;
+  const entryId = `ent_${suffix}`;
+  const now = new Date().toISOString();
+  db.prepare(`INSERT INTO parties (id, user_id, name, party_type, created_at, updated_at)
+    VALUES (?, ?, ?, 'PAYEE', ?, ?)`)
+    .run(partyId, userId, partyName, now, now);
+  db.prepare(`INSERT INTO financial_entries (
+      id, user_id, entry_type, description, party_id, financial_account_id,
+      expected_amount_cents, realized_amount_cents, competence_month, due_date,
+      status, origin, created_at, updated_at
+    ) VALUES (?, ?, 'EXPENSE', ?, ?, ?, ?, 0, ?, ?, 'PENDING', 'MANUAL', ?, ?)`)
+    .run(entryId, userId, description, partyId, accountId, expectedAmountCents, competenceMonth, dueDate, now, now);
+  return db.prepare("SELECT * FROM financial_entries WHERE id = ?").get(entryId);
 }
 
 function webhookBody({
