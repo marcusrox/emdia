@@ -116,7 +116,7 @@ function userMenuItems(user, active) {
     ${adminMenu}
     <form method="post" action="/logout">
       ${csrfInput(user)}
-      <button type="submit">${buttonContent("Sair", "log-out")}</button>
+      <button class="user-menu-button" type="submit">${buttonContent("Sair", "log-out")}</button>
     </form>`;
 }
 

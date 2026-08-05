@@ -720,8 +720,8 @@ button svg,
   width: 17px;
 }
 
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):hover,
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):focus-visible,
+button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):hover,
+button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):focus-visible,
 .primary-button:hover,
 .primary-button:focus-visible {
   background: var(--primary-dark);
@@ -739,7 +739,7 @@ button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-cl
   transform: translateY(-1px);
 }
 
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):active,
+button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):active,
 .primary-button:active,
 .ghost-button:active,
 .icon-button:active {
@@ -747,7 +747,7 @@ button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-cl
   transform: translateY(0);
 }
 
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):focus-visible,
+button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):focus-visible,
 .primary-button:focus-visible,
 .ghost-button:focus-visible,
 .icon-button:focus-visible {
