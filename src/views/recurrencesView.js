@@ -1,6 +1,6 @@
 const { formatMoney } = require("../services/moneyService");
 const {
-  buttonContent,
+  actionButton,
   buttonLink,
   categoryIdentity,
   categoryOptionLabel,
@@ -116,7 +116,7 @@ function recurrenceFormView({ user, recurrence, categories, accounts, action, er
         </label>
         <div class="form-actions wide">
           ${buttonLink({ href: "/recurrences", label: "Voltar", icon: "arrow-left" })}
-          <button type="submit">${buttonContent("Salvar", "save")}</button>
+          ${actionButton({ label: "Salvar", icon: "save" })}
         </div>
       </form>
     `,

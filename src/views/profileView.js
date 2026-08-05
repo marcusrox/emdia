@@ -1,4 +1,4 @@
-const { buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, gravatarAvatar, lucideIcon, pageHeading } = require("../services/viewHelpers");
+const { actionButton, buttonContent, buttonLink, csrfInput, escapeHtml, fieldLabel, gravatarAvatar, lucideIcon, pageHeading } = require("../services/viewHelpers");
 const { layout } = require("./layout");
 
 function profileView({ user, profile = user, saved = false, errors = [] }) {
@@ -24,7 +24,7 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
           <div>
             <h2 id="profile-avatar-title">Foto do perfil</h2>
             <p>O avatar é carregado do Gravatar usando o e-mail cadastrado no EmDia.</p>
-            <a class="ghost-button" href="https://gravatar.com/profile/avatars" target="_blank" rel="noopener noreferrer">${buttonContent("Definir avatar no Gravatar", "external-link")}</a>
+            <a class="button button--secondary" href="https://gravatar.com/profile/avatars" target="_blank" rel="noopener noreferrer">${buttonContent("Definir avatar no Gravatar", "external-link")}</a>
           </div>
         </section>
         <div class="profile-form-section">
@@ -71,7 +71,7 @@ function profileView({ user, profile = user, saved = false, errors = [] }) {
         </div>
         <div class="form-actions profile-form-actions">
           ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
-          <button type="submit">${buttonContent("Salvar alterações", "save")}</button>
+          ${actionButton({ label: "Salvar alterações", icon: "save" })}
         </div>
       </form>
     `,

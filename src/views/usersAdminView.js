@@ -1,6 +1,6 @@
 const { layout } = require("./layout");
 const {
-  buttonContent,
+  actionButton,
   buttonLink,
   csrfInput,
   escapeHtml,
@@ -33,8 +33,8 @@ function usersAdminListView({ user, users, filters, notifications = [] }) {
           <label>Perfil<select name="role">${option("", "Todos", filters.role)}${option("user", "Usuário", filters.role)}${option("admin", "Administrador", filters.role)}</select></label>
           <label>Estado<select name="status">${option("", "Todos", filters.status)}${option("active", "Ativo", filters.status)}${option("blocked", "Bloqueado", filters.status)}</select></label>
           <div class="toolbar-actions">
-            <button type="submit">${buttonContent("Filtrar", "filter")}</button>
-            <a class="ghost-button" href="/admin/users">${buttonContent("Limpar", "eraser")}</a>
+            ${actionButton({ label: "Filtrar", icon: "filter" })}
+            ${buttonLink({ href: "/admin/users", label: "Limpar", icon: "eraser" })}
           </div>
         </form>
       </section>
@@ -71,7 +71,7 @@ function userAdminFormView({ user, target = {}, action, isNew = false, errors = 
         <label>${fieldLabel("Perfil")}<select name="role"${fieldErrorAttributes(errors, "role")}>${option("user", "Usuário", target.is_admin ? "admin" : "user")}${option("admin", "Administrador", target.is_admin ? "admin" : "user")}</select>${fieldError(errors, "role")}</label>
         ${isNew ? `<label>${fieldLabel("Estado")}<select name="status">${option("active", "Ativo", target.is_active === 0 ? "blocked" : "active")}${option("blocked", "Bloqueado", target.is_active === 0 ? "blocked" : "active")}</select></label>` : `<div class="user-admin-current-state"><span>Estado atual</span>${statusBadge(target)}</div>`}
         ${isNew ? passwordFields(errors) : ""}
-        <div class="form-actions wide">${buttonLink({ href: "/admin/users", label: "Voltar", icon: "arrow-left" })}<button type="submit">${buttonContent("Salvar", "save")}</button></div>
+        <div class="form-actions wide">${buttonLink({ href: "/admin/users", label: "Voltar", icon: "arrow-left" })}${actionButton({ label: "Salvar", icon: "save" })}</div>
       </form>
       ${isNew ? "" : passwordResetPanel(user, target, errors)}
     `,
@@ -91,7 +91,7 @@ function passwordResetPanel(user, target, errors) {
       ${csrfInput(user)}
       <label>Nova senha<input type="password" name="new_password" required minlength="12" autocomplete="new-password"${fieldErrorAttributes(errors, "new_password")}>${fieldError(errors, "new_password")}</label>
       <label>Confirmar nova senha<input type="password" name="confirm_password" required autocomplete="new-password"${fieldErrorAttributes(errors, "confirm_password")}>${fieldError(errors, "confirm_password")}</label>
-      <div class="form-actions wide"><button type="submit">${buttonContent("Redefinir senha", "key-round")}</button></div>
+      <div class="form-actions wide">${actionButton({ label: "Redefinir senha", icon: "key-round" })}</div>
     </form>
   </section>`;
 }

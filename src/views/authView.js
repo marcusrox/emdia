@@ -1,4 +1,5 @@
 const {
+  actionButton,
   buttonContent,
   escapeHtml,
   fieldError,
@@ -25,11 +26,11 @@ function loginView({ email = "", error = "" } = {}) {
         <label>Senha
           <input type="password" name="password" autocomplete="current-password" required>
         </label>
-        <button type="submit">${buttonContent("Entrar", "log-in")}</button>
+        ${actionButton({ label: "Entrar", icon: "log-in" })}
       </form>
       <div class="auth-alternate">
         <span>Ainda não usa o EmDia?</span>
-        <a class="ghost-button auth-alternate-link" href="/signup">${buttonContent("Criar minha conta", "user-plus")}</a>
+        <a class="button button--secondary auth-alternate-link" href="/signup">${buttonContent("Criar minha conta", "user-plus")}</a>
       </div>`,
   });
 }
@@ -64,11 +65,11 @@ function signupView({ values = {}, errors = {}, error = "", csrfToken = "" } = {
           <input type="password" name="confirm_password" autocomplete="new-password" minlength="12" required${fieldErrorAttributes(errors, "confirm_password")}>
           ${fieldError(errors, "confirm_password")}
         </label>
-        <button type="submit">${buttonContent("Criar minha conta", "user-plus")}</button>
+        ${actionButton({ label: "Criar minha conta", icon: "user-plus" })}
       </form>
       <div class="auth-alternate">
         <span>Já tem uma conta?</span>
-        <a class="ghost-button auth-alternate-link" href="/login">${buttonContent("Entrar", "log-in")}</a>
+        <a class="button button--secondary auth-alternate-link" href="/login">${buttonContent("Entrar", "log-in")}</a>
       </div>`,
   });
 }

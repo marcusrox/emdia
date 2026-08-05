@@ -1,6 +1,7 @@
 const { formatMoney } = require("../services/moneyService");
 const { formatCivilDate } = require("../services/dateService");
 const {
+  actionButton,
   buttonContent,
   buttonLink,
   csrfInput,
@@ -64,7 +65,7 @@ function receiptImportsListView({ user, imports, filters, notifications = [] }) 
         <h2 id="receipt-filter-title">Filtrar comprovantes</h2>
         <form method="get" action="/receipt-imports" class="receipt-filter-form">
           <label>Status <select name="status">${statusOptions}</select></label>
-          <button type="submit">${buttonContent("Filtrar", "filter")}</button>
+          ${actionButton({ label: "Filtrar", icon: "filter" })}
         </form>
       </section>
     </div>
@@ -228,12 +229,12 @@ function receiptImportDetailView({
         ${fieldError(errors, "confirm_duplicate")}
       </label>` : ""}
       <div class="form-actions">
-        <button type="submit" class="primary-button"><span data-receipt-submit-icon aria-hidden="true">${lucideIcon("badge-check")}</span><span data-receipt-submit-label>${action === "EXISTING" ? "Aprovar e registrar baixa" : "Aprovar e criar despesa"}</span></button>
+        <button type="submit" class="button button--primary"><span data-receipt-submit-icon aria-hidden="true">${lucideIcon("badge-check")}</span><span data-receipt-submit-label>${action === "EXISTING" ? "Aprovar e registrar baixa" : "Aprovar e criar despesa"}</span></button>
       </div>
     </form>` : "";
   const alternateActions = ["NEEDS_REVIEW", "FAILED"].includes(receipt.status) ? `<div class="receipt-secondary-actions">
-      ${receipt.status === "NEEDS_REVIEW" ? `<form method="post" action="/receipt-imports/${escapeHtml(receipt.id)}/reject">${csrfInput(user)}<button type="submit" class="danger-button">${buttonContent("Rejeitar", "trash-2")}</button></form>` : ""}
-      <form method="post" action="/receipt-imports/${escapeHtml(receipt.id)}/reprocess">${csrfInput(user)}<button type="submit" class="ghost-button">${buttonContent("Reprocessar", "refresh-cw")}</button></form>
+      ${receipt.status === "NEEDS_REVIEW" ? `<form method="post" action="/receipt-imports/${escapeHtml(receipt.id)}/reject">${csrfInput(user)}${actionButton({ label: "Rejeitar", icon: "trash-2", tone: "danger" })}</form>` : ""}
+      <form method="post" action="/receipt-imports/${escapeHtml(receipt.id)}/reprocess">${csrfInput(user)}${actionButton({ label: "Reprocessar", icon: "refresh-cw", tone: "secondary" })}</form>
     </div>` : "";
   const body = `${pageHeading({
     eyebrow: "Comprovante recebido",

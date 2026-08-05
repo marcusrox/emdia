@@ -1,6 +1,7 @@
 const { formatMoney } = require("../services/moneyService");
 const { settlementEligibility, statusLabel } = require("../services/statusService");
 const {
+  actionButton,
   buttonContent,
   buttonLink,
   categoryIdentity,
@@ -90,7 +91,6 @@ function entryRecurrenceBadge(entry) {
   const label = `Editar recorrência ${recurrenceName}`;
   return `<a class="entry-recurrence-badge" href="/recurrences/${escapeHtml(entry.recurrence_rule_id)}/edit" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
     ${lucideIcon("repeat-2")}
-    <span>Recorrente</span>
   </a>`;
 }
 
@@ -303,7 +303,7 @@ function deleteMonthPanel({ user, competence, errors = {}, values = {}, open = f
           <input name="confirmation" value="${escapeHtml(confirmationValue)}" autocomplete="off"${fieldErrorAttributes(errors, "confirmation")}>
           ${fieldError(errors, "confirmation")}
         </label>
-        <button type="submit" class="danger-button">${buttonContent("Excluir lançamentos deste mês", "trash-2")}</button>
+        ${actionButton({ label: "Excluir lançamentos deste mês", icon: "trash-2", tone: "danger" })}
       </form>
     </div>
   </details>`;
@@ -475,7 +475,7 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
         </label>
         <div class="form-actions wide">
           ${buttonLink({ href: `/entries?competence=${selectedCompetence}`, label: "Voltar", icon: "arrow-left" })}
-          <button type="submit">${buttonContent("Salvar", "save")}</button>
+          ${actionButton({ label: "Salvar", icon: "save" })}
         </div>
       </form>
     `,
@@ -626,8 +626,8 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
                               </label>
                               ${fieldError(errors, "confirm_reversal")}
                               <div class="settlement-reversal-actions">
-                                <button type="button" class="ghost-button" data-close-details>${buttonContent("Cancelar", "x")}</button>
-                                <button type="submit" class="settlement-reversal-submit">${buttonContent("Confirmar estorno", "undo-2")}</button>
+                                ${actionButton({ label: "Cancelar", icon: "x", type: "button", tone: "secondary", attributes: { "data-close-details": true } })}
+                                ${actionButton({ label: "Confirmar estorno", icon: "undo-2", tone: "danger" })}
                               </div>
                             </form>
                           </details>`}
@@ -713,7 +713,7 @@ function entryDetailView({ user, entry, competence = entry.competence_month, ret
               </label>
               ${fieldError(settlementErrors, "confirm_excess")}
             </div>
-            <button type="submit">${buttonContent("Baixar", "check-circle")}</button>
+            ${actionButton({ label: "Baixar", icon: "check-circle" })}
           </form>
           `
               : `<div class="empty-state settlement-blocked-message" role="status">

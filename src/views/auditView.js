@@ -1,6 +1,6 @@
 const { layout } = require("./layout");
 const { formatCivilDate } = require("../services/dateService");
-const { buttonContent, escapeHtml, option, pageHeading } = require("../services/viewHelpers");
+const { actionButton, buttonLink, escapeHtml, option, pageHeading } = require("../services/viewHelpers");
 
 const ENTITY_OPTIONS = [
   ["financial_entry", "Lançamento"],
@@ -63,8 +63,8 @@ function auditView({ user, entries, filters }) {
           </select>
           <input name="q" value="${escapeHtml(filters.q || "")}" placeholder="Buscar no histórico">
           <div class="toolbar-actions">
-            <button type="submit">${buttonContent("Filtrar", "filter")}</button>
-            <a class="ghost-button" href="/audit">${buttonContent("Limpar", "eraser")}</a>
+            ${actionButton({ label: "Filtrar", icon: "filter" })}
+            ${buttonLink({ href: "/audit", label: "Limpar", icon: "eraser" })}
           </div>
         </form>
       </section>

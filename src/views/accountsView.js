@@ -2,7 +2,7 @@ const { formatMoney } = require("../services/moneyService");
 const {
   ACCOUNT_TYPE_OPTIONS,
   accountTypeLabel,
-  buttonContent,
+  actionButton,
   buttonLink,
   csrfInput,
   escapeHtml,
@@ -58,7 +58,7 @@ function accountsView({ user, accounts, account = null, action = "/accounts" }) 
           <label>Saldo inicial<input name="initial_balance" inputmode="decimal" value="${escapeHtml(moneyInput(account?.initial_balance_cents))}"></label>
           <div class="form-actions wide">
             ${buttonLink({ href: isEdit ? "/accounts" : "/dashboard", label: "Voltar", icon: "arrow-left" })}
-            <button type="submit">${buttonContent(isEdit ? "Atualizar" : "Salvar", isEdit ? "check" : "save")}</button>
+            ${actionButton({ label: isEdit ? "Atualizar" : "Salvar", icon: isEdit ? "check" : "save" })}
           </div>
         </form>
         <article class="panel list-panel">

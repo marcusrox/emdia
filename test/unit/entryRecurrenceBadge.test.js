@@ -28,7 +28,8 @@ describe("identificação de lançamentos recorrentes", () => {
 
     assert.equal(html.match(/class="entry-recurrence-badge"/g)?.length, 2);
     assert.equal(html.match(/href="\/recurrences\/rec-1\/edit"/g)?.length, 2);
-    assert.equal(html.match(/<span>Recorrente<\/span>/g)?.length, 2);
+    assert.equal(html.match(/lucide-repeat-2/g)?.length, 2);
+    assert.ok(!html.includes("<span>Recorrente</span>"));
     assert.match(html, /aria-label="Editar recorrência Internet &amp; mensal"/);
   });
 

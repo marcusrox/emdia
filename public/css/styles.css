@@ -107,7 +107,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.receipt-filter-form button {
+.receipt-filter-form .button {
   white-space: nowrap;
 }
 
@@ -552,7 +552,7 @@
     grid-template-columns: 1fr;
   }
 
-  .receipt-filter-form button {
+  .receipt-filter-form .button {
     justify-self: start;
   }
 
@@ -664,9 +664,7 @@ textarea {
   width: 1px;
 }
 
-button,
-.primary-button,
-.ghost-button,
+.button,
 .icon-button {
   align-items: center;
   border: 1px solid var(--line);
@@ -687,8 +685,7 @@ button,
     transform 0.16s ease;
 }
 
-button,
-.primary-button {
+.button--primary {
   background: var(--primary);
   border-color: var(--primary);
   box-shadow: 0 8px 18px rgba(15, 118, 110, 0.16);
@@ -696,8 +693,16 @@ button,
   font-weight: 700;
 }
 
-.ghost-button {
+.button--secondary {
   background: transparent;
+  font-weight: 700;
+}
+
+.button--danger {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: 0 8px 18px rgba(185, 28, 28, 0.16);
+  color: white;
   font-weight: 700;
 }
 
@@ -709,9 +714,7 @@ button,
   width: 42px;
 }
 
-button svg,
-.primary-button svg,
-.ghost-button svg {
+.button svg {
   fill: none;
   flex-shrink: 0;
   height: 17px;
@@ -720,18 +723,16 @@ button svg,
   width: 17px;
 }
 
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):hover,
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):focus-visible,
-.primary-button:hover,
-.primary-button:focus-visible {
+.button--primary:hover,
+.button--primary:focus-visible {
   background: var(--primary-dark);
   border-color: var(--primary-dark);
   box-shadow: 0 10px 22px rgba(15, 118, 110, 0.22);
   transform: translateY(-1px);
 }
 
-.ghost-button:hover,
-.ghost-button:focus-visible {
+.button--secondary:hover,
+.button--secondary:focus-visible {
   background: #eef7f6;
   border-color: #b9d7d2;
   color: var(--primary-dark);
@@ -739,17 +740,21 @@ button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-cl
   transform: translateY(-1px);
 }
 
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):active,
-.primary-button:active,
-.ghost-button:active,
+.button--danger:hover,
+.button--danger:focus-visible {
+  background: #991b1b;
+  border-color: #991b1b;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.22);
+  transform: translateY(-1px);
+}
+
+.button:active,
 .icon-button:active {
   box-shadow: none;
   transform: translateY(0);
 }
 
-button:not(.record-action-button):not(.toolbar-icon-button):not(.notification-close):not(.category-icon-picker-trigger):not(.category-icon-picker-option):not(.user-menu-button):focus-visible,
-.primary-button:focus-visible,
-.ghost-button:focus-visible,
+.button:focus-visible,
 .icon-button:focus-visible {
   outline: 3px solid rgba(37, 99, 235, 0.22);
   outline-offset: 2px;
@@ -967,8 +972,7 @@ td small {
   z-index: 10;
 }
 
-.user-menu-panel a,
-.user-menu-panel button {
+.user-menu-item {
   align-items: center;
   background: transparent;
   border: 0;
@@ -985,17 +989,14 @@ td small {
   width: 100%;
 }
 
-.user-menu-panel a svg,
-.user-menu-panel button svg {
+.user-menu-item svg {
   flex: 0 0 auto;
   height: 17px;
   width: 17px;
 }
 
-.user-menu-panel a:hover,
-.user-menu-panel a:focus-visible,
-.user-menu-panel button:hover,
-.user-menu-panel button:focus-visible {
+.user-menu-item:hover,
+.user-menu-item:focus-visible {
   background: var(--surface-2);
   box-shadow: none;
   outline: 2px solid rgba(37, 99, 235, 0.18);
@@ -1281,11 +1282,11 @@ td small {
   min-height: 48px;
 }
 
-.auth-panel button {
+.auth-panel .button {
   min-height: 48px;
 }
 
-.auth-form > button {
+.auth-form > .button {
   width: 100%;
 }
 
@@ -2253,18 +2254,7 @@ textarea {
 .entry-settlement-list .settlement-reversal-actions {
   align-items: center; display: flex; gap: 8px; justify-content: flex-end;
 }
-.settlement-reversal-actions button { min-height: 36px; }
-.entry-settlement-list .settlement-reversal-actions .ghost-button:hover,
-.entry-settlement-list .settlement-reversal-actions .ghost-button:focus-visible,
-.entry-settlement-list .settlement-reversal-actions .ghost-button:hover span,
-.entry-settlement-list .settlement-reversal-actions .ghost-button:focus-visible span {
-  color: #fff;
-}
-.settlement-reversal-submit { background: #b42318; border-color: #b42318; box-shadow: none; color: #fff; }
-.entry-settlement-list .settlement-reversal-submit span { color: #fff; }
-.settlement-reversal-submit:hover, .settlement-reversal-submit:focus-visible {
-  background: #8f1c13 !important; border-color: #8f1c13 !important;
-}
+.settlement-reversal-actions .button { min-height: 36px; }
 
 .entry-history-list {
   border-left: 2px solid var(--line);
@@ -2655,12 +2645,11 @@ tbody tr:hover {
   color: var(--primary);
   display: inline-flex;
   flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 800;
-  gap: .25rem;
+  height: 25px;
+  justify-content: center;
   line-height: 1;
-  padding: .25rem .45rem;
-  white-space: nowrap;
+  padding: 0;
+  width: 25px;
 }
 
 .entry-recurrence-badge:hover,
@@ -2670,8 +2659,8 @@ tbody tr:hover {
 }
 
 .entry-recurrence-badge svg {
-  height: 13px;
-  width: 13px;
+  height: 14px;
+  width: 14px;
 }
 
 .category-name-with-color {
@@ -2916,8 +2905,7 @@ tbody tr:hover {
 
 .audit-filters input,
 .audit-filters select,
-.audit-filters button,
-.audit-filters .ghost-button {
+.audit-filters .button {
   min-height: 44px;
 }
 
@@ -2934,8 +2922,7 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-.audit-filters button,
-.audit-filters .ghost-button {
+.audit-filters .button {
   border-radius: 8px;
   padding-inline: 14px;
 }
@@ -3028,8 +3015,7 @@ tbody tr:hover {
 
 .operational-log-filters input,
 .operational-log-filters select,
-.operational-log-filters button,
-.operational-log-filters .ghost-button {
+.operational-log-filters .button {
   min-height: 44px;
 }
 
@@ -3211,20 +3197,6 @@ tbody tr:hover {
 
 .danger-confirmation small {
   color: #991b1b;
-}
-
-.danger-button {
-  background: #b91c1c;
-  border-color: #b91c1c;
-  box-shadow: 0 8px 18px rgba(185, 28, 28, 0.16);
-  justify-self: start;
-}
-
-.danger-button:hover,
-.danger-button:focus-visible {
-  background: #991b1b;
-  border-color: #991b1b;
-  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.22);
 }
 
 .form-grid {
@@ -3716,14 +3688,12 @@ textarea[aria-invalid="true"] {
   min-height: 68px;
 }
 
-.form-compact button,
-.form-compact .primary-button,
-.form-compact .ghost-button {
+.form-compact .button {
   min-height: 34px;
   padding: 0 12px;
 }
 
-.form-short button {
+.form-short .button {
   align-self: end;
 }
 

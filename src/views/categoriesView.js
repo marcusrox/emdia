@@ -1,6 +1,6 @@
 const {
   ENTRY_TYPE_OPTIONS,
-  buttonContent,
+  actionButton,
   buttonLink,
   categoryIdentity,
   csrfInput,
@@ -133,7 +133,7 @@ function categoriesView({ user, categories, category = null, action = "/categori
           ${categoryColorPicker(category?.color)}
           <div class="form-actions wide">
             ${buttonLink({ href: isEdit ? "/categories" : "/dashboard", label: "Voltar", icon: "arrow-left" })}
-            <button type="submit">${buttonContent(isEdit ? "Atualizar" : "Salvar", isEdit ? "check" : "save")}</button>
+            ${actionButton({ label: isEdit ? "Atualizar" : "Salvar", icon: isEdit ? "check" : "save" })}
           </div>
         </form>
         <article class="panel list-panel">

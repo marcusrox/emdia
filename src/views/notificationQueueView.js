@@ -1,5 +1,5 @@
 const { layout } = require("./layout");
-const { buttonContent, csrfInput, escapeHtml, lucideIcon, option, pageHeading } = require("../services/viewHelpers");
+const { actionButton, buttonLink, csrfInput, escapeHtml, lucideIcon, option, pageHeading } = require("../services/viewHelpers");
 
 const STATUS_OPTIONS = [
   ["PENDING", "Pendente"],
@@ -59,8 +59,8 @@ function notificationQueueView({ user, entries, users, filters, notifications = 
             <input name="limit" value="${escapeHtml(filters.limit || 100)}" inputmode="numeric">
           </label>
           <div class="toolbar-actions">
-            <button type="submit">${buttonContent("Filtrar", "filter")}</button>
-            <a class="ghost-button" href="/admin/notifications">${buttonContent("Limpar", "eraser")}</a>
+            ${actionButton({ label: "Filtrar", icon: "filter" })}
+            ${buttonLink({ href: "/admin/notifications", label: "Limpar", icon: "eraser" })}
           </div>
         </form>
       </section>

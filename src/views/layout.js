@@ -110,23 +110,23 @@ function layout({ title, user, active, body, notifications = [] }) {
 function userMenuItems(user, active) {
   const adminMenu = user?.is_admin ? adminMenuItems(active) : "";
 
-  return `<a href="/profile">${buttonContent("Perfil", "user-round")}</a>
-    <a href="/settings">${buttonContent("Configurações", "settings")}</a>
-    <a href="/audit">${buttonContent("Auditoria", "clipboard-list")}</a>
+  return `<a class="user-menu-item" href="/profile">${buttonContent("Perfil", "user-round")}</a>
+    <a class="user-menu-item" href="/settings">${buttonContent("Configurações", "settings")}</a>
+    <a class="user-menu-item" href="/audit">${buttonContent("Auditoria", "clipboard-list")}</a>
     ${adminMenu}
     <form method="post" action="/logout">
       ${csrfInput(user)}
-      <button class="user-menu-button" type="submit">${buttonContent("Sair", "log-out")}</button>
+      <button class="user-menu-item" type="submit">${buttonContent("Sair", "log-out")}</button>
     </form>`;
 }
 
 function adminMenuItems(active) {
   return `<div class="admin-menu-group" aria-label="Administração">
     <span class="admin-menu-label">${lucideIcon("shield-check")} Administração</span>
-    <a class="admin-menu-link ${active === "/admin/users" ? "active" : ""}" href="/admin/users">${buttonContent("Usuários", "users")}</a>
-    <a class="admin-menu-link ${active === "/admin/notifications" ? "active" : ""}" href="/admin/notifications">${buttonContent("Fila de notificações", "bell")}</a>
-    <a class="admin-menu-link ${active === "/operational-logs" ? "active" : ""}" href="/operational-logs">${buttonContent("Logs operacionais", "file-text")}</a>
-    <a class="admin-menu-link ${active === "/runtime-environment" ? "active" : ""}" href="/runtime-environment">${buttonContent("Ambiente de execução", "server")}</a>
+    <a class="user-menu-item admin-menu-link ${active === "/admin/users" ? "active" : ""}" href="/admin/users">${buttonContent("Usuários", "users")}</a>
+    <a class="user-menu-item admin-menu-link ${active === "/admin/notifications" ? "active" : ""}" href="/admin/notifications">${buttonContent("Fila de notificações", "bell")}</a>
+    <a class="user-menu-item admin-menu-link ${active === "/operational-logs" ? "active" : ""}" href="/operational-logs">${buttonContent("Logs operacionais", "file-text")}</a>
+    <a class="user-menu-item admin-menu-link ${active === "/runtime-environment" ? "active" : ""}" href="/runtime-environment">${buttonContent("Ambiente de execução", "server")}</a>
   </div>`;
 }
 

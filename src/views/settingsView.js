@@ -1,7 +1,7 @@
 const {
   FONT_SCALE_OPTIONS,
   LIST_DENSITY_OPTIONS,
-  buttonContent,
+  actionButton,
   buttonLink,
   csrfInput,
   escapeHtml,
@@ -150,7 +150,7 @@ function settingsView({ user, saved = false, notificationPreferences }) {
         </details>
         <div class="form-actions">
           ${buttonLink({ href: "/dashboard", label: "Voltar", icon: "arrow-left" })}
-          <button type="submit">${buttonContent("Salvar configurações", "save")}</button>
+          ${actionButton({ label: "Salvar configurações", icon: "save" })}
         </div>
       </form>
     `,

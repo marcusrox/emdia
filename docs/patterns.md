@@ -461,6 +461,30 @@ Padrões:
   (`form-compact`) para reduzir rolagem e aumentar densidade sem perder
   legibilidade.
 
+### 12.1. Botões e links de ação
+
+A aparência de um botão deve ser sempre explícita. O seletor global `button`
+pode normalizar propriedades nativas, como a fonte, mas não deve definir cor,
+borda, sombra, espaçamento ou estados visuais.
+
+- ações comuns devem usar a classe-base `button` e exatamente uma variante:
+  `button--primary`, `button--secondary` ou `button--danger`;
+- em views, prefira `actionButton` para elementos `button` e `buttonLink` para
+  links com aparência de botão;
+- `actionButton` usa `button--primary` por padrão e `buttonLink` usa
+  `button--secondary` por padrão; informe `tone` quando a intenção for outra;
+- controles especializados, como `record-action-button`,
+  `toolbar-icon-button`, `user-menu-item`, `notification-close` e o seletor de
+  ícones de categoria, devem possuir componente próprio e não devem herdar
+  estilos visuais por serem elementos `button`;
+- não use cadeias de `:not()` para impedir que um estilo genérico alcance
+  componentes especializados;
+- não crie novas variantes visuais locais quando uma das variantes do
+  componente atender à intenção da ação;
+- toda nova ocorrência literal de `<button>` em `src/views` deve declarar uma
+  classe de componente reconhecida. O teste `buttonComponent.test.js` protege
+  essa regra.
+
 ## 13. Auditoria
 
 Ações financeiras relevantes devem registrar auditoria com `AuditLog.record`.

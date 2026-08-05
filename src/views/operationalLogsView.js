@@ -1,5 +1,5 @@
 const { layout } = require("./layout");
-const { buttonContent, escapeHtml, lucideIcon, option, pageHeading } = require("../services/viewHelpers");
+const { actionButton, buttonLink, escapeHtml, lucideIcon, option, pageHeading } = require("../services/viewHelpers");
 const { detailsSummary } = require("../services/operationalLogReader");
 
 const LEVEL_OPTIONS = [
@@ -57,8 +57,8 @@ function operationalLogsView({ user, entries, filters, dates }) {
             <input name="limit" value="${escapeHtml(filters.limit || 200)}" inputmode="numeric">
           </label>
           <div class="toolbar-actions">
-            <button type="submit">${buttonContent("Filtrar", "filter")}</button>
-            <a class="ghost-button" href="/operational-logs">${buttonContent("Limpar", "eraser")}</a>
+            ${actionButton({ label: "Filtrar", icon: "filter" })}
+            ${buttonLink({ href: "/operational-logs", label: "Limpar", icon: "eraser" })}
           </div>
         </form>
       </section>

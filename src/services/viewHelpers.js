@@ -218,11 +218,38 @@ function buttonContent(label, iconName = "") {
   return `${icon}<span>${escapeHtml(label)}</span>`;
 }
 
-function buttonLink({ href, label, icon = "", tone = "secondary", className = "" }) {
-  const toneClass = tone === "primary" ? "primary-button" : "ghost-button";
-  const classes = [toneClass, className].filter(Boolean).join(" ");
+const BUTTON_TONE_CLASSES = Object.freeze({
+  danger: "button--danger",
+  primary: "button--primary",
+  secondary: "button--secondary",
+});
 
-  return `<a class="${classes}" href="${escapeHtml(href)}">${buttonContent(label, icon)}</a>`;
+function buttonClassNames(tone, className = "") {
+  const toneClass = BUTTON_TONE_CLASSES[tone];
+  if (!toneClass) throw new TypeError(`Variante de botão inválida: ${tone}`);
+
+  return ["button", toneClass, className].filter(Boolean).join(" ");
+}
+
+function actionButton({ label, icon = "", type = "submit", tone = "primary", className = "", attributes = {} }) {
+  if (!["button", "reset", "submit"].includes(type)) throw new TypeError(`Tipo de botão inválido: ${type}`);
+
+  const classes = buttonClassNames(tone, className);
+  const extraAttributes = Object.entries(attributes).map(([name, value]) => {
+    if (!/^(?:aria-[a-z0-9-]+|data-[a-z0-9-]+|disabled|form|name|title|value)$/.test(name)) {
+      throw new TypeError(`Atributo de botão inválido: ${name}`);
+    }
+    if (value === false || value == null) return "";
+    return value === true || value === "" ? ` ${name}` : ` ${name}="${escapeHtml(value)}"`;
+  }).join("");
+
+  return `<button class="${escapeHtml(classes)}" type="${type}"${extraAttributes}>${buttonContent(label, icon)}</button>`;
+}
+
+function buttonLink({ href, label, icon = "", tone = "secondary", className = "" }) {
+  const classes = buttonClassNames(tone, className);
+
+  return `<a class="${escapeHtml(classes)}" href="${escapeHtml(href)}">${buttonContent(label, icon)}</a>`;
 }
 
 function pageHeading({ eyebrow = "", title, description = "", icon = "", actions = "", className = "" }) {
@@ -287,6 +314,7 @@ module.exports = {
   FONT_SCALE_OPTIONS,
   LIST_DENSITY_OPTIONS,
   accountTypeLabel,
+  actionButton,
   buttonContent,
   buttonLink,
   categoryIdentity,
