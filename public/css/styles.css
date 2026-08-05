@@ -2639,6 +2639,41 @@ tbody tr:hover {
   font-weight: 800;
 }
 
+.entry-description-heading {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  min-width: 0;
+}
+
+.entry-recurrence-badge {
+  align-items: center;
+  background: #e9f5f3;
+  border: 1px solid #c8dfda;
+  border-radius: 999px;
+  color: var(--primary);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  gap: .25rem;
+  line-height: 1;
+  padding: .25rem .45rem;
+  white-space: nowrap;
+}
+
+.entry-recurrence-badge:hover,
+.entry-recurrence-badge:focus-visible {
+  background: #dcefeb;
+  border-color: var(--primary);
+}
+
+.entry-recurrence-badge svg {
+  height: 13px;
+  width: 13px;
+}
+
 .category-name-with-color {
   align-items: center;
   display: inline-flex;

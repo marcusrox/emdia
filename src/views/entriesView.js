@@ -83,6 +83,17 @@ function toolbarIconButton({ icon, label, tone = "" }) {
   return `<button type="submit" class="toolbar-icon-button ${tone}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${TOOLBAR_ICONS[icon]}</button>`;
 }
 
+function entryRecurrenceBadge(entry) {
+  if (!entry.recurrence_rule_id) return "";
+
+  const recurrenceName = entry.recurrence_description || entry.description;
+  const label = `Editar recorrência ${recurrenceName}`;
+  return `<a class="entry-recurrence-badge" href="/recurrences/${escapeHtml(entry.recurrence_rule_id)}/edit" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+    ${lucideIcon("repeat-2")}
+    <span>Recorrente</span>
+  </a>`;
+}
+
 function entriesTotals(entries) {
   return entries.reduce(
     (totals, entry) => {
@@ -140,8 +151,11 @@ function entriesTable(entries, { compact = false, user = null } = {}) {
             (entry) => `<tr>
               <td>${escapeHtml(formatCivilDate(entry.due_date))}</td>
               <td>
-                <a class="strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
-                <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.recurrence_rule_id ? " · Recorrente" : ""}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
+                <span class="entry-description-heading">
+                  <a class="strong-link" href="/entries/${entry.id}">${escapeHtml(entry.description)}</a>
+                  ${compact ? "" : entryRecurrenceBadge(entry)}
+                </span>
+                <small>${entry.entry_type === "INCOME" ? "Receita" : "Despesa"}${entry.recurrence_rule_id && compact ? " · Recorrente" : ""}${entry.party_name ? ` · ${escapeHtml(entry.party_name)}` : ""}</small>
               </td>
               <td>${categoryIdentity({
                 name: entry.category_name,
@@ -208,7 +222,6 @@ function entriesMobileList(entries, { user }) {
       .map((entry) => {
         const account = entry.financial_account_name || "-";
         const typeLabel = entry.entry_type === "INCOME" ? "Receita" : "Despesa";
-        const recurrence = entry.recurrence_rule_id ? "Recorrente" : "";
         const party = entry.party_name || "";
         const details = [
           escapeHtml(formatCivilDate(entry.due_date)),
@@ -218,7 +231,7 @@ function entriesMobileList(entries, { user }) {
             color: entry.category_color,
           }, { appearance: "badge" }),
         ].join(" · ");
-        const meta = [escapeHtml(account), recurrence, party ? escapeHtml(party) : ""].filter(Boolean).join(" · ");
+        const meta = [escapeHtml(account), party ? escapeHtml(party) : ""].filter(Boolean).join(" · ");
 
         return `<article class="entry-mobile-card">
           <div class="entry-mobile-card-main">
@@ -227,6 +240,7 @@ function entriesMobileList(entries, { user }) {
           </div>
           <div class="entry-mobile-card-status">
             <span>${typeLabel}</span>
+            ${entryRecurrenceBadge(entry)}
             <span class="status status-${entry.status.toLowerCase()}">${escapeHtml(statusLabel(entry.status))}</span>
           </div>
           <div class="entry-mobile-card-meta">
