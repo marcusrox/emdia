@@ -28,7 +28,7 @@ function list(userId) {
       LEFT JOIN financial_accounts a ON a.id = r.financial_account_id
       LEFT JOIN parties p ON p.id = r.party_id
       WHERE r.user_id = ?
-      ORDER BY r.status, r.description
+      ORDER BY r.status, r.due_day, r.description
     `)
     .all(userId);
 }
