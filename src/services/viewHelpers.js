@@ -184,13 +184,8 @@ function categoryIdentity({ name, icon, color } = {}, { appearance = "default" }
           <rect width="1" height="1" fill="${blendHexColor(normalizedColor, "#ffffff", 0.84)}"></rect>
         </svg>`
       : "";
-    const badgeText = normalizedColor
-      ? `<svg class="entry-category-badge-text" aria-hidden="true" focusable="false">
-          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="${blendHexColor(normalizedColor, "#000000", 0.55)}">${escapeHtml(categoryName)}</text>
-        </svg>`
-      : "";
 
-    return `<span class="category-name-with-color entry-category-identity">${identityIcon}<span class="${badgeClass}">${badgeBackground}<span class="entry-category-badge-label"${normalizedColor ? ' aria-hidden="true"' : ""}>${escapeHtml(categoryName)}</span>${badgeText}${normalizedColor ? `<span class="sr-only">${escapeHtml(categoryName)}</span>` : ""}</span></span>`;
+    return `<span class="category-name-with-color entry-category-identity">${identityIcon}<span class="${badgeClass}" title="${escapeHtml(categoryName)}">${badgeBackground}<span class="entry-category-badge-label">${escapeHtml(categoryName)}</span></span></span>`;
   }
 
   const normalizedIcon = normalizeCategoryIcon(icon);

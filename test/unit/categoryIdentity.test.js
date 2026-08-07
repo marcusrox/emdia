@@ -21,17 +21,21 @@ describe("identidade da categoria nas listagens de lançamentos", () => {
     assert.match(html, /entry-category-icon/);
     assert.match(html, /entry-category-badge/);
     assert.match(html, /<rect width="1" height="1" fill="#d9e9e8">/);
-    assert.match(html, /<text[^>]+fill="#073531">Alimentação<\/text>/);
+    assert.match(html, /title="Alimentação"/);
+    assert.match(html, /<span class="entry-category-badge-label">Alimentação<\/span>/);
+    assert.ok(!html.includes("entry-category-badge-text"));
+    assert.ok(!html.includes("<span class=\"sr-only\">Alimentação</span>"));
     assert.ok(!html.includes("style="));
     assert.ok(!html.includes("category-icon-circle"));
     assert.ok(!html.includes("category-color-dot"));
   });
 
-  it("deriva fundo claro e texto escuro da mesma cor cadastrada", () => {
+  it("deriva o fundo claro e mantém o texto HTML padronizado", () => {
     const html = entryCategory({ color: "#fef3c7" });
 
     assert.match(html, /<rect width="1" height="1" fill="#fffdf6">/);
-    assert.match(html, /<text[^>]+fill="#726d5a">Alimentação<\/text>/);
+    assert.match(html, /<span class="entry-category-badge-label">Alimentação<\/span>/);
+    assert.ok(!html.includes("<text"));
   });
 
   it("não cria marcador substituto quando não há ícone válido", () => {
