@@ -250,6 +250,29 @@ describe("models financeiros", () => {
     db.exec("DROP TRIGGER fail_cancelled_audit;");
   });
 
+  it("duplica lançamento e auditoria semântica na mesma transação", () => {
+    const fixture = createFinancialFixture();
+    const source = createEntry(fixture, { description: "Conta original", party_name: "Fornecedor" });
+    Entry.settle(fixture.user, source.id, settlement(fixture, { principal: "40,00" }));
+
+    const copy = Entry.duplicate(fixture.user, source.id);
+    assert.equal(copy.description, "Conta original (cópia)");
+    assert.equal(copy.expected_amount_cents, source.expected_amount_cents);
+    assert.equal(copy.realized_amount_cents, 0);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM settlements WHERE financial_entry_id = ?").get(copy.id).total, 0);
+    const audit = db.prepare("SELECT payload_json FROM audit_logs WHERE entity_id = ? AND action = 'duplicated'").get(copy.id);
+    assert.deepEqual(JSON.parse(audit.payload_json), {
+      source_entry_id: source.id,
+      duplicated_entry_id: copy.id,
+    });
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM audit_logs WHERE entity_id = ? AND action = 'created'").get(copy.id).total, 0);
+
+    db.exec("CREATE TRIGGER fail_duplicate_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'duplicated' BEGIN SELECT RAISE(ABORT, 'duplicate audit failure'); END;");
+    assert.throws(() => Entry.duplicate(fixture.user, source.id), /duplicate audit failure/);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries WHERE description = 'Conta original (cópia)'").get().total, 1);
+    db.exec("DROP TRIGGER fail_duplicate_audit;");
+  });
+
   it("estorna baixa, recalcula total e preserva histórico", () => {
     const fixture = createFinancialFixture();
     const entry = createEntry(fixture);

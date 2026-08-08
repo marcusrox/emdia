@@ -216,11 +216,6 @@ function registerEntryRoutes(app, { requireCsrf }) {
 
   app.post("/entries/:id/duplicate", requireCsrf, (req, res) => {
     const entry = Entry.duplicate(req.user, req.params.id);
-    if (entry) {
-      AuditLog.record(req.user.id, "financial_entry", entry.id, "duplicated", {
-        source_entry_id: req.params.id,
-      });
-    }
     const competence = entry ? entry.competence_month : normalizeCompetence("", req.user.timezone);
     return redirect(res, `/entries?competence=${competence}`);
   });

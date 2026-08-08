@@ -96,3 +96,27 @@ vínculo com a origem e auditoria semântica sejam persistidos atomicamente.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação concluída
+
+- inserção financeira foi extraída para helper interno que exige transação
+  SQLite ativa;
+- duplicação passou a localizar a origem, criar a cópia e registrar auditoria
+  `duplicated` em uma única transação `IMMEDIATE`;
+- o evento semântico contém `source_entry_id` e `duplicated_entry_id`, sem
+  registro redundante `created` para a cópia;
+- a rota deixou de registrar auditoria e preserva apenas o contrato HTTP;
+- testes comprovam ausência de settlements copiados e rollback integral quando
+  a auditoria falha;
+- release incrementada para `Release 08/08/2026 10:54 - 114`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 08/08/2026 10:54
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

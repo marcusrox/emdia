@@ -169,25 +169,35 @@ function create(user, data) {
   const validation = normalizeEntryData(user, data);
   const db = getDatabase();
 
-  return withImmediateTransaction(db, () => {
-    const now = new Date().toISOString();
-    const id = newId("ent");
-    const party = Party.findOrCreate(
-      user.id,
-      data.party_name,
-      validation.entry_type === "INCOME" ? "PAYER" : "PAYEE"
-    );
-    const draft = {
-      entry_type: validation.entry_type,
-      expected_amount_cents: validation.expected_amount_cents,
-      realized_amount_cents: 0,
-      due_date: validation.due_date || todayIso(user.timezone),
-      status: data.status || "PENDING",
-    };
+  return withImmediateTransaction(db, () => createWithinTransaction(user, data, validation));
+}
 
-    draft.status = deriveStatus(draft, user.timezone);
+function createWithinTransaction(user, data, validation, audit = {}) {
+  const db = getDatabase();
+  if (!db.isTransaction) {
+    const error = new Error("A criação interna exige uma transação SQLite ativa.");
+    error.code = "ENTRY_TRANSACTION_REQUIRED";
+    throw error;
+  }
 
-    db.prepare(`
+  const now = new Date().toISOString();
+  const id = newId("ent");
+  const party = Party.findOrCreate(
+    user.id,
+    data.party_name,
+    validation.entry_type === "INCOME" ? "PAYER" : "PAYEE"
+  );
+  const draft = {
+    entry_type: validation.entry_type,
+    expected_amount_cents: validation.expected_amount_cents,
+    realized_amount_cents: 0,
+    due_date: validation.due_date || todayIso(user.timezone),
+    status: data.status || "PENDING",
+  };
+
+  draft.status = deriveStatus(draft, user.timezone);
+
+  db.prepare(`
         INSERT INTO financial_entries (
           id, user_id, entry_type, description, category_id, party_id,
           financial_account_id, expected_amount_cents, realized_amount_cents,
@@ -195,27 +205,31 @@ function create(user, data) {
           settled_at, status, origin, notes, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, ?, ?, ?, ?, ?)
       `)
-      .run(
-        id,
-        user.id,
-        draft.entry_type,
-        validation.description,
-        validation.category_id,
-        party ? party.id : null,
-        validation.financial_account_id,
-        validation.expected_amount_cents,
-        validation.competence_month,
-        draft.due_date,
-        draft.status,
-        data.origin || "MANUAL",
-        validation.notes,
-        now,
-        now
-      );
+    .run(
+      id,
+      user.id,
+      draft.entry_type,
+      validation.description,
+      validation.category_id,
+      party ? party.id : null,
+      validation.financial_account_id,
+      validation.expected_amount_cents,
+      validation.competence_month,
+      draft.due_date,
+      draft.status,
+      data.origin || "MANUAL",
+      validation.notes,
+      now,
+      now
+    );
 
-    AuditLog.record(user.id, "financial_entry", id, "created", { description: validation.description });
-    return getById(user, id);
+  const action = audit.action || "created";
+  const payload = audit.payload || { description: validation.description };
+  AuditLog.record(user.id, "financial_entry", id, action, {
+    ...payload,
+    duplicated_entry_id: action === "duplicated" ? id : undefined,
   });
+  return getById(user, id);
 }
 
 function update(user, id, data) {
@@ -313,20 +327,28 @@ function deleteMonth(user, data) {
 }
 
 function duplicate(user, id) {
-  const entry = getById(user, id);
-  if (!entry) return null;
+  const db = getDatabase();
+  return withImmediateTransaction(db, () => {
+    const entry = getById(user, id);
+    if (!entry) return null;
 
-  return create(user, {
-    entry_type: entry.entry_type,
-    description: `${entry.description} (cópia)`,
-    category_id: entry.category_id,
-    party_name: entry.party_name,
-    financial_account_id: entry.financial_account_id,
-    expected_amount: entry.expected_amount_cents / 100,
-    competence_month: entry.competence_month,
-    due_date: entry.due_date,
-    origin: "MANUAL",
-    notes: entry.notes,
+    const data = {
+      entry_type: entry.entry_type,
+      description: `${entry.description} (cópia)`,
+      category_id: entry.category_id,
+      party_name: entry.party_name,
+      financial_account_id: entry.financial_account_id,
+      expected_amount: entry.expected_amount_cents / 100,
+      competence_month: entry.competence_month,
+      due_date: entry.due_date,
+      origin: "MANUAL",
+      notes: entry.notes,
+    };
+    const validation = normalizeEntryData(user, data);
+    return createWithinTransaction(user, data, validation, {
+      action: "duplicated",
+      payload: { source_entry_id: entry.id },
+    });
   });
 }
 
