@@ -37,6 +37,8 @@ describe("migrations", () => {
     assert.ok(columnExists(database, "notification_preferences", "receipt_ready_review_enabled"));
     assert.ok(columnExists(database, "notification_preferences", "receipt_approved_enabled"));
     assert.ok(columnExists(database, "receipt_imports", "settlement_id"));
+    assert.ok(columnExists(database, "notifications", "claim_token"));
+    assert.ok(columnExists(database, "notifications", "claimed_at"));
     assert.equal(database.isTransaction, false);
   });
 

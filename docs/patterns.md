@@ -678,6 +678,21 @@ Regras do adaptador:
 - links de revisão, comprovante ou lançamento devem derivar somente de
   `APP_BASE_URL` validada e de IDs cuja propriedade foi confirmada no model.
 
+### Reivindicação da outbox
+
+- Consumidores de WhatsApp e e-mail devem reivindicar notificações com
+  `Notification.claimPending` antes de qualquer I/O externo.
+- O claim usa transação `IMMEDIATE`, muda o item para `PROCESSING`, registra
+  token opaco e instante, e incrementa a tentativa antes de liberar o SQLite.
+- A chamada ao provedor ocorre fora da transação. Somente o token vigente pode
+  concluir o item com `markSent` ou `markFailed`.
+- Claims abandonados podem ser recuperados depois do timeout; itens que já
+  atingiram o limite terminam em `FAILED` sem novo envio.
+- A garantia é de entrega pelo menos uma vez: se o provedor aceitar a mensagem
+  e o processo encerrar antes de persistir `SENT`, o item poderá ser reenviado.
+- Flags `running` dos schedulers evitam sobreposição local, mas a exclusão entre
+  processos é responsabilidade do claim persistido na outbox.
+
 ## 19.1. E-mail transacional
 
 - Cadastros públicos devem inserir `EMAIL/ACCOUNT_CREATED` na tabela

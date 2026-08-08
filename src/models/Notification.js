@@ -1,5 +1,8 @@
 const { getDatabase } = require("../database/connection");
+const { withImmediateTransaction } = require("../database/transaction");
 const { newId } = require("../services/id");
+
+const DEFAULT_CLAIM_TIMEOUT_MS = 5 * 60 * 1000;
 
 function createPending(input) {
   const now = new Date().toISOString();
@@ -88,6 +91,63 @@ function listPendingEmail(limit = 25, maxAttempts = 5, now = new Date().toISOStr
     .all(now, maxAttempts, limit);
 }
 
+function claimPending(channel, options = {}) {
+  const db = options.db || getDatabase();
+  const normalizedChannel = String(channel || "").trim().toUpperCase();
+  const limit = Math.min(Math.max(Number.parseInt(options.limit, 10) || 25, 1), 100);
+  const maxAttempts = Math.min(Math.max(Number.parseInt(options.maxAttempts, 10) || 5, 1), 100);
+  const now = options.now instanceof Date ? options.now : new Date(options.now || Date.now());
+  const claimTimeoutMs = positiveInteger(options.claimTimeoutMs, DEFAULT_CLAIM_TIMEOUT_MS);
+  const nowIso = now.toISOString();
+  const staleBeforeIso = new Date(now.getTime() - claimTimeoutMs).toISOString();
+  const claimToken = options.claimToken || newId("clm");
+
+  return withImmediateTransaction(db, () => {
+    db.prepare(`
+      UPDATE notifications
+      SET status = 'FAILED', claim_token = NULL, claimed_at = NULL,
+        error_message = COALESCE(error_message, 'Processamento interrompido após o limite de tentativas.'),
+        updated_at = ?
+      WHERE channel = ? AND status = 'PROCESSING' AND claimed_at <= ?
+        AND attempt_count >= ?
+    `).run(nowIso, normalizedChannel, staleBeforeIso, maxAttempts);
+
+    const candidates = db.prepare(`
+      SELECT notifications.id
+      FROM notifications
+      JOIN users ON users.id = notifications.user_id
+      WHERE notifications.channel = ?
+        AND notifications.attempt_count < ?
+        AND (? <> 'WHATSAPP' OR users.is_active = 1)
+        AND (
+          (notifications.status IN ('PENDING', 'FAILED') AND notifications.scheduled_at <= ?)
+          OR
+          (notifications.status = 'PROCESSING' AND notifications.claimed_at <= ?)
+        )
+      ORDER BY notifications.scheduled_at ASC, notifications.created_at ASC
+      LIMIT ?
+    `).all(normalizedChannel, maxAttempts, normalizedChannel, nowIso, staleBeforeIso, limit);
+
+    const claim = db.prepare(`
+      UPDATE notifications
+      SET status = 'PROCESSING', claim_token = ?, claimed_at = ?,
+        attempt_count = attempt_count + 1, updated_at = ?
+      WHERE id = ?
+    `);
+    candidates.forEach((candidate) => claim.run(claimToken, nowIso, nowIso, candidate.id));
+    if (!candidates.length) return [];
+
+    return db.prepare(`
+      SELECT notifications.*, users.phone_e164, users.email AS user_email,
+        users.name AS user_name, users.locale, users.timezone, users.is_active
+      FROM notifications
+      JOIN users ON users.id = notifications.user_id
+      WHERE notifications.claim_token = ?
+      ORDER BY notifications.scheduled_at ASC, notifications.created_at ASC
+    `).all(claimToken);
+  });
+}
+
 function listForAdmin(filters = {}) {
   const clauses = ["1 = 1"];
   const params = [];
@@ -158,36 +218,46 @@ function parsePayload(value) {
   }
 }
 
-function markSent(id, providerMessageId) {
-  getDatabase()
+function markSent(id, providerMessageId, claimToken, options = {}) {
+  const result = (options.db || getDatabase())
     .prepare(
       `
       UPDATE notifications
       SET status = 'SENT', sent_at = ?, provider_message_id = ?,
-        error_message = NULL, updated_at = ?
-      WHERE id = ?
+        error_message = NULL, claim_token = NULL, claimed_at = NULL, updated_at = ?
+      WHERE id = ? AND status = 'PROCESSING' AND claim_token = ?
     `
     )
-    .run(new Date().toISOString(), providerMessageId || null, new Date().toISOString(), id);
+    .run(new Date().toISOString(), providerMessageId || null, new Date().toISOString(), id, claimToken);
+  return result.changes === 1;
 }
 
 function markFailed(id, errorMessage, options = {}) {
   const attemptCount = Number.isInteger(options.attemptCount) ? options.attemptCount : null;
-  getDatabase()
+  const result = (options.db || getDatabase())
     .prepare(
       `
-      UPDATE notifications
-      SET status = 'FAILED', attempt_count = COALESCE(?, attempt_count + 1),
-        scheduled_at = COALESCE(?, scheduled_at), error_message = ?, updated_at = ?
-      WHERE id = ?
+      UPDATE notifications SET status = 'FAILED',
+        attempt_count = COALESCE(?, attempt_count), scheduled_at = COALESCE(?, scheduled_at),
+        error_message = ?, claim_token = NULL, claimed_at = NULL, updated_at = ?
+      WHERE id = ? AND status = 'PROCESSING' AND claim_token = ?
     `
     )
     .run(attemptCount, options.scheduledAt || null,
-      String(errorMessage || "Falha ao enviar notificação.").slice(0, 500), new Date().toISOString(), id);
+      String(errorMessage || "Falha ao enviar notificação.").slice(0, 500), new Date().toISOString(), id,
+      options.claimToken);
+  return result.changes === 1;
+}
+
+function positiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 module.exports = {
+  DEFAULT_CLAIM_TIMEOUT_MS,
   cancel,
+  claimPending,
   createPending,
   listForAdmin,
   listPending,

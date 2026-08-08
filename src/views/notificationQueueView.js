@@ -3,6 +3,7 @@ const { actionButton, buttonLink, csrfInput, escapeHtml, lucideIcon, option, pag
 
 const STATUS_OPTIONS = [
   ["PENDING", "Pendente"],
+  ["PROCESSING", "Processando"],
   ["FAILED", "Falhou"],
   ["SENT", "Enviada"],
   ["CANCELLED", "Cancelada"],
@@ -74,6 +75,7 @@ function queueSummary(entries) {
   return `<section class="queue-summary" aria-label="Resumo da fila">
     ${summaryCard("Exibidas", entries.length, "list-filter", "total")}
     ${summaryCard("Pendentes", count("PENDING"), "clock-3", "pending")}
+    ${summaryCard("Processando", count("PROCESSING"), "loader-circle", "processing")}
     ${summaryCard("Com falha", count("FAILED"), "triangle-alert", "failed")}
     ${summaryCard("Enviadas", count("SENT"), "circle-check-big", "sent")}
   </section>`;

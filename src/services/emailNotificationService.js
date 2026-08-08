@@ -20,7 +20,12 @@ async function runEmailNotificationCycle(options = {}) {
   const maxAttempts = positiveInteger(options.maxAttempts || process.env.EMAIL_NOTIFICATION_MAX_ATTEMPTS, 5);
   const client = options.client || createEmailClient(options.clientOptions);
   const now = options.now instanceof Date ? options.now : new Date();
-  const entries = Notification.listPendingEmail(options.limit || 25, maxAttempts, now.toISOString());
+  const entries = Notification.claimPending("EMAIL", {
+    limit: options.limit || 25,
+    maxAttempts,
+    now,
+    claimTimeoutMs: options.claimTimeoutMs,
+  });
 
   for (const notification of entries) {
     await processNotification(notification, { client, maxAttempts, now, from: options.from });
@@ -33,7 +38,7 @@ async function processNotification(notification, options) {
   const to = String(payload.to || notification.user_email || "").trim();
   const name = payload.name || notification.user_name;
   const template = accountCreatedEmail({ name });
-  const attempt = notification.attempt_count + 1;
+  const attempt = notification.attempt_count;
 
   try {
     const result = await options.client.send({
@@ -44,7 +49,13 @@ async function processNotification(notification, options) {
       text: template.text,
       idempotencyKey: notification.idempotency_key,
     });
-    Notification.markSent(notification.id, result.providerMessageId);
+    const completed = Notification.markSent(notification.id, result.providerMessageId, notification.claim_token);
+    if (!completed) {
+      logWarn("email.notification.claim_lost", "Resultado de envio ignorado porque a reivindicação não está mais vigente.", {
+        entity: "notification", entityId: notification.id,
+      });
+      return;
+    }
     logInfo("email.notification.sent", "Notificação por e-mail aceita pelo provedor.", {
       user: { id: notification.user_id, email: notification.user_email }, entity: "notification", entityId: notification.id,
       details: { provider: options.client.provider, eventType: notification.event_type, attempt },
@@ -55,6 +66,7 @@ async function processNotification(notification, options) {
       ? new Date(options.now.getTime() + BACKOFF_MS[Math.min(attempt - 1, BACKOFF_MS.length - 1)]).toISOString()
       : null;
     Notification.markFailed(notification.id, failureMessage(error), {
+      claimToken: notification.claim_token,
       scheduledAt,
       attemptCount: canRetry ? attempt : options.maxAttempts,
     });

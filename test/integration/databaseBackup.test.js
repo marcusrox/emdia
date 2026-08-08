@@ -61,7 +61,7 @@ describe("backup e restauração do SQLite", () => {
     assert.ok(fs.existsSync(first.manifestPath));
     assert.equal(first.integrityCheck, "ok");
     assert.equal(first.foreignKeyViolations, 0);
-    assert.equal(first.schemaMigration, "014_link_receipt_import_settlement");
+    assert.equal(first.schemaMigration, "015_add_notification_claims");
     assert.match(first.sha256, /^[a-f0-9]{64}$/);
     assert.equal(fixture.db.prepare("SELECT COUNT(*) AS total FROM users").get().total, sourceCountBefore);
 

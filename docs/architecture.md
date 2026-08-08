@@ -538,6 +538,14 @@ no mesmo processo. Usuários bloqueados depois do cadastro continuam elegíveis
 para esse aviso transacional. A fila administrativa reúne ambos os canais e
 permite filtrar, cancelar e reenviar mantendo nova chave idempotente.
 
+WhatsApp e e-mail reivindicam itens antes do envio por meio de um claim
+persistido em `notifications`. A transação `IMMEDIATE` seleciona e marca cada
+item como `PROCESSING`, mas termina antes do I/O externo. O token opaco impede
+que outro processo conclua o mesmo claim, e claims abandonados voltam a ser
+elegíveis depois de um timeout. O contrato oferece entrega pelo menos uma vez;
+uma interrupção depois da aceitação pelo provedor e antes de persistir `SENT`
+ainda pode resultar em reenvio.
+
 ## 16. Cabeçalhos das views internas
 
 `src/services/viewHelpers.js` fornece `pageHeading`, responsável pela marcação

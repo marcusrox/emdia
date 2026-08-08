@@ -143,7 +143,7 @@ async function sendPendingNotifications() {
     return;
   }
 
-  const notifications = Notification.listPending(25);
+  const notifications = Notification.claimPending("WHATSAPP", { limit: 25, maxAttempts: 5 });
 
   for (const notification of notifications) {
     const payload = parsePayload(notification.payload_json);
@@ -151,18 +151,24 @@ async function sendPendingNotifications() {
     const message = payload.message;
 
     if (!to) {
-      Notification.markFailed(notification.id, "Usuário sem telefone cadastrado.");
+      Notification.markFailed(notification.id, "Usuário sem telefone cadastrado.", { claimToken: notification.claim_token });
       continue;
     }
 
     if (!message) {
-      Notification.markFailed(notification.id, "Notificação sem mensagem.");
+      Notification.markFailed(notification.id, "Notificação sem mensagem.", { claimToken: notification.claim_token });
       continue;
     }
 
     try {
       const result = await client.sendText({ to, message });
-      Notification.markSent(notification.id, result.providerMessageId);
+      const completed = Notification.markSent(notification.id, result.providerMessageId, notification.claim_token);
+      if (!completed) {
+        logWarn("whatsapp.notification.claim_lost", "Resultado de envio ignorado porque a reivindicação não está mais vigente.", {
+          entity: "notification", entityId: notification.id,
+        });
+        continue;
+      }
       logInfo("whatsapp.notification.sent", "Notificação WhatsApp enviada.", {
         user: { id: notification.user_id, email: notification.user_email },
         entity: "notification",
@@ -173,7 +179,7 @@ async function sendPendingNotifications() {
         },
       });
     } catch (error) {
-      Notification.markFailed(notification.id, error.message);
+      Notification.markFailed(notification.id, error.message, { claimToken: notification.claim_token });
       logError("whatsapp.notification.failed", "Falha ao enviar notificação WhatsApp.", {
         user: { id: notification.user_id, email: notification.user_email },
         entity: "notification",

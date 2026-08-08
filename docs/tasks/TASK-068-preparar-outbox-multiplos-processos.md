@@ -136,3 +136,30 @@ simultaneamente.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação concluída
+
+- migration `015_add_notification_claims` adicionou token, instante e índices
+  de reivindicação à outbox existente;
+- WhatsApp e e-mail agora reivindicam lotes em transação `IMMEDIATE`, encerrada
+  antes de qualquer chamada externa;
+- cada claim muda o item para `PROCESSING`, incrementa a tentativa e somente o
+  token vigente pode concluir ou falhar a notificação;
+- claims expirados são recuperados enquanto houver tentativas e encerrados em
+  `FAILED` ao atingir o limite;
+- fila administrativa passou a exibir e filtrar o estado **Processando**;
+- testes usam duas conexões SQLite para comprovar posse exclusiva, rejeição de
+  token obsoleto e recuperação por timeout;
+- arquitetura e padrões documentam a garantia de entrega pelo menos uma vez;
+- release incrementada para `Release 08/08/2026 11:05 - 115`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 08/08/2026 11:05
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao
