@@ -2,6 +2,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { randomBytes } = require("node:crypto");
 
+const INVALID_LOCK_GRACE_MS = 5000;
+
 function acquireDatabaseLock(databasePath, { owner = "application" } = {}) {
   const resolvedDatabasePath = normalizeDatabasePath(databasePath);
   const lockPath = `${resolvedDatabasePath}.emdia.lock`;
@@ -51,7 +53,11 @@ function acquireDatabaseLock(databasePath, { owner = "application" } = {}) {
       if (error.code !== "EEXIST") throw error;
 
       const existingLock = readDatabaseLock(lockPath);
-      if (!existingLock || isProcessAlive(existingLock.pid)) {
+      if (!existingLock) {
+        removeStaleInvalidLock(lockPath);
+        continue;
+      }
+      if (isProcessAlive(existingLock.pid)) {
         throw databaseInUseError(existingLock);
       }
 
@@ -108,6 +114,42 @@ function removeStaleLock(lockPath, expectedLock) {
   }
 }
 
+function removeStaleInvalidLock(lockPath) {
+  let initialStat;
+  try {
+    initialStat = fs.statSync(lockPath);
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+
+  if (Date.now() - initialStat.mtimeMs < INVALID_LOCK_GRACE_MS) {
+    throw databaseInUseError(null);
+  }
+
+  const currentLock = readDatabaseLock(lockPath);
+  if (currentLock) {
+    throw databaseInUseError(currentLock);
+  }
+
+  let currentStat;
+  try {
+    currentStat = fs.statSync(lockPath);
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  if (currentStat.mtimeMs !== initialStat.mtimeMs || currentStat.size !== initialStat.size) {
+    throw databaseInUseError(readDatabaseLock(lockPath));
+  }
+
+  try {
+    fs.unlinkSync(lockPath);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
 function releaseOwnedLock(lockPath, token) {
   const currentLock = readDatabaseLock(lockPath);
   if (!currentLock || currentLock.token !== token) return;
@@ -130,6 +172,7 @@ function databaseInUseError(lock) {
 }
 
 module.exports = {
+  INVALID_LOCK_GRACE_MS,
   acquireDatabaseLock,
   readDatabaseLock,
 };

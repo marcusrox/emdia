@@ -443,9 +443,8 @@ function entryFormView({ user, entry, competence, categories, accounts, action, 
           <input name="expected_amount" inputmode="decimal" value="${escapeHtml(expectedAmount)}" required data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(errors, "expected_amount")}>
           ${fieldError(errors, "expected_amount")}
         </label>
-        <label>Valor realizado
-          <input name="realized_amount" inputmode="decimal" value="${escapeHtml(realizedAmount)}" data-validate-money data-error-message="Informe um valor válido, como 100,00."${fieldErrorAttributes(errors, "realized_amount")}>
-          ${fieldError(errors, "realized_amount")}
+        <label>Valor realizado pelas baixas
+          <input class="field-readonly" value="${escapeHtml(realizedAmount)}" readonly aria-readonly="true">
         </label>
         <label>Vencimento
           <input type="date" name="due_date" value="${escapeHtml(fieldValue("due_date"))}" required${fieldErrorAttributes(errors, "due_date")}>

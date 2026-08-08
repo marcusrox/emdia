@@ -1702,6 +1702,12 @@ textarea {
   width: 100%;
 }
 
+label input.field-readonly {
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .queue-admin-chip {
   align-items: center;
   background: #e8f3f1;

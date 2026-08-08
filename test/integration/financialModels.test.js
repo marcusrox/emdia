@@ -36,6 +36,29 @@ describe("models financeiros", () => {
     assert.equal(db.prepare("SELECT COUNT(*) total FROM audit_logs WHERE entity_id = ? AND action = 'settled'").get(entry.id).total, 2);
   });
 
+  it("mantém settlements como única fonte do valor realizado", () => {
+    const fixture = createFinancialFixture();
+    const entry = createEntry(fixture, { realized_amount: "25,00" });
+    assert.equal(entry.realized_amount_cents, 0);
+
+    Entry.settle(fixture.user, entry.id, settlement(fixture));
+    const updated = Entry.update(fixture.user, entry.id, {
+      entry_type: "EXPENSE",
+      description: "Conta atualizada",
+      category_id: fixture.categoryId,
+      financial_account_id: fixture.accountId,
+      expected_amount: "100,00",
+      realized_amount: "99,00",
+      competence_month: "2026-07",
+      due_date: "2999-07-10",
+      party_name: "",
+      notes: "",
+    });
+
+    assert.equal(updated.realized_amount_cents, 4000);
+    assert.equal(db.prepare("SELECT SUM(total_cents) AS total FROM settlements WHERE financial_entry_id = ?").get(entry.id).total, 4000);
+  });
+
   it("calcula ajustes e exige confirmação para valor realizado acima do previsto", () => {
     const fixture = createFinancialFixture();
     const entry = createEntry(fixture);
@@ -198,6 +221,35 @@ describe("models financeiros", () => {
     db.exec("DROP TRIGGER fail_settlement_audit;");
   });
 
+  it("mantém criação, edição e cancelamento atômicos com a auditoria", () => {
+    const fixture = createFinancialFixture();
+    const payload = {
+      entry_type: "EXPENSE", description: "Conta atômica", category_id: fixture.categoryId,
+      financial_account_id: fixture.accountId, expected_amount: "100,00", realized_amount: "0,00",
+      competence_month: "2026-07", due_date: "2999-07-10", party_name: "Favorecido novo",
+    };
+
+    db.exec("CREATE TRIGGER fail_created_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'created' BEGIN SELECT RAISE(ABORT, 'created audit failure'); END;");
+    assert.throws(() => Entry.create(fixture.user, payload), /created audit failure/);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries").get().total, 0);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM parties WHERE user_id = ?").get(fixture.user.id).total, 0);
+    db.exec("DROP TRIGGER fail_created_audit;");
+
+    const entry = Entry.create(fixture.user, { ...payload, party_name: "" });
+    db.exec("CREATE TRIGGER fail_updated_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'updated' BEGIN SELECT RAISE(ABORT, 'updated audit failure'); END;");
+    assert.throws(() => Entry.update(fixture.user, entry.id, {
+      ...payload, description: "Descrição não persistida", party_name: "Outro favorecido",
+    }), /updated audit failure/);
+    assert.equal(Entry.getById(fixture.user, entry.id).description, "Conta atômica");
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM parties WHERE user_id = ?").get(fixture.user.id).total, 0);
+    db.exec("DROP TRIGGER fail_updated_audit;");
+
+    db.exec("CREATE TRIGGER fail_cancelled_audit BEFORE INSERT ON audit_logs WHEN NEW.action = 'cancelled' BEGIN SELECT RAISE(ABORT, 'cancelled audit failure'); END;");
+    assert.throws(() => Entry.cancel(fixture.user, entry.id), /cancelled audit failure/);
+    assert.equal(Entry.getById(fixture.user, entry.id).status, "PENDING");
+    db.exec("DROP TRIGGER fail_cancelled_audit;");
+  });
+
   it("estorna baixa, recalcula total e preserva histórico", () => {
     const fixture = createFinancialFixture();
     const entry = createEntry(fixture);
@@ -259,6 +311,19 @@ describe("models financeiros", () => {
     assert.equal(db.isTransaction, false);
     assert.equal(db.prepare("SELECT deleted_at FROM financial_entries WHERE id = ?").get(entry.id).deleted_at, null);
     db.exec("DROP TRIGGER fail_month_delete_audit;");
+  });
+
+  it("exclui lançamentos cancelados das projeções do dashboard", () => {
+    const fixture = createFinancialFixture();
+    const active = createEntry(fixture, { description: "Despesa ativa", expected_amount: "40,00" });
+    const cancelled = createEntry(fixture, { description: "Despesa cancelada", expected_amount: "100,00" });
+    Entry.cancel(fixture.user, cancelled.id);
+
+    const dashboard = Entry.dashboard(fixture.user, "2026-07");
+    assert.equal(dashboard.cards.expenseExpected, 4000);
+    assert.equal(dashboard.cards.expectedBalance, -4000);
+    assert.equal(dashboard.byCategory[active.category_name], 4000);
+    assert.ok(dashboard.entries.some((entry) => entry.id === cancelled.id));
   });
 
   it("preserva o último administrador e encerra retornos funcionais", () => {

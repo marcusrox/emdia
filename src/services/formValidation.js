@@ -231,7 +231,6 @@ function validateEntryPayload(user, data, dependencies) {
   const competenceMonth = validateCompetenceMonth(result, "competence_month", "Informe uma competência válida.");
   const dueDate = validateIsoDate(result, "due_date", { message: "Informe um vencimento válido." });
   const expectedAmountCents = validateMoney(result, "expected_amount");
-  const realizedAmountCents = validateMoney(result, "realized_amount", { required: false });
   const category = validateOptionalReference(result, "category_id", user, getCategory, "Selecione uma categoria válida.");
   const account = validateOptionalReference(result, "financial_account_id", user, getAccount, "Selecione uma conta válida.");
 
@@ -247,7 +246,6 @@ function validateEntryPayload(user, data, dependencies) {
       dueDate,
       entryType,
       expectedAmountCents,
-      realizedAmountCents,
     },
   };
 }

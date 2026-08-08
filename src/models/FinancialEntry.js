@@ -167,103 +167,119 @@ function timezoneFrom(userOrId) {
 
 function create(user, data) {
   const validation = normalizeEntryData(user, data);
-  const now = new Date().toISOString();
-  const id = newId("ent");
-  const party = Party.findOrCreate(user.id, data.party_name, validation.entry_type === "INCOME" ? "PAYER" : "PAYEE");
-  const draft = {
-    entry_type: validation.entry_type,
-    expected_amount_cents: validation.expected_amount_cents,
-    realized_amount_cents: validation.realized_amount_cents,
-    due_date: validation.due_date || todayIso(user.timezone),
-    status: data.status || "PENDING",
-  };
+  const db = getDatabase();
 
-  draft.status = deriveStatus(draft, user.timezone);
-
-  getDatabase()
-    .prepare(`
-      INSERT INTO financial_entries (
-        id, user_id, entry_type, description, category_id, party_id,
-        financial_account_id, expected_amount_cents, realized_amount_cents,
-        competence_month, due_date,
-        settled_at, status, origin, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-    .run(
-      id,
+  return withImmediateTransaction(db, () => {
+    const now = new Date().toISOString();
+    const id = newId("ent");
+    const party = Party.findOrCreate(
       user.id,
-      draft.entry_type,
-      validation.description,
-      validation.category_id,
-      party ? party.id : null,
-      validation.financial_account_id,
-      validation.expected_amount_cents,
-      validation.realized_amount_cents,
-      validation.competence_month,
-      draft.due_date,
-      data.settled_at || null,
-      draft.status,
-      data.origin || "MANUAL",
-      validation.notes,
-      now,
-      now
+      data.party_name,
+      validation.entry_type === "INCOME" ? "PAYER" : "PAYEE"
     );
+    const draft = {
+      entry_type: validation.entry_type,
+      expected_amount_cents: validation.expected_amount_cents,
+      realized_amount_cents: 0,
+      due_date: validation.due_date || todayIso(user.timezone),
+      status: data.status || "PENDING",
+    };
 
-  AuditLog.record(user.id, "financial_entry", id, "created", { description: validation.description });
-  return getById(user.id, id);
+    draft.status = deriveStatus(draft, user.timezone);
+
+    db.prepare(`
+        INSERT INTO financial_entries (
+          id, user_id, entry_type, description, category_id, party_id,
+          financial_account_id, expected_amount_cents, realized_amount_cents,
+          competence_month, due_date,
+          settled_at, status, origin, notes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, ?, ?, ?, ?, ?)
+      `)
+      .run(
+        id,
+        user.id,
+        draft.entry_type,
+        validation.description,
+        validation.category_id,
+        party ? party.id : null,
+        validation.financial_account_id,
+        validation.expected_amount_cents,
+        validation.competence_month,
+        draft.due_date,
+        draft.status,
+        data.origin || "MANUAL",
+        validation.notes,
+        now,
+        now
+      );
+
+    AuditLog.record(user.id, "financial_entry", id, "created", { description: validation.description });
+    return getById(user.id, id);
+  });
 }
 
 function update(user, id, data) {
-  const existing = getById(user.id, id);
-  if (!existing) return null;
+  const db = getDatabase();
 
-  const validation = normalizeEntryData(user, data);
-  const party = Party.findOrCreate(user.id, data.party_name, validation.entry_type === "INCOME" ? "PAYER" : "PAYEE");
-  const updated = {
-    ...existing,
-    entry_type: validation.entry_type,
-    expected_amount_cents: validation.expected_amount_cents,
-    realized_amount_cents: validation.realized_amount_cents,
-    due_date: validation.due_date || existing.due_date,
-    status: data.status || existing.status,
-  };
-  updated.status = deriveStatus(updated, user.timezone);
+  return withImmediateTransaction(db, () => {
+    const existing = getById(user.id, id);
+    if (!existing) return null;
 
-  getDatabase()
-    .prepare(`
-      UPDATE financial_entries
-      SET entry_type = ?, description = ?, category_id = ?, party_id = ?,
-        financial_account_id = ?, expected_amount_cents = ?,
-        realized_amount_cents = ?, competence_month = ?,
-        due_date = ?, status = ?, notes = ?, updated_at = ?
-      WHERE user_id = ? AND id = ?
-    `)
-    .run(
-      updated.entry_type,
-      validation.description,
-      validation.category_id,
-      party ? party.id : null,
-      validation.financial_account_id,
-      updated.expected_amount_cents,
-      updated.realized_amount_cents,
-      validation.competence_month,
-      updated.due_date,
-      updated.status,
-      validation.notes,
-      new Date().toISOString(),
+    const validation = normalizeEntryData(user, data);
+    const party = Party.findOrCreate(
       user.id,
-      id
+      data.party_name,
+      validation.entry_type === "INCOME" ? "PAYER" : "PAYEE"
     );
+    const updated = {
+      ...existing,
+      entry_type: validation.entry_type,
+      expected_amount_cents: validation.expected_amount_cents,
+      due_date: validation.due_date || existing.due_date,
+      status: data.status || existing.status,
+    };
+    updated.status = deriveStatus(updated, user.timezone);
 
-  AuditLog.record(user.id, "financial_entry", id, "updated", { description: validation.description });
-  return getById(user.id, id);
+    db.prepare(`
+        UPDATE financial_entries
+        SET entry_type = ?, description = ?, category_id = ?, party_id = ?,
+          financial_account_id = ?, expected_amount_cents = ?, competence_month = ?,
+          due_date = ?, status = ?, notes = ?, updated_at = ?
+        WHERE user_id = ? AND id = ?
+      `)
+      .run(
+        updated.entry_type,
+        validation.description,
+        validation.category_id,
+        party ? party.id : null,
+        validation.financial_account_id,
+        updated.expected_amount_cents,
+        validation.competence_month,
+        updated.due_date,
+        updated.status,
+        validation.notes,
+        new Date().toISOString(),
+        user.id,
+        id
+      );
+
+    AuditLog.record(user.id, "financial_entry", id, "updated", { description: validation.description });
+    return getById(user.id, id);
+  });
 }
 
 function cancel(user, id) {
-  getDatabase()
-    .prepare("UPDATE financial_entries SET status = 'CANCELLED', updated_at = ? WHERE user_id = ? AND id = ?")
-    .run(new Date().toISOString(), user.id, id);
-  AuditLog.record(user.id, "financial_entry", id, "cancelled");
+  const db = getDatabase();
+
+  return withImmediateTransaction(db, () => {
+    const existing = getById(user.id, id);
+    if (!existing) return null;
+
+    db.prepare("UPDATE financial_entries SET status = 'CANCELLED', updated_at = ? WHERE user_id = ? AND id = ?")
+      .run(new Date().toISOString(), user.id, id);
+    AuditLog.record(user.id, "financial_entry", id, "cancelled");
+    return getById(user.id, id);
+  });
 }
 
 function deleteMonth(user, data) {
@@ -501,14 +517,14 @@ function normalizeEntryData(user, data) {
     financial_account_id: validation.normalized.account?.id || null,
     expected_amount_cents: validation.normalized.expectedAmountCents,
     notes: data.notes || null,
-    realized_amount_cents: validation.normalized.realizedAmountCents,
   };
 }
 
 function dashboard(user, competence) {
   const entries = list(user, { competence });
+  const activeEntries = entries.filter((entry) => entry.status !== "CANCELLED");
   const total = (type, predicate = () => true, field = "expected_amount_cents") =>
-    entries
+    activeEntries
       .filter((entry) => entry.entry_type === type && predicate(entry))
       .reduce((sum, entry) => sum + Number(entry[field] || 0), 0);
 
@@ -528,7 +544,7 @@ function dashboard(user, competence) {
       expensePending: total("EXPENSE", pending),
       dueToday: entries.filter((entry) => entry.due_date === today && pending(entry)).length,
     },
-    byCategory: entries.reduce((acc, entry) => {
+    byCategory: activeEntries.reduce((acc, entry) => {
       const key = entry.category_name || "Sem categoria";
       acc[key] = (acc[key] || 0) + (entry.entry_type === "EXPENSE" ? entry.expected_amount_cents : 0);
       return acc;
