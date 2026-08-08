@@ -615,15 +615,19 @@ Se uma validação não puder ser executada, informe o motivo na resposta final.
 
 ## 18. Evolução futura
 
-Itens previstos no PRD, mas ainda não implementados no MVP atual:
+O MVP atual já possui autenticação e sessões, usuários isolados, recorrências e
+comprovantes JPEG/PNG recebidos pelo WAHA, armazenados privadamente, extraídos
+via OpenRouter e submetidos à revisão humana.
 
-- autenticação real;
-- recorrências;
-- anexos;
-- OCR;
-- relatórios avancados;
-- TypeScript;
-- EJS/Drizzle.
+Itens do PRD ainda não implementados ou apenas parciais:
+
+- contas compartilhadas e colaboração entre usuários;
+- parcelamento;
+- CRUD dedicado de favorecidos e pagadores;
+- upload web genérico, PDF e arquivo fiscal de anexos;
+- relatórios avançados;
+- confirmação de entrega outbound por webhook;
+- TypeScript, EJS e Drizzle.
 
 Ao implementar qualquer item futuro, preserve os principios atuais:
 
@@ -693,7 +697,7 @@ Regras do adaptador:
 - Flags `running` dos schedulers evitam sobreposição local, mas a exclusão entre
   processos é responsabilidade do claim persistido na outbox.
 
-## 19.1. E-mail transacional
+### 19.1. E-mail transacional
 
 - Cadastros públicos devem inserir `EMAIL/ACCOUNT_CREATED` na tabela
   `notifications` dentro da mesma transação de usuário, contas e categorias.

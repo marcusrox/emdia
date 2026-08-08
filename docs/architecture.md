@@ -72,6 +72,7 @@ src/routes/
 src/middleware/
   auth.js: sessão, autenticação, autorização e CSRF
   errors.js: formato de resposta e handlers 404/405/500
+  securityHeaders.js: CSP e cabeçalhos defensivos
 
 src/database/
   connection.js
@@ -89,13 +90,15 @@ src/models/
   FinancialEntry.js
   Settlement.js
   AuditLog.js
+  Recurrence.js
+  Notification.js e NotificationPreference.js
+  ReceiptImport.js
 
 src/services/
-  dateService.js
-  moneyService.js
-  statusService.js
-  id.js
-  viewEngine.js
+  regras financeiras, competência, validação e renderização
+  autenticação, auditoria operacional, backup e readiness
+  outbox de WhatsApp/e-mail e respectivos schedulers
+  webhook, armazenamento, extração e worker de comprovantes
 
 src/views/
   layout.js
@@ -465,31 +468,35 @@ abrem porta.
 
 ## 13. Limites do MVP atual
 
-Ainda não existem:
+O MVP já possui autenticação por sessão, cadastro público, administração de
+usuários, isolamento por `user_id`, recorrências mensais e recebimento de
+comprovantes JPEG/PNG pelo WAHA. A extração usa OpenRouter com Structured
+Outputs, armazenamento privado temporário e aprovação humana obrigatória.
 
-- autenticação real;
-- multiusuario real na interface;
-- recorrências;
-- anexos;
-- OCR;
-- relatórios avancados;
-- templates EJS;
-- API JSON completa.
+Limitações atuais:
 
-Esses itens estao previstos no PRD ou em evolução futura, mas não devem ser
-presumidos em mudanças pequenas.
+- não há contas compartilhadas nem colaboração financeira entre usuários;
+- favorecidos são criados pelos fluxos financeiros, sem CRUD administrativo
+  dedicado;
+- parcelamento e relatórios avançados ainda não foram implementados;
+- comprovantes não aceitam PDF, não possuem upload web genérico e não formam
+  arquivo fiscal de longo prazo;
+- o backup SQLite não inclui as imagens privadas de comprovantes;
+- notificações não possuem confirmação de entrega por webhook do provedor;
+- não existem templates EJS, API JSON completa, TypeScript ou Drizzle.
 
 ## 14. Caminhos de evolução
 
 Evolucoes prováveis:
 
-1. autenticar usuários;
-2. implementar recorrências;
-3. adicionar anexos e comprovantes;
-4. criar OCR com revisão humana;
-5. evoluir a integração WhatsApp para entrada de mensagens e mídias;
-6. extrair relatórios;
-7. avaliar migracao para EJS/TypeScript/Drizzle se o projeto crescer.
+1. implementar parcelamento;
+2. criar administração dedicada de favorecidos e pagadores;
+3. adicionar upload web e PDF ao fluxo de comprovantes;
+4. definir backup e retenção de longo prazo para arquivos privados;
+5. extrair relatórios mensais e históricos;
+6. adicionar métricas e confirmação de entrega das notificações;
+7. avaliar migracao para EJS/TypeScript/Drizzle apenas se o crescimento do
+   projeto justificar.
 
 Qualquer evolução deve preservar:
 
@@ -525,7 +532,7 @@ seguros, a revisão usa os campos identificados na importação e a aprovação 
 o lançamento financeiro confirmado. Dados textuais são normalizados e links
 somente são incluídos quando `APP_BASE_URL` é válida.
 
-## 15.1. E-mail transacional pelo Resend
+### 15.1. E-mail transacional pelo Resend
 
 `emailNotificationService.js` consome somente itens `EMAIL` já enfileirados. O
 cadastro gera a chave idempotente `email:<user_id>:account-created`; o worker
@@ -567,7 +574,7 @@ variáveis permitidas e configurações seguras. A view
 O limite de segurança fica no service: segredos, URLs, caminhos absolutos,
 identificadores da máquina e variáveis desconhecidas não são devolvidos para a
 camada de renderização.
-## Recebimento de comprovantes (WAHA)
+## 18. Recebimento de comprovantes (WAHA)
 
 O endpoint público `POST /webhooks/whatsapp/waha` é registrado antes de sessão,
 autenticação e CSRF e usa um parser de corpo bruto dedicado. Depois de validar

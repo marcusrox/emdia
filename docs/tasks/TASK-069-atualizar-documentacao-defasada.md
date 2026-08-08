@@ -119,3 +119,28 @@ entregue, limitação atual e evolução futura.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação concluída
+
+- README passou a listar comprovantes recebidos, extração assistida e os
+  próximos passos que realmente permanecem pendentes;
+- arquitetura e padrões deixaram de classificar autenticação, multiusuário
+  isolado, recorrências e comprovantes como inexistentes;
+- limites atuais agora distinguem recursos entregues, parciais e futuros;
+- mapa de módulos passou a representar middleware de segurança, notificações,
+  recorrências e o fluxo de comprovantes;
+- PRD foi identificado como documento orientador/histórico, teve numeração
+  duplicada corrigida e o incremento de comprovantes alinhado ao vínculo com
+  lançamentos existentes;
+- release incrementada para `Release 08/08/2026 11:06 - 116`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 08/08/2026 11:06
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

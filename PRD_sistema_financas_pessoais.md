@@ -5,6 +5,12 @@
 > Data: 10/07/2026  
 > Status: Proposta de MVP
 
+> Nota de implementação (08/08/2026): este PRD permanece como documento
+> orientador e histórico. A fonte de verdade da arquitetura entregue é
+> `docs/architecture.md`; padrões vigentes ficam em `docs/patterns.md`. A
+> implementação atual usa CommonJS, HTML server-side por funções, SQLite direto
+> e adaptadores configuráveis, sem EJS, TypeScript ou Drizzle.
+
 ## Identidade do produto
 
 **Nome:** EmDia  
@@ -1801,7 +1807,7 @@ Antes de atualizar:
 
 
 
-### 17.10 Exemplos de mensagens do EmDia
+### 17.14 Exemplos de mensagens do EmDia
 
 ```text
 EmDia: sua conta de energia vence amanhã.
@@ -1962,7 +1968,7 @@ attachment-process:{attachmentId}:{version}
 
 ## 20. Interface
 
-### 19.1 Menu principal
+### 20.1 Menu principal
 
 - Dashboard;
 - Lançamentos;
@@ -1975,7 +1981,7 @@ attachment-process:{attachmentId}:{version}
 - Relatórios;
 - Configurações.
 
-### 19.2 Dashboard
+### 20.2 Dashboard
 
 Ao abrir o dashboard, a competência selecionada deve ser o mês corrente. A
 interface deve exibir claramente o mês em uso e oferecer navegação rápida para
@@ -1998,7 +2004,7 @@ Blocos:
 - documentos aguardando revisão;
 - últimos pagamentos.
 
-### 19.3 Listagem de lançamentos
+### 20.3 Listagem de lançamentos
 
 A listagem deve abrir com filtro de competência igual ao mês corrente. O seletor
 de competência deve permanecer visível durante filtros, paginação e ações HTMX.
@@ -2022,7 +2028,7 @@ Ações:
 - duplicar;
 - cancelar.
 
-### 19.4 HTMX
+### 20.4 HTMX
 
 Usar HTMX para:
 
@@ -2037,7 +2043,7 @@ Usar HTMX para:
 - seleção de competência;
 - retorno rápido para a competência do mês corrente.
 
-### 19.5 Rotas de fragmentos
+### 20.5 Rotas de fragmentos
 
 ```text
 GET  /ui/entries/table
@@ -2047,7 +2053,7 @@ POST /ui/entries/:id/settle
 POST /ui/entries/:id/cancel
 ```
 
-### 19.6 Calendário
+### 20.6 Calendário
 
 Visualizações:
 
@@ -2682,7 +2688,7 @@ Não implementar todas as funcionalidades em uma única alteração.
 
 ---
 
-## 35. Referências técnicas
+## 34. Referências técnicas
 
 - Evolution API utilizada pelo projeto: https://evolution.idevsolutions.com.br/
 - Express 5 API: https://expressjs.com/en/5x/api.html
@@ -2705,8 +2711,9 @@ Não implementar todas as funcionalidades em uma única alteração.
 
 O MVP passa a aceitar imagens JPEG/PNG recebidas exclusivamente pelo WAHA. O
 usuário é identificado pelo celular E.164 único, a imagem é processada
-assincronamente via OpenRouter e o resultado permanece em uma caixa de revisão. A
-aprovação humana cria uma despesa já paga, com baixa em `settlements` e
-competência derivada da data civil de pagamento. PDFs, criação automática sem
+assincronamente via OpenRouter e o resultado permanece em uma caixa de revisão.
+A aprovação humana pode criar uma despesa já paga ou registrar uma baixa em uma
+despesa existente. Em ambos os casos, `settlements` preserva o histórico e o
+comprovante referencia o lançamento e a baixa. PDFs, criação automática sem
 revisão, arquivo fiscal de longo prazo e administração da sessão WAHA continuam
 fora do escopo.

@@ -24,6 +24,8 @@ baixas financeiras. O projeto foi implementado a partir do PRD técnico
 - 📤 Exportação CSV conforme a competência e os filtros ativos.
 - 💬 Notificações por WhatsApp com `mock`, Evolution API ou WAHA.
 - ✉️ E-mail transacional de conta criada pelo Resend, com fila e cliente `mock`.
+- 📥 Comprovantes JPEG/PNG recebidos pelo WAHA, extraídos via OpenRouter e
+  submetidos à revisão humana antes da baixa.
 - 🛡️ Login por sessão, proteção CSRF e administração de usuários.
 - 📜 Auditoria funcional, fila de notificações e logs operacionais.
 - 🧪 Testes unitários e de integração com banco SQLite isolado.
@@ -253,6 +255,7 @@ emdia/
       Notification.js
       NotificationPreference.js
       Party.js
+      ReceiptImport.js
       Recurrence.js
       Settlement.js
       User.js
@@ -271,6 +274,8 @@ emdia/
       id.js
       moneyService.js
       notificationService.js
+      receiptImportWorker.js
+      receiptStorageService.js
       statusService.js
       viewEngine.js
       viewHelpers.js
@@ -388,11 +393,12 @@ node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { get
 ## 🛣️ Próximos passos sugeridos
 
 - 🧾 Parcelamento básico com geração transacional das parcelas.
-- 👥 Cadastro e manutenção de favorecidos e pagadores.
+- 👥 Administração dedicada de favorecidos e pagadores já criados pelos fluxos
+  financeiros.
 - 📈 Relatórios mensais e históricos.
-- 📎 Upload de comprovantes, boletos e recibos.
-- 🤖 OCR com revisão humana antes da gravação.
-- 📲 Recebimento de documentos pelo WhatsApp.
+- 📎 Upload autenticado de comprovantes, boletos e recibos fora do WhatsApp.
+- 📄 Suporte a PDF e estratégia de arquivo fiscal para comprovantes.
+- 📊 Métricas de entrega e webhooks de confirmação dos provedores outbound.
 
 ---
 
@@ -404,14 +410,16 @@ Persistência: SQLite local
 Interface: server-rendered HTML
 Foco atual: controle mensal de contas, receitas e despesas
 ```
+
 ## Comprovantes recebidos pelo WhatsApp
 
 O EmDia pode receber imagens JPEG/PNG por um webhook `message` do WAHA,
 identificar o usuário pelo telefone canônico ou pelo alias brasileiro legado,
 extrair os dados com a Responses API
 via OpenRouter e disponibilizar a importação em **Comprovantes** para revisão. A
-aprovação cria uma despesa paga e a respectiva baixa; nenhuma extração cria um
-lançamento definitivo sem confirmação humana.
+aprovação pode criar uma despesa paga ou vincular o comprovante à baixa de uma
+despesa existente; nenhuma extração cria ou altera um lançamento definitivo
+sem confirmação humana.
 
 Configuração mínima adicional:
 
