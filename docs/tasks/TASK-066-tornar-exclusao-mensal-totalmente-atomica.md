@@ -95,3 +95,25 @@ realmente alterada pelo comando de atualização.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação concluída
+
+- exclusão lógica mensal passou a usar `withImmediateTransaction`;
+- a quantidade excluída agora vem de `UPDATE ... .changes`, dentro da mesma
+  transação que registra a auditoria;
+- o retorno funcional e o payload auditado refletem exatamente as linhas
+  alteradas, inclusive quando nenhuma linha permanece elegível;
+- testes cobrem múltiplos lançamentos, repetição da operação, outra competência,
+  outro usuário e rollback por falha de auditoria;
+- release incrementada para `Release 08/08/2026 10:52 - 113`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 08/08/2026 10:52
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

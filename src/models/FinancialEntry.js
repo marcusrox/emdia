@@ -1,7 +1,6 @@
 const { getDatabase } = require("../database/connection");
 const {
   withImmediateTransaction,
-  withTransaction,
 } = require("../database/transaction");
 const Account = require("./FinancialAccount");
 const AuditLog = require("./AuditLog");
@@ -292,32 +291,25 @@ function deleteMonth(user, data) {
   const db = getDatabase();
   const now = new Date().toISOString();
   const competence = validation.normalized.competenceMonth;
-  const countRow = db
-    .prepare(
-      `SELECT COUNT(*) AS count
-       FROM financial_entries
-       WHERE user_id = ? AND competence_month = ? AND deleted_at IS NULL`
-    )
-    .get(user.id, competence);
-  const deletedCount = Number(countRow?.count || 0);
 
-  withTransaction(db, () => {
-    db.prepare(
+  return withImmediateTransaction(db, () => {
+    const result = db.prepare(
       `UPDATE financial_entries
        SET deleted_at = ?, updated_at = ?
        WHERE user_id = ? AND competence_month = ? AND deleted_at IS NULL`
     ).run(now, now, user.id, competence);
+    const deletedCount = Number(result.changes || 0);
 
     AuditLog.record(user.id, "financial_entries", `${user.id}:${competence}`, "month_deleted", {
       competence_month: competence,
       deleted_count: deletedCount,
     });
-  });
 
-  return {
-    competence,
-    deletedCount,
-  };
+    return {
+      competence,
+      deletedCount,
+    };
+  });
 }
 
 function duplicate(user, id) {

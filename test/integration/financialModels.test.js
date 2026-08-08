@@ -330,6 +330,33 @@ describe("models financeiros", () => {
     db.exec("DROP TRIGGER fail_month_delete_audit;");
   });
 
+  it("retorna a quantidade efetivamente excluída dentro da transação mensal", () => {
+    const fixture = createFinancialFixture();
+    const other = createFinancialFixture();
+    createEntry(fixture, { description: "Primeira" });
+    createEntry(fixture, { description: "Segunda" });
+    createEntry(fixture, { description: "Outro mês", competence_month: "2026-08" });
+    createEntry(other, { description: "Outro usuário" });
+    const confirmation = {
+      competence_month: "2026-07",
+      confirmation: "2026-07",
+      acknowledge_impact: "on",
+    };
+
+    assert.deepEqual(Entry.deleteMonth(fixture.user, confirmation), {
+      competence: "2026-07",
+      deletedCount: 2,
+    });
+    assert.deepEqual(Entry.deleteMonth(fixture.user, confirmation), {
+      competence: "2026-07",
+      deletedCount: 0,
+    });
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries WHERE user_id = ? AND deleted_at IS NULL").get(fixture.user.id).total, 1);
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM financial_entries WHERE user_id = ? AND deleted_at IS NULL").get(other.user.id).total, 1);
+    const audits = db.prepare("SELECT payload_json FROM audit_logs WHERE entity_id = ? AND action = 'month_deleted' ORDER BY created_at").all(`${fixture.user.id}:2026-07`);
+    assert.deepEqual(audits.map((item) => JSON.parse(item.payload_json).deleted_count), [2, 0]);
+  });
+
   it("exclui lançamentos cancelados das projeções do dashboard", () => {
     const fixture = createFinancialFixture();
     const active = createEntry(fixture, { description: "Despesa ativa", expected_amount: "40,00" });
