@@ -26,7 +26,7 @@ function registerSettlementRoutes(app, { requireCsrf }) {
       return redirect(res, entry ? `/entries/${entry.id}` : "/entries");
     } catch (error) {
       if (isValidationError(error)) {
-        const entry = Entry.getById(req.user.id, req.params.id);
+        const entry = Entry.getById(req.user, req.params.id);
         if (!entry) return sendHtml(res, notFoundView(req.user), 404);
 
         if (error.code === "SETTLEMENT_NOT_ALLOWED") {

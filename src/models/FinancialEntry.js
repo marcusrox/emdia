@@ -20,7 +20,7 @@ const { deriveStatus, settlementEligibility } = require("../services/statusServi
 
 function list(user, filters = {}) {
   const competence = normalizeCompetence(filters.competence, user.timezone);
-  refreshOverdueStatuses(user, competence);
+  refreshOverdueStatuses(user, competence, filters.now);
 
   const params = [user.id, competence];
   const clauses = ["e.user_id = ?", "e.deleted_at IS NULL", "e.competence_month = ?"];
@@ -82,8 +82,8 @@ function list(user, filters = {}) {
     .all(...params);
 }
 
-function listOpenExpenses(userOrId) {
-  refreshOverdueStatuses(userOrId);
+function listOpenExpenses(userOrId, options = {}) {
+  refreshOverdueStatuses(userOrId, "", options.now);
   const userId = userIdFrom(userOrId);
   return getDatabase().prepare(`
     SELECT e.*, p.name AS party_name, a.name AS financial_account_name,
@@ -102,8 +102,8 @@ function listOpenExpenses(userOrId) {
   `).all(userId);
 }
 
-function getById(userOrId, id) {
-  refreshOverdueStatuses(userOrId);
+function getById(userOrId, id, options = {}) {
+  refreshOverdueStatuses(userOrId, "", options.now);
 
   const userId = userIdFrom(userOrId);
 
@@ -131,11 +131,12 @@ function getById(userOrId, id) {
     .get(userId, id);
 }
 
-function refreshOverdueStatuses(userOrId, competence = "") {
+function refreshOverdueStatuses(userOrId, competence = "", now = new Date()) {
   const userId = userIdFrom(userOrId);
-  if (!userId) return;
+  const timezone = timezoneFrom(userOrId);
+  if (!userId || !timezone) return;
 
-  const params = ["OVERDUE", new Date().toISOString(), userId, todayIso(timezoneFrom(userOrId))];
+  const params = ["OVERDUE", now.toISOString(), userId, todayIso(timezone, now)];
   const clauses = [
     "user_id = ?",
     "deleted_at IS NULL",
@@ -162,7 +163,7 @@ function userIdFrom(userOrId) {
 }
 
 function timezoneFrom(userOrId) {
-  return typeof userOrId === "object" ? userOrId?.timezone || "America/Bahia" : "America/Bahia";
+  return typeof userOrId === "object" ? userOrId?.timezone || null : null;
 }
 
 function create(user, data) {
@@ -214,7 +215,7 @@ function create(user, data) {
       );
 
     AuditLog.record(user.id, "financial_entry", id, "created", { description: validation.description });
-    return getById(user.id, id);
+    return getById(user, id);
   });
 }
 
@@ -222,7 +223,7 @@ function update(user, id, data) {
   const db = getDatabase();
 
   return withImmediateTransaction(db, () => {
-    const existing = getById(user.id, id);
+    const existing = getById(user, id);
     if (!existing) return null;
 
     const validation = normalizeEntryData(user, data);
@@ -264,7 +265,7 @@ function update(user, id, data) {
       );
 
     AuditLog.record(user.id, "financial_entry", id, "updated", { description: validation.description });
-    return getById(user.id, id);
+    return getById(user, id);
   });
 }
 
@@ -272,13 +273,13 @@ function cancel(user, id) {
   const db = getDatabase();
 
   return withImmediateTransaction(db, () => {
-    const existing = getById(user.id, id);
+    const existing = getById(user, id);
     if (!existing) return null;
 
     db.prepare("UPDATE financial_entries SET status = 'CANCELLED', updated_at = ? WHERE user_id = ? AND id = ?")
       .run(new Date().toISOString(), user.id, id);
     AuditLog.record(user.id, "financial_entry", id, "cancelled");
-    return getById(user.id, id);
+    return getById(user, id);
   });
 }
 
@@ -320,7 +321,7 @@ function deleteMonth(user, data) {
 }
 
 function duplicate(user, id) {
-  const entry = getById(user.id, id);
+  const entry = getById(user, id);
   if (!entry) return null;
 
   return create(user, {
@@ -352,7 +353,7 @@ function settleWithinTransaction(user, id, data) {
     error.code = "SETTLEMENT_TRANSACTION_REQUIRED";
     throw error;
   }
-  const entry = getById(user.id, id);
+  const entry = getById(user, id);
   if (!entry) return null;
 
   const eligibility = settlementEligibility(entry);
@@ -427,7 +428,7 @@ function settleWithinTransaction(user, id, data) {
   });
 
   return {
-    entry: getById(user.id, id),
+    entry: getById(user, id),
     settlement,
   };
 }
@@ -462,7 +463,7 @@ function reverseSettlement(user, settlementId, data = {}) {
   return withImmediateTransaction(db, () => {
     const settlement = Settlement.getActiveForUser(user.id, settlementId);
     if (!settlement) return null;
-    const entry = getById(user.id, settlement.financial_entry_id);
+    const entry = getById(user, settlement.financial_entry_id);
     if (!entry) return null;
 
     const now = new Date().toISOString();
@@ -487,7 +488,7 @@ function reverseSettlement(user, settlementId, data = {}) {
     AuditLog.record(user.id, "financial_entry", entry.id, "settlement_reversed", {
       settlement_id: settlement.id, total_cents: settlement.total_cents, reason,
     });
-    return getById(user.id, entry.id);
+    return getById(user, entry.id);
   });
 }
 

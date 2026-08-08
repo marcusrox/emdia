@@ -80,7 +80,7 @@ function registerEntryRoutes(app, { requireCsrf }) {
 
   app.get("/entries/:id", (req, res) => {
     const user = req.user;
-    const entry = Entry.getById(user.id, req.params.id);
+    const entry = Entry.getById(user, req.params.id);
     if (!entry) return sendHtml(res, notFoundView(user), 404);
 
     return sendHtml(res, entryDetail(user, entry, {
@@ -91,7 +91,7 @@ function registerEntryRoutes(app, { requireCsrf }) {
 
   app.get("/entries/:id/edit", (req, res) => {
     const user = req.user;
-    const entry = Entry.getById(user.id, req.params.id);
+    const entry = Entry.getById(user, req.params.id);
     if (!entry) return sendHtml(res, notFoundView(user), 404);
 
     return sendHtml(res, entryForm(user, {
@@ -181,7 +181,7 @@ function registerEntryRoutes(app, { requireCsrf }) {
       return redirect(res, `/entries?competence=${competence}`);
     } catch (error) {
       if (isValidationError(error)) {
-        const existing = Entry.getById(req.user.id, req.params.id);
+        const existing = Entry.getById(req.user, req.params.id);
         const competence = normalizeCompetence(
           req.body.competence_month || existing?.competence_month,
           req.user.timezone
@@ -208,7 +208,7 @@ function registerEntryRoutes(app, { requireCsrf }) {
   });
 
   app.post("/entries/:id/cancel", requireCsrf, (req, res) => {
-    const entry = Entry.getById(req.user.id, req.params.id);
+    const entry = Entry.getById(req.user, req.params.id);
     Entry.cancel(req.user, req.params.id);
     const competence = entry ? entry.competence_month : normalizeCompetence("", req.user.timezone);
     return redirect(res, `/entries?competence=${competence}`);

@@ -295,6 +295,23 @@ describe("models financeiros", () => {
     assert.equal(db.prepare("SELECT COUNT(*) total FROM settlements").get().total, 0);
   });
 
+  it("atualiza vencidos pelo dia civil do usuário sem presumir fuso para user_id", () => {
+    const instant = new Date("2026-08-09T00:30:00.000Z");
+    const losAngeles = createFinancialFixture({ user: { timezone: "America/Los_Angeles" } });
+    const tokyo = createFinancialFixture({ user: { timezone: "Asia/Tokyo" } });
+    const pendingInLosAngeles = createEntry(losAngeles);
+    const overdueInTokyo = createEntry(tokyo);
+
+    db.prepare("UPDATE financial_entries SET due_date = '2026-08-08', status = 'PENDING' WHERE id IN (?, ?)")
+      .run(pendingInLosAngeles.id, overdueInTokyo.id);
+
+    assert.equal(Entry.getById(losAngeles.user, pendingInLosAngeles.id, { now: instant }).status, "PENDING");
+    assert.equal(Entry.getById(tokyo.user, overdueInTokyo.id, { now: instant }).status, "OVERDUE");
+
+    db.prepare("UPDATE financial_entries SET status = 'PENDING' WHERE id = ?").run(overdueInTokyo.id);
+    assert.equal(Entry.getById(tokyo.user.id, overdueInTokyo.id, { now: instant }).status, "PENDING");
+  });
+
   it("reverte exclusão mensal quando a auditoria falha", () => {
     const fixture = createFinancialFixture();
     const entry = createEntry(fixture);

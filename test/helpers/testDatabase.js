@@ -24,14 +24,14 @@ function resetDatabase() {
   `);
 }
 
-function createUser({ id, email, name = "Usuário de teste", password = "senha123", isAdmin = false, phoneE164 = null } = {}) {
+function createUser({ id, email, name = "Usuário de teste", password = "senha123", isAdmin = false, phoneE164 = null, timezone = "America/Sao_Paulo" } = {}) {
   const userId = id || `usr_${cryptoId()}`;
   const now = new Date().toISOString();
   db.prepare(`INSERT INTO users
     (id,name,email,password_hash,phone_e164,phone_whatsapp_legacy,timezone,locale,is_active,is_admin,created_at,updated_at)
     VALUES (?,?,?,?,?,?,?,?,1,?,?,?)`).run(
     userId, name, email || `${userId}@example.test`, hashPassword(password),
-    phoneE164, legacyWhatsAppPhone(phoneE164) || null, "America/Sao_Paulo", "pt-BR", isAdmin ? 1 : 0, now, now,
+    phoneE164, legacyWhatsAppPhone(phoneE164) || null, timezone, "pt-BR", isAdmin ? 1 : 0, now, now,
   );
   return db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
 }

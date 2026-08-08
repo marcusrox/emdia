@@ -102,3 +102,25 @@ regional fixo quando o usuário estiver disponível no fluxo.
 - Modelo: GPT-5
 - Versao: não informado
 - Acao: criacao
+
+---
+
+## Implementação concluída
+
+- atualização de vencidos passou a exigir o fuso explícito do objeto do
+  usuário, sem fallback regional quando somente `user_id` é informado;
+- fluxos autenticados de consulta, criação, edição, cancelamento, baixa e
+  estorno passaram a propagar o objeto `user`;
+- `todayIso` passou a aceitar relógio controlado para testes determinísticos;
+- teste de regressão cobre o mesmo instante em `America/Los_Angeles` e
+  `Asia/Tokyo`, além da consulta somente por identificador;
+- release incrementada para `Release 08/08/2026 10:46 - 112`.
+
+---
+
+## Assinatura da LLM
+
+- Data: 08/08/2026 10:46
+- Modelo: GPT-5
+- Versao: não informado
+- Acao: atualizacao

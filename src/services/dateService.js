@@ -10,13 +10,13 @@ function currentCompetence(timezone = "America/Bahia") {
   return `${year}-${month}`;
 }
 
-function todayIso(timezone = "America/Bahia") {
+function todayIso(timezone = "America/Bahia", now = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
+  }).formatToParts(now);
 
   const year = parts.find((part) => part.type === "year").value;
   const month = parts.find((part) => part.type === "month").value;
