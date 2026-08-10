@@ -70,7 +70,7 @@ function receiptImportsListView({ user, imports, filters, notifications = [] }) 
       </section>
     </div>
     <section class="panel list-panel">
-      <div class="table-scroll"><table>
+      <div class="table-wrap"><table>
         <thead><tr><th>Favorecido</th><th>Pagamento</th><th>Valor</th><th>Status</th><th>Recebido</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
