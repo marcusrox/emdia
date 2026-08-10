@@ -1,12 +1,21 @@
 const User = require("../models/User");
 const Auth = require("../services/authService");
 const { logInfo, logWarn } = require("../services/operationalLogger");
-const { redirect, requestDetails, sendHtml } = require("../services/http");
+const {
+  queryValue,
+  redirect,
+  requestDetails,
+  safeReturnPath,
+  sendHtml,
+} = require("../services/http");
 const { loginView, signupView } = require("../services/viewEngine");
 
 function registerPublicAuthRoutes(app, { loginRateLimiter, signupRateLimiter }) {
   app.get("/login", (req, res) => {
-    return req.user ? redirect(res, "/dashboard") : sendHtml(res, loginView({ email: "" }));
+    const returnTo = safeReturnPath(queryValue(req, "return_to"));
+    return req.user
+      ? redirect(res, returnTo)
+      : sendHtml(res, loginView({ email: "", returnTo }));
   });
 
   app.get("/signup", (req, res) => {
@@ -69,14 +78,15 @@ function registerPublicAuthRoutes(app, { loginRateLimiter, signupRateLimiter }) 
   app.post("/login", (req, res) => {
     const email = String(req.body.email || "").trim();
     const password = String(req.body.password || "");
+    const returnTo = safeReturnPath(req.body.return_to);
     const currentLimit = loginRateLimiter.inspect(req, email);
-    if (currentLimit.blocked) return blockedLogin(req, res, email, currentLimit);
+    if (currentLimit.blocked) return blockedLogin(req, res, email, currentLimit, returnTo);
 
     const user = User.findByEmail(email);
 
     if (!user || !Auth.verifyPassword(password, user.password_hash)) {
       const updatedLimit = loginRateLimiter.recordFailure(req, email);
-      if (updatedLimit.blocked) return blockedLogin(req, res, email, updatedLimit);
+      if (updatedLimit.blocked) return blockedLogin(req, res, email, updatedLimit, returnTo);
 
       logWarn("auth.login.failed", "Falha de login.", {
         details: {
@@ -84,7 +94,7 @@ function registerPublicAuthRoutes(app, { loginRateLimiter, signupRateLimiter }) 
           ...requestDetails(req),
         },
       });
-      return sendHtml(res, loginView({ email, error: "E-mail ou senha inválidos." }), 401);
+      return sendHtml(res, loginView({ email, error: "E-mail ou senha inválidos.", returnTo }), 401);
     }
 
     loginRateLimiter.reset(req, email);
@@ -94,7 +104,7 @@ function registerPublicAuthRoutes(app, { loginRateLimiter, signupRateLimiter }) 
       details: requestDetails(req),
     });
     res.set("Set-Cookie", session.cookie);
-    return redirect(res, "/dashboard");
+    return redirect(res, returnTo);
   });
 }
 
@@ -128,7 +138,7 @@ function publicSignupValues(body = {}) {
   };
 }
 
-function blockedLogin(req, res, email, limit) {
+function blockedLogin(req, res, email, limit, returnTo = "/dashboard") {
   logWarn("auth.login.blocked", "Login bloqueado temporariamente por excesso de tentativas.", {
     details: {
       emailFingerprint: limit.emailFingerprint,
@@ -139,7 +149,7 @@ function blockedLogin(req, res, email, limit) {
   res.set("Retry-After", String(limit.retryAfterSeconds));
   return sendHtml(
     res,
-    loginView({ email, error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." }),
+    loginView({ email, error: "Muitas tentativas. Aguarde alguns minutos e tente novamente.", returnTo }),
     429,
   );
 }

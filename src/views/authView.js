@@ -9,7 +9,7 @@ const {
 } = require("../services/viewHelpers");
 const { versionedAssetPath } = require("../config/release");
 
-function loginView({ email = "", error = "" } = {}) {
+function loginView({ email = "", error = "", returnTo = "/dashboard" } = {}) {
   return authPage({
     title: "Login",
     notifications: error ? [{ type: "error", message: error }] : [],
@@ -20,6 +20,7 @@ function loginView({ email = "", error = "" } = {}) {
         <p>Acesse sua organização financeira e continue de onde parou.</p>
       </div>
       <form class="form-stack auth-form" method="post" action="/login">
+        <input type="hidden" name="return_to" value="${escapeHtml(returnTo)}">
         <label>E-mail
           <input type="email" name="email" value="${escapeHtml(email)}" autocomplete="email" maxlength="254" required autofocus>
         </label>

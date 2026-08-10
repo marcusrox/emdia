@@ -16,6 +16,20 @@ function queryValue(req, name) {
   return String(value || "");
 }
 
+function safeReturnPath(value, fallback = "/dashboard") {
+  const candidate = String(value || "").trim();
+  if (!candidate.startsWith("/") || candidate.startsWith("//")) return fallback;
+  if (/[\\\u0000-\u001f\u007f]/.test(candidate)) return fallback;
+
+  try {
+    const parsed = new URL(candidate, "http://emdia.local");
+    if (parsed.origin !== "http://emdia.local") return fallback;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
 function requestDetails(req, details = {}) {
   return {
     method: req.method,
@@ -34,6 +48,7 @@ module.exports = {
   queryValue,
   redirect,
   requestDetails,
+  safeReturnPath,
   sendHtml,
   sendJson,
 };

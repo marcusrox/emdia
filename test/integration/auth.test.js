@@ -11,6 +11,47 @@ const User = require("../../src/models/User");
 beforeEach(resetDatabase);
 
 describe("autenticação e sessões", () => {
+  it("retorna à URL protegida completa depois do login", async () => {
+    const user = createUser({ email: "retorno@example.test", password: "senha-correta" });
+    const app = createServer();
+    const target = "/receipt-imports/rcp_0125acf09fc4466488478468b8f334db?origem=whatsapp&revisao=1";
+
+    const protectedResponse = await request(app).get(target).expect(303);
+    assert.equal(
+      protectedResponse.headers.location,
+      `/login?return_to=${encodeURIComponent(target)}`,
+    );
+
+    const loginPage = await request(app).get(protectedResponse.headers.location).expect(200);
+    assert.ok(
+      loginPage.text.includes(`name="return_to" value="${target.replaceAll("&", "&amp;")}"`),
+    );
+
+    const authenticated = await request(app)
+      .post("/login")
+      .type("form")
+      .send({ email: user.email, password: "senha-correta", return_to: target })
+      .expect(303);
+    assert.equal(authenticated.headers.location, target);
+  });
+
+  it("não aceita destino externo no retorno do login", async () => {
+    const user = createUser({ email: "seguro@example.test", password: "senha-correta" });
+    const app = createServer();
+
+    const response = await request(app)
+      .post("/login")
+      .type("form")
+      .send({
+        email: user.email,
+        password: "senha-correta",
+        return_to: "https://malicioso.example/roubo",
+      })
+      .expect(303);
+
+    assert.equal(response.headers.location, "/dashboard");
+  });
+
   it("mantém mensagem genérica para e-mail inexistente e senha incorreta", async () => {
     const user = createUser({ email: "existente@example.test", password: "senha-correta" });
     const app = createServer();

@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const Auth = require("../services/authService");
 const { logInfo, logWarn } = require("../services/operationalLogger");
-const { redirect, requestDetails, sendHtml } = require("../services/http");
+const { redirect, requestDetails, safeReturnPath, sendHtml } = require("../services/http");
 
 function loadSession(req, res, next) {
   User.ensureDefaultUser();
@@ -27,7 +27,13 @@ function requireAuth(req, res, next) {
   logWarn("auth.access.denied", "Acesso negado a rota protegida sem autenticação.", {
     details: requestDetails(req),
   });
-  return redirect(res, "/login");
+  const returnPath = ["GET", "HEAD"].includes(req.method)
+    ? safeReturnPath(req.originalUrl, "")
+    : "";
+  const loginPath = returnPath
+    ? `/login?return_to=${encodeURIComponent(returnPath)}`
+    : "/login";
+  return redirect(res, loginPath);
 }
 
 function requireCsrf(req, res, next) {

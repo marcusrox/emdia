@@ -73,7 +73,7 @@ describe("integração HTTP Express", () => {
 
   it("redireciona acesso protegido e preserva sessão entre login e logout", async () => {
     const app = createServer();
-    await request(app).get("/dashboard").expect(303).expect("Location", "/login");
+    await request(app).get("/dashboard").expect(303).expect("Location", "/login?return_to=%2Fdashboard");
     const agent = request.agent(app);
     const response = await login(agent);
     assert.equal(response.status, 303);
@@ -82,7 +82,7 @@ describe("integração HTTP Express", () => {
     const csrf = csrfFrom(dashboard.text);
     assert.ok(csrf);
     await agent.post("/logout").type("form").send({ _csrf: csrf }).expect(303).expect("Location", "/login");
-    await agent.get("/dashboard").expect(303).expect("Location", "/login");
+    await agent.get("/dashboard").expect(303).expect("Location", "/login?return_to=%2Fdashboard");
   });
 
   it("monta uma rota representativa de cada módulo protegido", async () => {
@@ -114,7 +114,8 @@ describe("integração HTTP Express", () => {
 
     try {
       const app = createServer();
-      await request(app).get("/dashboard").set("Host", "localhost").expect(303).expect("Location", "/login");
+      await request(app).get("/dashboard").set("Host", "localhost").expect(303)
+        .expect("Location", "/login?return_to=%2Fdashboard");
     } finally {
       process.env.NODE_ENV = previousNodeEnv;
       restoreEnvironmentVariable("EMDIA_AUTO_LOGIN", previousAutoLogin);
