@@ -1084,6 +1084,7 @@ td small {
     radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 34%),
     linear-gradient(135deg, #f8fbf7 0%, #eef5f2 100%);
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .auth-shell {
@@ -1114,6 +1115,7 @@ td small {
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(390px, 0.92fr);
   max-width: 1040px;
+  min-width: 0;
   overflow: hidden;
   width: 100%;
 }
@@ -1124,6 +1126,7 @@ td small {
   box-shadow: none;
   gap: 20px;
   max-width: none;
+  min-width: 0;
   padding: clamp(30px, 5vw, 56px);
 }
 
@@ -1287,6 +1290,8 @@ td small {
 }
 
 .auth-form > .button {
+  max-width: 100%;
+  min-width: 0;
   width: 100%;
 }
 
@@ -1357,7 +1362,17 @@ td small {
 
   .auth-presentation,
   .auth-card .auth-panel {
+    max-width: 100%;
+    min-width: 0;
     padding: 24px 20px;
+  }
+
+  .auth-form,
+  .auth-form label,
+  .auth-form input,
+  .auth-alternate {
+    max-width: 100%;
+    min-width: 0;
   }
 
   .auth-presentation-copy p,
