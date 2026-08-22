@@ -2797,6 +2797,11 @@ tbody tr:hover {
   color: #075985;
 }
 
+.status-needs_review {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .status-overdue,
 .status-cancelled {
   background: #ffedd5;

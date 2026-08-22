@@ -18,7 +18,7 @@ const { layout } = require("./layout");
 const STATUS_LABELS = {
   RECEIVED: "Recebido",
   PROCESSING: "Processando",
-  NEEDS_REVIEW: "Revisar",
+  NEEDS_REVIEW: "Pendente",
   APPROVED: "Aprovado",
   REJECTED: "Rejeitado",
   FAILED: "Falhou",
