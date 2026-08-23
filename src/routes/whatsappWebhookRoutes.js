@@ -1,22 +1,26 @@
 const express = require("express");
+const { requestClientIp } = require("../services/http");
 const { logError, logInfo, logWarn } = require("../services/operationalLogger");
 const { acceptWebhook } = require("../services/wahaReceiptWebhookService");
 const { wakeReceiptImportWorker } = require("../services/receiptImportWorker");
 
 function registerWhatsAppWebhookRoutes(app, options = {}) {
   const accept = options.acceptWebhook || acceptWebhook;
+  const info = options.logInfo || logInfo;
+  const warn = options.logWarn || logWarn;
+  const failure = options.logError || logError;
   app.post(
     "/webhooks/whatsapp/waha",
     express.raw({ type: "application/json", limit: "1mb" }),
     async (req, res) => {
       const requestId = safeId(req.get("X-Webhook-Request-Id"));
       const receiptDetails = incomingRequestDetails(req);
-      logInfo("whatsapp.webhook.received", "Webhook do WAHA recebido.", {
+      info("whatsapp.webhook.received", "Webhook do WAHA recebido.", {
         requestId,
         details: receiptDetails,
       });
       if (!Buffer.isBuffer(req.body)) {
-        logWarn("whatsapp.webhook.invalid_payload", "Webhook WAHA sem corpo JSON bruto válido.", {
+        warn("whatsapp.webhook.invalid_payload", "Webhook WAHA sem corpo JSON bruto válido.", {
           requestId,
           details: { ...receiptDetails, outcome: "rejected", reason: "raw_json_body_missing" },
         });
@@ -30,7 +34,7 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
             : result.reason?.includes("signature") || result.reason === "hmac_not_configured"
               ? "whatsapp.webhook.invalid_signature"
               : "whatsapp.webhook.invalid_payload";
-          logWarn(eventName, "Webhook WAHA recusado.", {
+          warn(eventName, "Webhook WAHA recusado.", {
             requestId,
             details: {
               ...receiptDetails,
@@ -43,11 +47,12 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
           return res.status(result.status || 400).json({ ok: false });
         }
         if (result.ignored) {
-          logInfo("whatsapp.webhook.ignored", "Webhook WAHA ignorado.", {
+          info("whatsapp.webhook.ignored", "Webhook WAHA ignorado.", {
             requestId,
             allowWebhookSenderE164: result.reason === "user_not_found",
             user: result.userId ? { id: result.userId, email: result.userEmail } : null,
             details: {
+              ...receiptDetails,
               ...result.logDetails,
               outcome: "ignored",
               reason: result.reason,
@@ -57,26 +62,26 @@ function registerWhatsAppWebhookRoutes(app, options = {}) {
           return res.status(200).json({ ok: true });
         }
         if (result.duplicate) {
-          logInfo("whatsapp.webhook.duplicate", "Webhook WAHA duplicado ignorado.", {
+          info("whatsapp.webhook.duplicate", "Webhook WAHA duplicado ignorado.", {
             requestId,
             entity: "receipt_import",
             entityId: result.receiptId,
             user: result.userId ? { id: result.userId, email: result.userEmail } : null,
-            details: { ...result.logDetails, outcome: "duplicate" },
+            details: { ...receiptDetails, ...result.logDetails, outcome: "duplicate" },
           });
           return res.status(200).json({ ok: true });
         }
-        logInfo("whatsapp.receipt.queued", "Comprovante enfileirado para processamento.", {
+        info("whatsapp.receipt.queued", "Comprovante enfileirado para processamento.", {
           requestId,
           entity: "receipt_import",
           entityId: result.receiptId,
           user: result.userId ? { id: result.userId, email: result.userEmail } : null,
-          details: { ...result.logDetails, outcome: "queued" },
+          details: { ...receiptDetails, ...result.logDetails, outcome: "queued" },
         });
         wakeReceiptImportWorker();
         return res.status(200).json({ ok: true });
       } catch (error) {
-        logError("whatsapp.webhook.failed", "Falha transitória ao persistir webhook WAHA.", {
+        failure("whatsapp.webhook.failed", "Falha transitória ao persistir webhook WAHA.", {
           requestId,
           details: {
             ...receiptDetails,
@@ -103,6 +108,7 @@ function incomingRequestDetails(req) {
   const contentLength = Number(req.get("Content-Length") || 0);
   return {
     stage: "received",
+    clientIp: requestClientIp(req),
     contentType: safeId(req.get("Content-Type")).slice(0, 100),
     contentLength: Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : 0,
     requestIdPresent: Boolean(req.get("X-Webhook-Request-Id")),

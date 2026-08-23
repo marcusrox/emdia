@@ -1,4 +1,4 @@
-const RELEASE_LABEL = "Release 22/08/2026 20:34 - 118";
+const RELEASE_LABEL = "Release 22/08/2026 21:58 - 119";
 const ASSET_VERSION = RELEASE_LABEL.match(/-\s*(\d+)$/)?.[1] || "dev";
 
 function versionedAssetPath(pathname) {

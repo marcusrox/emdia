@@ -774,6 +774,12 @@ Regras:
   a correlação do remetente for necessária, use HMAC local truncado. A única
   exceção para E.164 completo é o diagnóstico de `user_not_found`; chat ID e
   LID completos permanecem proibidos.
+- O IP de origem HTTP pode ser registrado como `clientIp` nos detalhes dos
+  eventos do webhook, usando somente `req.ip` resolvido pela política de proxy
+  confiável e fallback para o socket. Normalize IPv4/IPv6 e nunca grave headers
+  brutos, a cadeia completa de proxies ou `X-Forwarded-For` recebido diretamente
+  na rota. Sem topologia confirmada, preserve `trust proxy` restrito a loopback;
+  o valor pode representar o proxy imediato e não autentica o webhook.
 - Extrações automatizadas sempre exigem conferência humana antes de criar
   lançamento financeiro. Pagamentos confirmados geram uma linha em
   `settlements` e usam centavos inteiros.

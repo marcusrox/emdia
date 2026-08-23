@@ -5,7 +5,9 @@ const request = require("supertest");
 const ReceiptImport = require("../src/models/ReceiptImport");
 const NotificationPreference = require("../src/models/NotificationPreference");
 const User = require("../src/models/User");
+const { incomingRequestDetails } = require("../src/routes/whatsappWebhookRoutes");
 const { createServer } = require("../src/server");
+const { normalizeClientIp, requestClientIp } = require("../src/services/http");
 const {
   buildRequest,
   extractionSchema,
@@ -91,6 +93,42 @@ test("webhook recusa assinatura inválida e timestamp fora da janela", () => {
   const validHeaders = signedHeaders(raw);
   assert.equal(verifyWebhook(raw, { ...validHeaders, "x-webhook-hmac": "00" }).status, 403);
   assert.equal(verifyWebhook(raw, { ...validHeaders, "x-webhook-timestamp": String(Date.now() - 600000) }).reason, "replay_rejected");
+});
+
+test("normaliza o IP do cliente sem aceitar valores arbitrários", () => {
+  assert.equal(normalizeClientIp("198.51.100.24"), "198.51.100.24");
+  assert.equal(normalizeClientIp("::ffff:198.51.100.25"), "198.51.100.25");
+  assert.equal(normalizeClientIp("2001:db8::25"), "2001:db8::25");
+  assert.equal(normalizeClientIp("\u0000198.51.100.26\n"), "198.51.100.26");
+  assert.equal(normalizeClientIp("198.51.100.27".repeat(10)), "unknown");
+  assert.equal(normalizeClientIp("não-é-ip"), "unknown");
+  assert.equal(normalizeClientIp(), "unknown");
+  assert.equal(normalizeEvent({
+    event: "whatsapp.webhook.received",
+    details: { clientIp: "198.51.100.24" },
+  }).details.clientIp, "198.51.100.24");
+});
+
+test("detalhes do webhook preferem o IP resolvido pelo Express e usam fallback controlado", () => {
+  const headers = {
+    "content-length": "42",
+    "content-type": "application/json",
+    "x-forwarded-for": "203.0.113.200",
+  };
+  const requestWithExpressIp = {
+    ip: "::ffff:198.51.100.30",
+    socket: { remoteAddress: "192.0.2.30" },
+    get: (name) => headers[String(name).toLowerCase()] || "",
+  };
+  const requestWithFallback = {
+    socket: { remoteAddress: "2001:db8::31" },
+    get: requestWithExpressIp.get,
+  };
+
+  assert.equal(requestClientIp(requestWithExpressIp), "198.51.100.30");
+  assert.equal(incomingRequestDetails(requestWithExpressIp).clientIp, "198.51.100.30");
+  assert.equal(incomingRequestDetails(requestWithFallback).clientIp, "2001:db8::31");
+  assert.notEqual(incomingRequestDetails(requestWithExpressIp).clientIp, headers["x-forwarded-for"]);
 });
 
 test("metadados do webhook enriquecem diagnóstico sem expor remetente ou mídia", async () => {
@@ -647,18 +685,91 @@ test("mídia bloqueia outra origem e reconhece assinatura real", () => {
   assert.equal(detectImage(Buffer.from("not-an-image")), null);
 });
 
-test("rota pública do webhook preserva corpo bruto e responde antes do worker", async () => {
+test("rota pública do webhook preserva corpo bruto, registra IP e responde antes do worker", async () => {
+  const events = [];
   const app = createServer({
     whatsappWebhook: {
       acceptWebhook: async (rawBody) => ({ ok: true, created: true, receiptId: `rcp_${rawBody.length}`, userId: "usr_test" }),
+      logInfo: (event, message, context) => events.push({ event, message, context }),
     },
   });
   const response = await request(app)
     .post("/webhooks/whatsapp/waha")
     .set("Content-Type", "application/json")
+    .set("X-Forwarded-For", "198.51.100.40")
     .send({ event: "message" });
   assert.equal(response.status, 200);
   assert.deepEqual(response.body, { ok: true });
+  assert.deepEqual(events.map((entry) => entry.event), ["whatsapp.webhook.received", "whatsapp.receipt.queued"]);
+  assert.equal(events[0].context.details.clientIp, "198.51.100.40");
+  assert.equal(events[1].context.details.clientIp, "198.51.100.40");
+});
+
+test("rota pública preserva o IP no evento de assinatura inválida", async () => {
+  const events = [];
+  const app = createServer({
+    whatsappWebhook: {
+      logInfo: (event, message, context) => events.push({ event, message, context }),
+      logWarn: (event, message, context) => events.push({ event, message, context }),
+    },
+  });
+  const response = await request(app)
+    .post("/webhooks/whatsapp/waha")
+    .set("Content-Type", "application/json")
+    .set("X-Forwarded-For", "198.51.100.41")
+    .set("X-Webhook-Hmac-Algorithm", "sha512")
+    .set("X-Webhook-Hmac", "00")
+    .set("X-Webhook-Timestamp", String(Date.now()))
+    .send({ event: "message" });
+
+  assert.equal(response.status, 403);
+  assert.deepEqual(events.map((entry) => entry.event), ["whatsapp.webhook.received", "whatsapp.webhook.invalid_signature"]);
+  assert.equal(events[0].context.details.clientIp, "198.51.100.41");
+  assert.equal(events[1].context.details.clientIp, "198.51.100.41");
+});
+
+test("rota pública propaga o IP para webhook ignorado, duplicado e com falha", async () => {
+  const scenarios = [
+    {
+      result: { ok: true, ignored: true, reason: "irrelevant_event", eventName: "session.status" },
+      status: 200,
+      event: "whatsapp.webhook.ignored",
+    },
+    {
+      result: { ok: true, duplicate: true, receiptId: "rcp_duplicate" },
+      status: 200,
+      event: "whatsapp.webhook.duplicate",
+    },
+    {
+      error: Object.assign(new Error("falha controlada"), { code: "TEST_FAILURE" }),
+      status: 500,
+      event: "whatsapp.webhook.failed",
+    },
+  ];
+
+  for (const [index, scenario] of scenarios.entries()) {
+    const events = [];
+    const app = createServer({
+      whatsappWebhook: {
+        acceptWebhook: async () => {
+          if (scenario.error) throw scenario.error;
+          return scenario.result;
+        },
+        logInfo: (event, message, context) => events.push({ event, message, context }),
+        logError: (event, message, context) => events.push({ event, message, context }),
+      },
+    });
+    const clientIp = `198.51.100.${50 + index}`;
+    const response = await request(app)
+      .post("/webhooks/whatsapp/waha")
+      .set("Content-Type", "application/json")
+      .set("X-Forwarded-For", clientIp)
+      .send({ event: "message" });
+
+    assert.equal(response.status, scenario.status);
+    assert.equal(events.at(-1).event, scenario.event);
+    assert.equal(events.at(-1).context.details.clientIp, clientIp);
+  }
 });
 
 function createReceipt(userId, providerMessageId = `msg-${crypto.randomUUID()}`) {

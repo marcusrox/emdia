@@ -1,3 +1,7 @@
+const net = require("node:net");
+
+const MAX_CLIENT_IP_LENGTH = 64;
+
 function sendHtml(res, html, statusCode = 200) {
   return res.status(statusCode).type("html").send(html);
 }
@@ -35,18 +39,31 @@ function requestDetails(req, details = {}) {
     method: req.method,
     path: req.path,
     originalUrl: req.originalUrl,
-    clientIp: normalizeClientIp(req.ip || req.socket?.remoteAddress),
+    clientIp: requestClientIp(req),
     ...details,
   };
 }
 
 function normalizeClientIp(value) {
-  return String(value || "").trim().replace(/^::ffff:/i, "") || "unknown";
+  const normalized = String(value || "")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .trim()
+    .slice(0, MAX_CLIENT_IP_LENGTH)
+    .replace(/^::ffff:/i, "");
+  return net.isIP(normalized) ? normalized : "unknown";
+}
+
+function requestClientIp(req) {
+  const expressIp = normalizeClientIp(req?.ip);
+  if (expressIp !== "unknown") return expressIp;
+  return normalizeClientIp(req?.socket?.remoteAddress);
 }
 
 module.exports = {
+  normalizeClientIp,
   queryValue,
   redirect,
+  requestClientIp,
   requestDetails,
   safeReturnPath,
   sendHtml,
