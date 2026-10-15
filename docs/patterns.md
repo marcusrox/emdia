@@ -51,7 +51,7 @@ com `new Date().toISOString()`.
 
 ## 2. Stack atual
 
-O MVP atual usa:
+O sistema atual usa:
 
 - Node.js `>=24.15.0 <25`;
 - CommonJS;
@@ -615,7 +615,7 @@ Se uma validação não puder ser executada, informe o motivo na resposta final.
 
 ## 18. Evolução futura
 
-O MVP atual já possui autenticação e sessões, usuários isolados, recorrências e
+O sistema atual já possui autenticação e sessões, usuários isolados, recorrências e
 comprovantes JPEG/PNG recebidos pelo WAHA, armazenados privadamente, extraídos
 via OpenRouter e submetidos à revisão humana.
 

@@ -3,7 +3,11 @@
 > Documento orientador para implementação com Codex  
 > Versão: 1.1  
 > Data: 10/07/2026  
-> Status: Proposta de MVP
+> Status atual do produto: Sistema web publicado na internet
+
+> Atualização de status (15/10/2026): o EmDia já está publicado na internet e
+> não é mais classificado como MVP. As referências a MVP no corpo deste PRD
+> descrevem o planejamento histórico e não o status atual do produto.
 
 > Nota de implementação (08/08/2026): este PRD permanece como documento
 > orientador e histórico. A fonte de verdade da arquitetura entregue é

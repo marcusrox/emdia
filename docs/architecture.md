@@ -1,15 +1,15 @@
 # Arquitetura do EmDia
 
-Este documento descreve a arquitetura atual do MVP EmDia. Ele complementa
+Este documento descreve a arquitetura atual do EmDia. Ele complementa
 `docs/patterns.md`: aqui ficam as decisões estruturais e os fluxos principais;
 os padrões de implementação ficam no arquivo de patterns.
 
 ## 1. Visão geral
 
-EmDia e uma aplicação web local para controle de contas, receitas, vencimentos e
-baixas financeiras. O MVP atual prioriza um fluxo simples:
+EmDia é uma aplicação web publicada na internet para controle de contas,
+receitas, vencimentos e baixas financeiras. O fluxo de inicialização e uso é:
 
-1. iniciar servidor local;
+1. iniciar o servidor no ambiente de hospedagem ou de desenvolvimento;
 2. criar banco SQLite quando necessário;
 3. gerar dados iniciais;
 4. abrir dashboard filtrado pela competência do mês corrente;
@@ -466,9 +466,9 @@ Falhas intermediárias são injetadas por triggers ou migrations controladas,
 sem alterar dados reais. Testes HTTP chamam o app Express diretamente e não
 abrem porta.
 
-## 13. Limites do MVP atual
+## 13. Limites atuais do sistema
 
-O MVP já possui autenticação por sessão, cadastro público, administração de
+O EmDia já possui autenticação por sessão, cadastro público, administração de
 usuários, isolamento por `user_id`, recorrências mensais e recebimento de
 comprovantes JPEG/PNG pelo WAHA. A extração usa OpenRouter com Structured
 Outputs, armazenamento privado temporário e aprovação humana obrigatória.

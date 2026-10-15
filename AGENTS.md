@@ -7,8 +7,9 @@ mês corrente.
 
 ## Contexto rápido
 
-EmDia e um MVP web local para controle de contas, receitas, vencimentos e
-baixas financeiras, baseado no PRD técnico `PRD_sistema_financas_pessoais.md`.
+EmDia é um sistema web publicado na internet para controle de contas, receitas,
+vencimentos e baixas financeiras, baseado no PRD técnico
+`PRD_sistema_financas_pessoais.md`.
 
 - Bootstrap principal: `app.js` na raiz.
 - Servidor HTTP: `src/server.js`.
@@ -23,7 +24,7 @@ baixas financeiras, baseado no PRD técnico `PRD_sistema_financas_pessoais.md`.
 - Documentacao principal: `README.md`, `PRD_sistema_financas_pessoais.md`,
   `docs/patterns.md` e `docs/architecture.md`.
 
-O MVP atual usa Node.js `>=24.15.0 <25`, CommonJS, Express, `node:sqlite` e `lucide-static` para ícones
+O sistema atual usa Node.js `>=24.15.0 <25`, CommonJS, Express, `node:sqlite` e `lucide-static` para ícones
 SVG. Não assuma EJS, Drizzle, TypeScript ou outras dependências externas apenas
 porque o PRD cita essas possibilidades futuras.
 
@@ -50,7 +51,7 @@ ser explícita e visível na interface.
 - Consulte `docs/patterns.md` quando precisar confirmar padrões de código,
   banco, rotas, renderização, segurança ou validação.
 - Consulte `docs/architecture.md` quando precisar entender organização geral,
-  fluxos principais, decisões técnicas ou limites do MVP.
+  fluxos principais, decisões técnicas ou limites do sistema.
 - Use `rg` ou `rg --files` para localizar código quando disponível.
 - Evite varrer `node_modules`, `data/`, bancos SQLite, arquivos WAL/SHM e
   arquivos gerados.

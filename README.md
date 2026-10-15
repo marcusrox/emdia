@@ -1,7 +1,7 @@
 # 💸 EmDia
 
-**EmDia** é um MVP web local para controle de contas, receitas, vencimentos e
-baixas financeiras. O projeto foi implementado a partir do PRD técnico
+**EmDia** é um sistema web publicado na internet para controle de contas,
+receitas, vencimentos e baixas financeiras. O projeto foi implementado a partir do PRD técnico
 [`PRD_sistema_financas_pessoais.md`](./PRD_sistema_financas_pessoais.md).
 
 > 🎯 Ideia central: trabalhar sempre a partir das contas da competência do mês
@@ -59,7 +59,7 @@ npm ci
 
 ---
 
-## 🚀 Como rodar
+## 🚀 Como rodar em ambiente de desenvolvimento local
 
 Na raiz do projeto:
 
@@ -367,7 +367,7 @@ EMAIL_NOTIFICATION_MAX_ATTEMPTS=5
 Cadastre no DNS os registros SPF e DKIM fornecidos pelo Resend e adote uma
 política DMARC apropriada. Nunca versione a API key. O estado `SENT` na fila
 significa que o provedor aceitou o envio; confirmação de entrega por webhook
-ainda não faz parte deste MVP.
+ainda não faz parte do sistema.
 
 ## 💬 Integração com WhatsApp
 
@@ -405,7 +405,7 @@ node -e "const { loadEnv } = require('./src/config/env'); loadEnv(); const { get
 ## 📌 Status
 
 ```text
-Status: MVP local funcional
+Status: Sistema web publicado na internet
 Persistência: SQLite local
 Interface: server-rendered HTML
 Foco atual: controle mensal de contas, receitas e despesas
@@ -450,7 +450,7 @@ Crie uma chave exclusiva no OpenRouter, defina orçamento/limites e guarde a
 chave somente no ambiente. O modelo é configurável; as opções homologadas
 abaixo aceitam imagem e Structured Outputs. Mantenha somente uma linha
 `OPENROUTER_RECEIPT_MODEL` ativa. O padrão é
-`qwen/qwen3-vl-32b-instruct`. O MVP sempre envia `store: false`,
+`qwen/qwen3-vl-32b-instruct`. O EmDia sempre envia `store: false`,
 `provider.require_parameters: true` e
 `provider.data_collection: deny`; ZDR não é exigido. Testes automatizados usam
 mocks e não consomem WAHA ou OpenRouter reais.
