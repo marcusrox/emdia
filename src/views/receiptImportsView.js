@@ -32,6 +32,7 @@ const WARNING_EXPLANATIONS = {
   INVALID_PAYMENT_DATE: "A data de pagamento identificada não é válida.",
   LOW_OVERALL_CONFIDENCE: "A leitura automática teve baixa confiança geral; confira todos os dados.",
   DOCUMENT_REQUIRES_ATTENTION: "O tipo de documento exige conferência antes da aprovação.",
+  WARNINGS_NORMALIZED: "Os avisos da leitura automática foram ajustados ao formato e aos limites do sistema; confira todos os dados do comprovante.",
 };
 
 function receiptImportsListView({ user, imports, filters, notifications = [] }) {

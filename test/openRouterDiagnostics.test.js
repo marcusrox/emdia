@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 require("./helpers/testDatabase");
-const { buildRequest, classifyProviderError, validateExtraction, validateExtractionSchema } = require("../src/services/receiptExtractionService");
+const { buildRequest, classifyProviderError, prepareExtractionOutput, validateExtraction, validateExtractionSchema } = require("../src/services/receiptExtractionService");
 const { safeExtractionDiagnostics } = require("../src/services/receiptImportWorker");
 const { diagnose } = require("../scripts/diagnose-openrouter");
 
@@ -56,6 +56,34 @@ test("validação local bloqueia JSON fora do contrato sem coerção financeira"
   Object.assign(raw, { document_type: "payment_receipt", amount_cents: 1250, currency: "BRL", payment_method: "PIX" });
   validateExtractionSchema(raw);
   assert.equal(validateExtraction(raw, [], "test-user").amountCents, 1250);
+});
+
+test("Qwen normaliza somente avisos e mantém o contrato financeiro estrito", () => {
+  const model = "qwen/qwen3.7-flash";
+  for (const source of [null, undefined, "revisar_dados", ["x".repeat(100)], Array.from({ length: 14 }, (_, index) => `aviso_${index}`), ["", "aviso", "aviso"]]) {
+    const raw = { ...validExtraction(), warnings: source };
+    const prepared = prepareExtractionOutput(raw, model);
+    assert.ok(prepared.warnings.includes("warnings_normalized"));
+    assert.ok(prepared.warnings.length <= 12);
+    assert.ok(prepared.warnings.every((item) => typeof item === "string" && item.length <= 60));
+    assert.equal(raw.warnings, source);
+    validateExtractionSchema(prepared);
+  }
+  assert.deepEqual(prepareExtractionOutput({ ...validExtraction(), warnings: [] }, model).warnings, []);
+  for (const warnings of [{ text: "private-marker" }, 123, [null], ["aviso", { text: "private-marker" }]]) {
+    assert.throws(() => prepareExtractionOutput({ ...validExtraction(), warnings }, model), (error) => {
+      const details = safeExtractionDiagnostics(error);
+      assert.equal(details.validationField, "receipt.warnings");
+      assert.equal(details.validationRule, "type");
+      assert.ok(details.actualType);
+      assert.doesNotMatch(JSON.stringify(details), /private-marker/);
+      return true;
+    });
+  }
+  assert.throws(() => prepareExtractionOutput({ ...validExtraction(), warnings: null, amount_cents: "1234" }, model), (error) => {
+    assert.equal(error.diagnostics.validationField, "receipt.amount_cents");
+    return true;
+  });
 });
 
 test("diagnóstico distingue causas de HTTP 404 sem expor mensagens do provedor", () => {

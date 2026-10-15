@@ -146,6 +146,8 @@ function safeExtractionDiagnostics(error) {
   copyToken(result, details, "providerErrorType");
   copyToken(result, details, "providerErrorReason");
   copyToken(result, details, "validationField");
+  copyToken(result, details, "validationRule");
+  copyToken(result, details, "actualType");
   copyToken(result, details, "model", 120);
   copyInteger(result, details, "outputTextLength", 0, Number.MAX_SAFE_INTEGER);
   copyInteger(result, details, "durationMs", 0, Number.MAX_SAFE_INTEGER);

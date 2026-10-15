@@ -802,3 +802,10 @@ Regras:
   dos dados. Preservar `require_parameters: true`, `data_collection: deny`,
   `store: false` e a revisão humana. Os demais modelos mantêm JSON Schema
   estrito no provedor.
+- No JSON mode do Qwen, normalizar somente `warnings` antes da validação:
+  ausente/null vira lista, texto único vira item, strings são limpas e limitadas
+  a 60 caracteres e a lista a 12 itens, com deduplicação. Registrar o aviso
+  `warnings_normalized` quando houver ajuste. Objetos e itens não textuais
+  continuam inválidos. Nunca aplicar essa tolerância aos campos financeiros
+  ou à confiança. Logs de schema podem incluir `validationRule` e `actualType`,
+  sem o valor recebido.

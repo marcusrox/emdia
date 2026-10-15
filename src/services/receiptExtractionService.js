@@ -44,8 +44,7 @@ async function extractReceipt(receipt, options = {}) {
     if (!response.ok || payload?.error || payload?.status === "failed") {
       throw openRouterResponseError(response.status, payload, responseDiagnostics);
     }
-    const raw = parseStructuredOutput(payload, responseDiagnostics);
-    if (usesJsonObject(model)) validateExtractionSchema(raw, responseDiagnostics);
+    const raw = prepareExtractionOutput(parseStructuredOutput(payload, responseDiagnostics), model, responseDiagnostics);
     const validated = validateExtraction(raw, categories, receipt.user_id, {
       ...responseDiagnostics,
       responseId: safeIdentifier(payload?.id),
@@ -132,6 +131,26 @@ function usesJsonObject(model) {
   return model === "qwen/qwen3.7-flash";
 }
 
+function prepareExtractionOutput(raw, model, diagnostics = {}) {
+  if (!usesJsonObject(model)) return raw;
+  let prepared = raw;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const source = raw.warnings;
+    const items = source == null ? [] : typeof source === "string" ? [source] : source;
+    // Avisos são metadados de revisão. Não converter objetos/números em texto
+    // nem normalizar campos financeiros para contornar a validação.
+    if (Array.isArray(items) && items.every((item) => typeof item === "string")) {
+      let warnings = [...new Set(items.map(cleanShortString).filter(Boolean))].slice(0, 12);
+      if (JSON.stringify(source) !== JSON.stringify(warnings)) {
+        warnings = [...warnings.filter((item) => item !== "warnings_normalized").slice(0, 11), "warnings_normalized"];
+      }
+      prepared = { ...raw, warnings };
+    }
+  }
+  validateExtractionSchema(prepared, diagnostics);
+  return prepared;
+}
+
 // Valida o subconjunto de JSON Schema usado por extractionSchema, sem coerção.
 // JSON mode garante JSON, mas não impõe o contrato de campos no provedor.
 function validateExtractionSchema(raw, diagnostics = {}) {
@@ -145,20 +164,22 @@ function validateExtractionSchema(raw, diagnostics = {}) {
       if (type === "number") return typeof value === "number" && Number.isFinite(value);
       return typeof value === type;
     });
-    const fail = () => { throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+    const fail = (validationRule) => { throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
       ...diagnostics, diagnosticStage: "schema_validation", reason: "invalid_schema_field", validationField: field,
+      validationRule, actualType: value === null ? "null" : Array.isArray(value) ? "array" : typeof value,
     }); };
-    if (!validType || (schema.enum && !schema.enum.includes(value))) fail();
+    if (!validType) fail("type");
+    if (schema.enum && !schema.enum.includes(value)) fail("enum");
     if (value === null) return;
     if (typeof value === "number" && ((schema.minimum !== undefined && value < schema.minimum)
-      || (schema.maximum !== undefined && value > schema.maximum))) fail();
+      || (schema.maximum !== undefined && value > schema.maximum))) fail("range");
     if (typeof value === "string" && ((schema.minLength !== undefined && [...value].length < schema.minLength)
-      || (schema.maxLength !== undefined && [...value].length > schema.maxLength))) fail();
+      || (schema.maxLength !== undefined && [...value].length > schema.maxLength))) fail("length");
     if (Array.isArray(value)) {
-      if (schema.maxItems !== undefined && value.length > schema.maxItems) fail();
+      if (schema.maxItems !== undefined && value.length > schema.maxItems) fail("max_items");
       value.forEach((item) => check(item, schema.items, field));
     } else if (schema.properties) {
-      if (schema.additionalProperties === false && Object.keys(value).some((key) => !Object.hasOwn(schema.properties, key))) fail();
+      if (schema.additionalProperties === false && Object.keys(value).some((key) => !Object.hasOwn(schema.properties, key))) fail("additional_properties");
       for (const key of schema.required || []) {
         if (!Object.hasOwn(value, key)) check(undefined, schema.properties[key], `${field}.${key}`);
       }
@@ -184,7 +205,7 @@ function extractionPrompt(categoryNames) {
     "Use BRL apenas quando indicado ou inequivocamente brasileiro.",
     `Escolha categoria somente desta lista: ${JSON.stringify(categoryNames)}.`,
     "Classifique pagamento concluído, agendamento, cobrança, transferência, ilegível ou sem relação financeira.",
-    "Use códigos curtos em warnings para explicar incertezas.",
+    "warnings deve ser sempre um array de até 12 códigos curtos, cada um com 1 a 60 caracteres. Use [] quando não houver avisos; nunca null, objeto ou texto solto.",
   ].join("\n");
 }
 
@@ -475,6 +496,7 @@ module.exports = {
   extractReceipt,
   extractionSchema,
   parseStructuredOutput,
+  prepareExtractionOutput,
   openRouterEndpoint,
   validateExtraction,
   validateExtractionSchema,

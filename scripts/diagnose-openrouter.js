@@ -4,6 +4,7 @@ const {
   classifyProviderError,
   openRouterEndpoint,
   parseStructuredOutput,
+  prepareExtractionOutput,
   validateExtractionSchema,
 } = require("../src/services/receiptExtractionService");
 
@@ -64,7 +65,7 @@ async function diagnose() {
   if (!failed) {
     try {
       const raw = parseStructuredOutput(payload);
-      validateExtractionSchema(raw);
+      validateExtractionSchema(prepareExtractionOutput(raw, model));
       result.structuredOutput = "json_received";
       result.schemaValidation = "passed";
     } catch {
