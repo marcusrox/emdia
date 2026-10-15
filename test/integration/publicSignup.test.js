@@ -48,7 +48,9 @@ describe("cadastro público", () => {
     assert.match(response.text, /value="Pessoa Teste"/);
   });
 
-  it("cria usuário comum, sessão e dados iniciais isolados", async () => {
+  it("cria usuário comum, sessão e dados iniciais isolados", async (context) => {
+    // Em Manaus ainda é julho, embora o relógio UTC já esteja em agosto.
+    context.mock.timers.enable({ apis: ["Date"], now: Date.UTC(2026, 7, 1, 2) });
     const other = createUser({ email: "outro@example.test" });
     db.prepare(`INSERT INTO financial_accounts
       (id,user_id,name,type,initial_balance_cents,is_active,created_at,updated_at)
@@ -86,7 +88,7 @@ describe("cadastro público", () => {
     `).all(user.id);
     assert.deepEqual(accounts.map((account) => account.name), ["Carteira", "Conta corrente"]);
     assert.deepEqual(accounts.map((account) => account.initial_balance_cents), [0, 0]);
-    assert.ok(accounts.every((account) => account.initial_balance_date === "2026-08-01"));
+    assert.ok(accounts.every((account) => account.initial_balance_date === "2026-07-01"));
     assert.ok(accounts.every((account) => account.institution_name === null));
 
     const categories = db.prepare(`
@@ -110,7 +112,7 @@ describe("cadastro público", () => {
     assert.doesNotMatch(notification.payload_json, /frase senha segura|password_hash|csrf/i);
 
     const dashboard = await agent.get("/dashboard").expect(200);
-    assert.match(dashboard.text, /2026-08/);
+    assert.match(dashboard.text, /2026-07/);
   });
 
   it("recusa e-mail duplicado sem diferenciar maiúsculas de minúsculas", async () => {
