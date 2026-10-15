@@ -796,3 +796,9 @@ Regras:
   provedor, saída estruturada e validação de schema. Registre somente códigos,
   status, tipos, tamanhos, modelo e duração; nunca corpo da resposta, prompt ou
   texto extraído.
+- Para `qwen/qwen3.7-flash`, usar `text.format.type: json_object` e incluir o
+  schema no prompt: seus endpoints anunciam JSON mode, sem suporte declarado
+  a `structured_outputs`. Validar localmente o contrato antes da normalização
+  dos dados. Preservar `require_parameters: true`, `data_collection: deny`,
+  `store: false` e a revisão humana. Os demais modelos mantêm JSON Schema
+  estrito no provedor.

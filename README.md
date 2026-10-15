@@ -429,10 +429,10 @@ WAHA_API_KEY=
 WAHA_SESSION=default
 WAHA_WEBHOOK_HMAC_KEY=
 OPENROUTER_API_KEY=
-# Modelos homologados: mantenha somente uma opção ativa
+# Modelos configuráveis: mantenha somente uma opção ativa
 #OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
 #OPENROUTER_RECEIPT_MODEL=google/gemini-2.5-flash-lite
-OPENROUTER_RECEIPT_MODEL=qwen/qwen3-vl-32b-instruct
+OPENROUTER_RECEIPT_MODEL=qwen/qwen3.7-flash
 OPENROUTER_RECEIPT_REASONING_EFFORT=
 OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS=4000
 ```
@@ -447,19 +447,57 @@ Consulte
 `.env.example` para limites, timeouts, retenção e diretório de armazenamento.
 
 Crie uma chave exclusiva no OpenRouter, defina orçamento/limites e guarde a
-chave somente no ambiente. O modelo é configurável; as opções homologadas
-abaixo aceitam imagem e Structured Outputs. Mantenha somente uma linha
+chave somente no ambiente. O modelo é configurável; mantenha somente uma linha
 `OPENROUTER_RECEIPT_MODEL` ativa. O padrão é
-`qwen/qwen3-vl-32b-instruct`. O EmDia sempre envia `store: false`,
+`qwen/qwen3.7-flash`. Para esse modelo, o EmDia usa JSON mode (`json_object`),
+inclui o contrato de campos no prompt e valida localmente tipos, campos
+obrigatórios, enums, limites e valores monetários em centavos inteiros. Seus
+endpoints anunciam `response_format`, mas não `structured_outputs`; exigir
+`json_schema` com `require_parameters: true` pode resultar em HTTP 404 por falta
+de endpoint compatível. Os demais modelos continuam usando JSON Schema estrito
+no provedor. O EmDia sempre envia `store: false`,
 `provider.require_parameters: true` e
 `provider.data_collection: deny`; ZDR não é exigido. Testes automatizados usam
 mocks e não consomem WAHA ou OpenRouter reais.
 
-Modelos homologados para extração de comprovantes:
+### Diagnosticar o OpenRouter sem depender do webhook
+
+Execute no ambiente de desenvolvimento ou no container de produção, com as
+variáveis `OPENROUTER_*` configuradas no processo:
+
+```bash
+node scripts/diagnose-openrouter.js
+node scripts/diagnose-openrouter.js --send
+node --env-file=.env scripts/diagnose-openrouter.js --send
+```
+
+A primeira execução apenas mostra a configuração sanitizada. `--send` faz uma
+chamada real, sujeita à cobrança do provedor, com PNG branco de 64×64 e a mesma
+estrutura de requisição da extração. Não inicia servidor, acessa o banco,
+recebe WhatsApp ou cria lançamentos. O script usa as variáveis do processo e
+não carrega `.env` automaticamente. Para usar o arquivo local com o carregador
+do Node, execute `node --env-file=.env scripts/diagnose-openrouter.js --send`.
+
+O teste verifica roteamento, recebimento de JSON e o contrato de campos
+(`schemaValidation: passed`); a imagem sintética não
+valida a qualidade do OCR nem a extração de um comprovante real. Para comparar
+ambientes, use o mesmo modelo, parâmetros e uma chave sujeita às mesmas
+políticas de conta/organização. A opção `--model` afeta somente esse teste.
+
+Erros da API recebem uma classificação segura `providerErrorReason` também
+nos logs do worker: `data_policy`, `unsupported_parameters`,
+`no_matching_endpoints`, `model_unavailable`, `resource_not_found` ou
+`json_reasoning_incompatible`, `invalid_image`, `unsupported_output_format` ou
+`unclassified`. A classificação identifica mensagens conhecidas sem registrar
+o texto livre do provedor, imagens, dados financeiros ou credenciais.
+`endpointPathExpected: false` indica que o caminho configurado difere do padrão
+`/api/v1/responses`; confira a configuração antes de investigar o modelo.
+
+Configuração por modelo (a disponibilidade depende do catálogo e da conta):
 
 | Modelo | `OPENROUTER_RECEIPT_REASONING_EFFORT` |
 | --- | --- |
-| `qwen/qwen3-vl-32b-instruct` (padrão) | vazio |
+| `qwen/qwen3.7-flash` (padrão, JSON mode) | vazio |
 | `google/gemini-2.5-flash-lite` | vazio |
 | `openai/gpt-5-mini` | `minimal` |
 

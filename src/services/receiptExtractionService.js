@@ -5,7 +5,7 @@ const { readStoredReceipt } = require("./receiptStorageService");
 const DOCUMENT_TYPES = ["payment_receipt", "scheduled_payment", "bill", "transfer", "unreadable", "unrelated"];
 const PAYMENT_METHODS = ["PIX", "TED", "DOC", "boleto", "cartao", "dinheiro", "debito_conta", "outro"];
 const CURRENCIES = ["BRL", "USD", "EUR", "other"];
-const DEFAULT_RECEIPT_MODEL = "qwen/qwen3-vl-32b-instruct";
+const DEFAULT_RECEIPT_MODEL = "qwen/qwen3.7-flash";
 const REASONING_EFFORTS = new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 async function extractReceipt(receipt, options = {}) {
@@ -45,6 +45,7 @@ async function extractReceipt(receipt, options = {}) {
       throw openRouterResponseError(response.status, payload, responseDiagnostics);
     }
     const raw = parseStructuredOutput(payload, responseDiagnostics);
+    if (usesJsonObject(model)) validateExtractionSchema(raw, responseDiagnostics);
     const validated = validateExtraction(raw, categories, receipt.user_id, {
       ...responseDiagnostics,
       responseId: safeIdentifier(payload?.id),
@@ -89,6 +90,10 @@ async function extractReceipt(receipt, options = {}) {
 
 function buildRequest(model, mimeType, image, categories) {
   const categoryNames = categories.map((category) => category.name.slice(0, 80));
+  const jsonObject = usesJsonObject(model);
+  const prompt = extractionPrompt(categoryNames) + (jsonObject
+    ? `\nRetorne somente um objeto JSON válido, sem Markdown, obedecendo integralmente a este schema. Inclua todos os campos obrigatórios, sem campos adicionais:\n${JSON.stringify(extractionSchema())}`
+    : "");
   const reasoningEffort = optionalReasoningEffort();
   const maxOutputTokens = boundedNumber(
     process.env.OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS,
@@ -108,12 +113,12 @@ function buildRequest(model, mimeType, image, categories) {
     input: [{
       role: "user",
       content: [
-        { type: "input_text", text: extractionPrompt(categoryNames) },
+        { type: "input_text", text: prompt },
         { type: "input_image", image_url: `data:${mimeType};base64,${image.toString("base64")}`, detail: "high" },
       ],
     }],
     text: {
-      format: {
+      format: jsonObject ? { type: "json_object" } : {
         type: "json_schema",
         name: "receipt_extraction",
         strict: true,
@@ -121,6 +126,48 @@ function buildRequest(model, mimeType, image, categories) {
       },
     },
   };
+}
+
+function usesJsonObject(model) {
+  return model === "qwen/qwen3.7-flash";
+}
+
+// Valida o subconjunto de JSON Schema usado por extractionSchema, sem coerção.
+// JSON mode garante JSON, mas não impõe o contrato de campos no provedor.
+function validateExtractionSchema(raw, diagnostics = {}) {
+  function check(value, schema, field) {
+    const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+    const validType = types.some((type) => {
+      if (type === "null") return value === null;
+      if (type === "object") return value !== null && typeof value === "object" && !Array.isArray(value);
+      if (type === "array") return Array.isArray(value);
+      if (type === "integer") return Number.isSafeInteger(value);
+      if (type === "number") return typeof value === "number" && Number.isFinite(value);
+      return typeof value === type;
+    });
+    const fail = () => { throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+      ...diagnostics, diagnosticStage: "schema_validation", reason: "invalid_schema_field", validationField: field,
+    }); };
+    if (!validType || (schema.enum && !schema.enum.includes(value))) fail();
+    if (value === null) return;
+    if (typeof value === "number" && ((schema.minimum !== undefined && value < schema.minimum)
+      || (schema.maximum !== undefined && value > schema.maximum))) fail();
+    if (typeof value === "string" && ((schema.minLength !== undefined && [...value].length < schema.minLength)
+      || (schema.maxLength !== undefined && [...value].length > schema.maxLength))) fail();
+    if (Array.isArray(value)) {
+      if (schema.maxItems !== undefined && value.length > schema.maxItems) fail();
+      value.forEach((item) => check(item, schema.items, field));
+    } else if (schema.properties) {
+      if (schema.additionalProperties === false && Object.keys(value).some((key) => !Object.hasOwn(schema.properties, key))) fail();
+      for (const key of schema.required || []) {
+        if (!Object.hasOwn(value, key)) check(undefined, schema.properties[key], `${field}.${key}`);
+      }
+      for (const [key, childSchema] of Object.entries(schema.properties)) {
+        if (Object.hasOwn(value, key)) check(value[key], childSchema, `${field}.${key}`);
+      }
+    }
+  }
+  check(raw, extractionSchema(), "receipt");
 }
 
 function optionalReasoningEffort() {
@@ -359,11 +406,27 @@ function openRouterResponseError(status, payload, responseDiagnostics = {}) {
     ...responseDiagnostics,
     diagnosticStage: "api_response",
     reason: "openrouter_error",
+    providerErrorReason: classifyProviderError(payload),
     providerErrorCode: safeDiagnosticToken(payload?.error?.code),
     providerErrorType: safeDiagnosticToken(payload?.error_type || payload?.error?.type),
     responseStatus: safeDiagnosticToken(payload?.status),
     responseId: safeIdentifier(payload?.id),
   });
+}
+
+function classifyProviderError(payload) {
+  // Nunca encaminhar mensagens livres do provedor aos logs: podem conter dados da entrada.
+  const upstream = payload?.error?.metadata?.raw;
+  const message = `${String(payload?.error?.message || "")} ${typeof upstream === "string" ? upstream : JSON.stringify(upstream || {})}`.toLowerCase();
+  if (message.includes("data policy") || message.includes("data policies") || message.includes("privacy")) return "data_policy";
+  if (message.includes("no endpoints") && /parameter|structured|response_format/.test(message)) return "unsupported_parameters";
+  if (message.includes("no endpoints")) return "no_matching_endpoints";
+  if (/model/.test(message) && /not found|does not exist|invalid|not available/.test(message)) return "model_unavailable";
+  if (/not found/.test(message)) return "resource_not_found";
+  if (/json/.test(message) && /thinking|reasoning/.test(message)) return "json_reasoning_incompatible";
+  if (/image|pixel|image_url/.test(message)) return "invalid_image";
+  if (/json|response_format|text.format/.test(message)) return "unsupported_output_format";
+  return "unclassified";
 }
 
 function responseMetadata(response) {
@@ -406,10 +469,13 @@ function boundedNumber(value, fallback, minimum, maximum) {
 }
 
 module.exports = {
+  DEFAULT_RECEIPT_MODEL,
+  classifyProviderError,
   buildRequest,
   extractReceipt,
   extractionSchema,
   parseStructuredOutput,
   openRouterEndpoint,
   validateExtraction,
+  validateExtractionSchema,
 };
