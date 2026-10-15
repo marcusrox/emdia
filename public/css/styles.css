@@ -1793,7 +1793,12 @@ label input.field-readonly {
 .queue-date { font-weight: 700; white-space: nowrap; }
 .queue-attempts { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; white-space: nowrap; }
 .queue-message { max-width: 340px; min-width: 220px; }
-.queue-message > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: pre-line; }
+.queue-message-details > summary { cursor: pointer; list-style: none; overflow-wrap: anywhere; }
+.queue-message-details > summary::-webkit-details-marker { display: none; }
+.queue-message-details > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.queue-message-details > summary > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: pre-line; }
+.queue-message-details[open] > summary > span { display: block; overflow: visible; -webkit-line-clamp: unset; }
+.queue-message-details .queue-error { white-space: pre-line; }
 .notification-queue-table td .queue-error { align-items: center; color: #a92920; display: flex; font-weight: 700; gap: 4px; }
 
 @media (max-width: 1300px) {
