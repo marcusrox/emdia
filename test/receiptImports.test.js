@@ -601,7 +601,7 @@ test("falha ao enfileirar aviso não desfaz a aprovação financeira", async () 
   assert.equal(db.prepare("SELECT COUNT(*) AS total FROM notifications").get().total, 0);
 });
 
-test("requisição OpenRouter desabilita armazenamento e exige schema estruturado", () => {
+test("requisição OpenRouter desabilita armazenamento e inclui contrato no prompt em JSON mode", () => {
   const requestBody = buildRequest("gpt-test", "image/jpeg", Buffer.from([0xff, 0xd8, 0xff]), []);
   assert.equal(requestBody.store, false);
   assert.equal(requestBody.provider.zdr, undefined);
@@ -609,27 +609,27 @@ test("requisição OpenRouter desabilita armazenamento e exige schema estruturad
   assert.equal(requestBody.provider.require_parameters, true);
   assert.equal(requestBody.max_output_tokens, 4000);
   assert.equal(requestBody.reasoning, undefined);
-  assert.equal(requestBody.text.format.strict, true);
-  assert.equal(requestBody.text.format.schema.additionalProperties, false);
+  assert.deepEqual(requestBody.text.format, { type: "json_object" });
+  assert.match(requestBody.input[0].content[0].text, /"additionalProperties":false/);
   assert.equal(requestBody.input[0].content[1].detail, "high");
   assert.equal(extractionSchema().properties.amount_cents.type[0], "integer");
   assert.equal(openRouterEndpoint(), "https://openrouter.ai/api/v1/responses");
 });
 
 test("requisição OpenRouter inclui reasoning somente quando configurado", () => {
-  const previousEffort = process.env.OPENROUTER_RECEIPT_REASONING_EFFORT;
+  const previousReasoning = process.env.OPENROUTER_RECEIPT_REASONING;
 
   try {
-    process.env.OPENROUTER_RECEIPT_REASONING_EFFORT = "minimal";
+    process.env.OPENROUTER_RECEIPT_REASONING = '{"effort":"minimal"}';
     const configured = buildRequest("openai/gpt-5-mini", "image/jpeg", Buffer.from([0xff, 0xd8, 0xff]), []);
     assert.deepEqual(configured.reasoning, { effort: "minimal" });
 
-    process.env.OPENROUTER_RECEIPT_REASONING_EFFORT = "não-suportado";
+    process.env.OPENROUTER_RECEIPT_REASONING = " ";
     const invalid = buildRequest("gpt-test", "image/jpeg", Buffer.from([0xff, 0xd8, 0xff]), []);
     assert.equal(invalid.reasoning, undefined);
   } finally {
-    if (previousEffort === undefined) delete process.env.OPENROUTER_RECEIPT_REASONING_EFFORT;
-    else process.env.OPENROUTER_RECEIPT_REASONING_EFFORT = previousEffort;
+    if (previousReasoning === undefined) delete process.env.OPENROUTER_RECEIPT_REASONING;
+    else process.env.OPENROUTER_RECEIPT_REASONING = previousReasoning;
   }
 });
 

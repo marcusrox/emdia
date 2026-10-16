@@ -509,6 +509,7 @@ function safeErrorCode(value) {
 function safeErrorMessage(error) {
   const known = {
     OPENROUTER_NOT_CONFIGURED: "A integração com OpenRouter ainda não foi configurada.",
+    OPENROUTER_INVALID_REASONING_CONFIG: "A configuração de raciocínio do OpenRouter é inválida. Solicite a revisão da configuração ao administrador.",
     MEDIA_TOO_LARGE: "A imagem excede o limite permitido.",
     UNSUPPORTED_MEDIA: "O arquivo recebido não é uma imagem JPEG ou PNG válida.",
   };

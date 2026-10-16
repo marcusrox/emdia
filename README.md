@@ -433,7 +433,7 @@ OPENROUTER_API_KEY=
 #OPENROUTER_RECEIPT_MODEL=openai/gpt-5-mini
 #OPENROUTER_RECEIPT_MODEL=google/gemini-2.5-flash-lite
 OPENROUTER_RECEIPT_MODEL=qwen/qwen3.7-flash
-OPENROUTER_RECEIPT_REASONING_EFFORT=
+OPENROUTER_RECEIPT_REASONING=
 OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS=4000
 ```
 
@@ -449,13 +449,14 @@ Consulte
 Crie uma chave exclusiva no OpenRouter, defina orçamento/limites e guarde a
 chave somente no ambiente. O modelo é configurável; mantenha somente uma linha
 `OPENROUTER_RECEIPT_MODEL` ativa. O padrão é
-`qwen/qwen3.7-flash`. Para esse modelo, o EmDia usa JSON mode (`json_object`),
-inclui o contrato de campos no prompt e valida localmente tipos, campos
-obrigatórios, enums, limites e valores monetários em centavos inteiros. Seus
-endpoints anunciam `response_format`, mas não `structured_outputs`; exigir
-`json_schema` com `require_parameters: true` pode resultar em HTTP 404 por falta
-de endpoint compatível. Os demais modelos continuam usando JSON Schema estrito
-no provedor. O EmDia sempre envia `store: false`,
+`qwen/qwen3.7-flash`. Todos os modelos usam JSON mode (`json_object`), com o
+mesmo schema no prompt, normalização de avisos e validação local completa dos
+campos antes da validação financeira. A integração não escolhe regras pelo nome
+do modelo nem solicita JSON Schema estrito no provedor. O modelo escolhido
+precisa aceitar imagens, JSON mode e os parâmetros configurados, nos provedores
+permitidos pela conta. Trocar por um modelo compatível exige apenas configurar
+`OPENROUTER_RECEIPT_MODEL` e reiniciar a aplicação; a qualidade do OCR ainda
+precisa ser conferida. O EmDia sempre envia `store: false`,
 `provider.require_parameters: true` e
 `provider.data_collection: deny`; ZDR não é exigido. Testes automatizados usam
 mocks e não consomem WAHA ou OpenRouter reais.
@@ -483,6 +484,10 @@ O teste verifica roteamento, recebimento de JSON e o contrato de campos
 valida a qualidade do OCR nem a extração de um comprovante real. Para comparar
 ambientes, use o mesmo modelo, parâmetros e uma chave sujeita às mesmas
 políticas de conta/organização. A opção `--model` afeta somente esse teste.
+O diagnóstico mostra o objeto `reasoning` validado e `reasoningSource`:
+`json` ou `provider_default`. Configuração inválida é rejeitada
+antes da chamada. Falhas de saída incluem etapa, campo, regra e tipo quando
+disponíveis, sem imprimir o conteúdo recebido.
 
 Erros da API recebem uma classificação segura `providerErrorReason` também
 nos logs do worker: `data_policy`, `unsupported_parameters`,
@@ -493,20 +498,30 @@ o texto livre do provedor, imagens, dados financeiros ou credenciais.
 `endpointPathExpected: false` indica que o caminho configurado difere do padrão
 `/api/v1/responses`; confira a configuração antes de investigar o modelo.
 
-Configuração por modelo (a disponibilidade depende do catálogo e da conta):
+### Configurar raciocínio sem alterar código
 
-| Modelo | `OPENROUTER_RECEIPT_REASONING_EFFORT` |
-| --- | --- |
-| `qwen/qwen3.7-flash` (padrão, JSON mode) | vazio |
-| `google/gemini-2.5-flash-lite` | vazio |
-| `openai/gpt-5-mini` | `minimal` |
+Configure o objeto `reasoning` por JSON válido em uma única linha ativa:
 
-O parâmetro de raciocínio é opcional porque nem todos os modelos o aceitam.
-Quando `OPENROUTER_RECEIPT_REASONING_EFFORT` estiver vazio ou contiver um valor
-não reconhecido, o EmDia omite `reasoning` da requisição. Os valores reconhecidos
-são `none`, `minimal`, `low`, `medium`, `high`, `xhigh` e `max`; o valor escolhido
-ainda precisa ser suportado pelo modelo configurado. Para modelos com raciocínio,
-`minimal` reduz tokens internos e preserva espaço para o JSON estruturado.
+```env
+OPENROUTER_RECEIPT_REASONING='{"enabled":false}'
+# Alternativas, conforme o suporte do modelo:
+#OPENROUTER_RECEIPT_REASONING='{"effort":"minimal"}'
+#OPENROUTER_RECEIPT_REASONING='{"enabled":true,"max_tokens":1000}'
+```
+
+São aceitos `enabled` e `exclude` booleanos, `effort` (`none`, `minimal`, `low`,
+`medium`, `high`, `xhigh`, `max`) e `max_tokens` inteiro positivo seguro. O JSON
+deve ser um objeto não vazio, sem propriedades desconhecidas. Não combine
+`effort` com `max_tokens`, `enabled: false` com orçamento/esforço, nem
+`enabled: true` com `effort: none`. Configurações inválidas geram
+`OPENROUTER_INVALID_REASONING_CONFIG`, sem chamada à API e sem expor o valor.
+Validação local não garante que o modelo/provedor aceite cada opção.
+
+A configuração é feita exclusivamente por `OPENROUTER_RECEIPT_REASONING`.
+Quando estiver ausente ou vazia, o EmDia omite `reasoning` e respeita o padrão
+do modelo/provedor. Omitir não significa
+desligar. `exclude: true` somente oculta o raciocínio da resposta: não elimina
+seu processamento ou cobrança. Reinicie a aplicação após mudar a configuração.
 
 O limite de saída é 4.000 tokens por padrão e pode ser ajustado entre 2.048 e
 16.000 por `OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS`.

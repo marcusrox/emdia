@@ -796,16 +796,22 @@ Regras:
   provedor, saída estruturada e validação de schema. Registre somente códigos,
   status, tipos, tamanhos, modelo e duração; nunca corpo da resposta, prompt ou
   texto extraído.
-- Para `qwen/qwen3.7-flash`, usar `text.format.type: json_object` e incluir o
-  schema no prompt: seus endpoints anunciam JSON mode, sem suporte declarado
-  a `structured_outputs`. Validar localmente o contrato antes da normalização
-  dos dados. Preservar `require_parameters: true`, `data_collection: deny`,
-  `store: false` e a revisão humana. Os demais modelos mantêm JSON Schema
-  estrito no provedor.
-- No JSON mode do Qwen, normalizar somente `warnings` antes da validação:
+- Para todos os modelos, usar `text.format.type: json_object`, incluir o mesmo
+  schema no prompt e validar o contrato localmente antes das regras de negócio.
+  Não selecionar formato, prompt ou validação pelo nome do modelo. Preservar
+  `require_parameters: true`, `data_collection: deny`, `store: false` e a revisão
+  humana. O modelo/provedor precisa aceitar imagens e JSON mode.
+- Normalizar somente `warnings` antes da validação completa para todos os modelos:
   ausente/null vira lista, texto único vira item, strings são limpas e limitadas
   a 60 caracteres e a lista a 12 itens, com deduplicação. Registrar o aviso
   `warnings_normalized` quando houver ajuste. Objetos e itens não textuais
   continuam inválidos. Nunca aplicar essa tolerância aos campos financeiros
   ou à confiança. Logs de schema podem incluir `validationRule` e `actualType`,
   sem o valor recebido.
+- Resolver raciocínio por `receiptReasoningService`: JSON não vazio em
+  `OPENROUTER_RECEIPT_REASONING` é a única configuração aceita. Ausência ou valor
+  vazio omite `reasoning`, respeitando o padrão do provedor.
+  Validar propriedades, tipos e combinações antes da API; preservar booleano
+  `false` e não registrar JSON bruto. O diagnóstico usa a mesma resolução e
+  informa `json` ou `provider_default`. A página de ambiente
+  reconhece a variável JSON, mas mascara seu conteúdo bruto.

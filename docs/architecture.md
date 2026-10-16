@@ -585,9 +585,12 @@ ponto.
 
 O `receiptImportWorker` reivindica um item por vez em transação imediata, fecha
 a transação antes de qualquer I/O, baixa a imagem em armazenamento privado e
-chama a Responses API. O modelo padrão `qwen/qwen3.7-flash` usa JSON mode com
-schema no prompt e validação local do contrato; os demais modelos usam
-Structured Outputs com JSON Schema estrito no provedor. A interface autenticada permite
+chama a Responses API. Todos os modelos usam JSON mode (`json_object`), schema
+único no prompt, normalização de avisos e validação local completa do contrato
+antes das regras financeiras. O identificador do modelo é configurável e não
+seleciona regras. `receiptReasoningService` valida o JSON opcional de
+`OPENROUTER_RECEIPT_REASONING`, única variável de raciocínio; quando vazia, usa
+o padrão do provedor. Configuração inválida impede a chamada. A interface autenticada permite
 revisar, rejeitar ou reprocessar. Antes da aprovação, o
 `receiptMatchingService` compara o favorecido normalizado por similaridade local
 e o valor do comprovante com tolerância de 20% sobre o valor total das despesas

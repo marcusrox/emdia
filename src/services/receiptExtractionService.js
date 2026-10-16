@@ -1,12 +1,12 @@
 const { getDatabase } = require("../database/connection");
 const Category = require("../models/Category");
 const { readStoredReceipt } = require("./receiptStorageService");
+const { resolveReceiptReasoning } = require("./receiptReasoningService");
 
 const DOCUMENT_TYPES = ["payment_receipt", "scheduled_payment", "bill", "transfer", "unreadable", "unrelated"];
 const PAYMENT_METHODS = ["PIX", "TED", "DOC", "boleto", "cartao", "dinheiro", "debito_conta", "outro"];
 const CURRENCIES = ["BRL", "USD", "EUR", "other"];
 const DEFAULT_RECEIPT_MODEL = "qwen/qwen3.7-flash";
-const REASONING_EFFORTS = new Set(["none", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 async function extractReceipt(receipt, options = {}) {
   const apiKey = String(process.env.OPENROUTER_API_KEY || "").trim();
@@ -14,6 +14,7 @@ async function extractReceipt(receipt, options = {}) {
   const model = String(process.env.OPENROUTER_RECEIPT_MODEL || DEFAULT_RECEIPT_MODEL).trim();
   const timeoutMs = positiveNumber(process.env.OPENROUTER_REQUEST_TIMEOUT_MS, 30000);
   const endpoint = openRouterEndpoint();
+  const reasoningConfig = resolveReceiptReasoning();
   const categories = Category.byType(receipt.user_id, "EXPENSE").filter((item) => item.is_active);
   const image = readStoredReceipt(receipt.storage_key);
   const controller = new AbortController();
@@ -27,7 +28,7 @@ async function extractReceipt(receipt, options = {}) {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(buildRequest(model, receipt.media_mime_type, image, categories)),
+      body: JSON.stringify(buildRequest(model, receipt.media_mime_type, image, categories, reasoningConfig)),
       signal: controller.signal,
     });
     const responseDiagnostics = responseMetadata(response);
@@ -44,7 +45,7 @@ async function extractReceipt(receipt, options = {}) {
     if (!response.ok || payload?.error || payload?.status === "failed") {
       throw openRouterResponseError(response.status, payload, responseDiagnostics);
     }
-    const raw = prepareExtractionOutput(parseStructuredOutput(payload, responseDiagnostics), model, responseDiagnostics);
+    const raw = prepareExtractionOutput(parseStructuredOutput(payload, responseDiagnostics), responseDiagnostics);
     const validated = validateExtraction(raw, categories, receipt.user_id, {
       ...responseDiagnostics,
       responseId: safeIdentifier(payload?.id),
@@ -87,13 +88,11 @@ async function extractReceipt(receipt, options = {}) {
   }
 }
 
-function buildRequest(model, mimeType, image, categories) {
+function buildRequest(model, mimeType, image, categories, reasoningConfig = resolveReceiptReasoning()) {
   const categoryNames = categories.map((category) => category.name.slice(0, 80));
-  const jsonObject = usesJsonObject(model);
-  const prompt = extractionPrompt(categoryNames) + (jsonObject
-    ? `\nRetorne somente um objeto JSON válido, sem Markdown, obedecendo integralmente a este schema. Inclua todos os campos obrigatórios, sem campos adicionais:\n${JSON.stringify(extractionSchema())}`
-    : "");
-  const reasoningEffort = optionalReasoningEffort();
+  const prompt = extractionPrompt(categoryNames)
+    + `\nRetorne somente um objeto JSON válido, sem Markdown, obedecendo integralmente a este schema. Inclua todos os campos obrigatórios, sem campos adicionais:\n${JSON.stringify(extractionSchema())}`;
+  const { reasoning } = reasoningConfig;
   const maxOutputTokens = boundedNumber(
     process.env.OPENROUTER_RECEIPT_MAX_OUTPUT_TOKENS,
     4000,
@@ -104,7 +103,7 @@ function buildRequest(model, mimeType, image, categories) {
     model,
     store: false,
     max_output_tokens: maxOutputTokens,
-    ...(reasoningEffort ? { reasoning: { effort: reasoningEffort } } : {}),
+    ...(reasoning ? { reasoning } : {}),
     provider: {
       require_parameters: true,
       data_collection: "deny",
@@ -117,22 +116,12 @@ function buildRequest(model, mimeType, image, categories) {
       ],
     }],
     text: {
-      format: jsonObject ? { type: "json_object" } : {
-        type: "json_schema",
-        name: "receipt_extraction",
-        strict: true,
-        schema: extractionSchema(),
-      },
+      format: { type: "json_object" },
     },
   };
 }
 
-function usesJsonObject(model) {
-  return model === "qwen/qwen3.7-flash";
-}
-
-function prepareExtractionOutput(raw, model, diagnostics = {}) {
-  if (!usesJsonObject(model)) return raw;
+function prepareExtractionOutput(raw, diagnostics = {}) {
   let prepared = raw;
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
     const source = raw.warnings;
@@ -191,11 +180,6 @@ function validateExtractionSchema(raw, diagnostics = {}) {
   check(raw, extractionSchema(), "receipt");
 }
 
-function optionalReasoningEffort() {
-  const effort = String(process.env.OPENROUTER_RECEIPT_REASONING_EFFORT || "").trim().toLowerCase();
-  return REASONING_EFFORTS.has(effort) ? effort : "";
-}
-
 function extractionPrompt(categoryNames) {
   return [
     "Extraia fatos desta imagem de documento financeiro brasileiro.",
@@ -240,6 +224,12 @@ function extractionSchema() {
 }
 
 function parseStructuredOutput(payload, responseDiagnostics = {}) {
+  if (payload?.status === "incomplete" || (Array.isArray(payload?.output) && payload.output.some((item) => item?.status === "incomplete"))) {
+    throw extractionError("OPENROUTER_INVALID_RESPONSE", false, {
+      ...responseDiagnostics, ...outputStructure(payload, []),
+      diagnosticStage: "structured_output", reason: "incomplete_output",
+    });
+  }
   const content = Array.isArray(payload?.output)
     ? payload.output.flatMap((item) => Array.isArray(item?.content) ? item.content : [])
     : [];

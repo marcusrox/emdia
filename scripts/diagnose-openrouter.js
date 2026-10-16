@@ -5,8 +5,32 @@ const {
   openRouterEndpoint,
   parseStructuredOutput,
   prepareExtractionOutput,
-  validateExtractionSchema,
 } = require("../src/services/receiptExtractionService");
+const { resolveReceiptReasoning } = require("../src/services/receiptReasoningService");
+const { safeExtractionDiagnostics } = require("../src/services/receiptImportWorker");
+const { crc32, deflateSync } = require("node:zlib");
+
+function syntheticReceiptImage() {
+  function chunk(type, data) {
+    const buffer = Buffer.alloc(data.length + 12);
+    buffer.writeUInt32BE(data.length);
+    buffer.write(type, 4);
+    data.copy(buffer, 8);
+    buffer.writeUInt32BE(crc32(buffer.subarray(4, -4)), buffer.length - 4);
+    return buffer;
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(64);
+  header.writeUInt32BE(64, 4);
+  header[8] = 8;
+  header[9] = 2;
+  const pixels = Buffer.alloc(64 * 193, 255);
+  for (let row = 0; row < 64; row += 1) pixels[row * 193] = 0;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", header), chunk("IDAT", deflateSync(pixels)), chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
 
 async function diagnose() {
   const args = process.argv.slice(2);
@@ -20,8 +44,9 @@ async function diagnose() {
     : args[modelIndex + 1];
   const endpoint = openRouterEndpoint();
   // PNG branco de 64x64: evita limites mínimos de imagem dos provedores.
-  const image = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAXklEQVR4nO3PMQ0AMAzAsPInvYLYYVWKESTzjhsd8KsBrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BrQGtAa0BbQHKU9LC7/CP1AAAAABJRU5ErkJggg==", "base64");
-  const body = buildRequest(model, "image/png", image, []);
+  const image = syntheticReceiptImage();
+  const reasoningConfig = resolveReceiptReasoning();
+  const body = buildRequest(model, "image/png", image, [], reasoningConfig);
   const key = String(process.env.OPENROUTER_API_KEY || "").trim();
   console.log(JSON.stringify({
     model: /^[a-zA-Z0-9_./:+-]{1,120}$/.test(model) ? model : "invalid_model_identifier",
@@ -31,6 +56,7 @@ async function diagnose() {
     provider: body.provider,
     outputFormat: body.text.format.type,
     reasoning: body.reasoning || null,
+    reasoningSource: reasoningConfig.source,
     maxOutputTokens: body.max_output_tokens,
     input: "synthetic_png",
     send: args.includes("--send"),
@@ -65,11 +91,12 @@ async function diagnose() {
   if (!failed) {
     try {
       const raw = parseStructuredOutput(payload);
-      validateExtractionSchema(prepareExtractionOutput(raw, model));
+      prepareExtractionOutput(raw);
       result.structuredOutput = "json_received";
       result.schemaValidation = "passed";
-    } catch {
+    } catch (error) {
       result.structuredOutput = "missing_or_invalid";
+      Object.assign(result, safeExtractionDiagnostics(error));
       process.exitCode = 1;
     }
   } else {
@@ -80,6 +107,11 @@ async function diagnose() {
 
 if (require.main === module) {
   diagnose().catch((error) => {
+    if (error.code === "OPENROUTER_INVALID_REASONING_CONFIG") {
+      console.error(JSON.stringify({ code: error.code, message: error.message, ...safeExtractionDiagnostics(error) }));
+      process.exitCode = 1;
+      return;
+    }
     // Erros esperados locais têm mensagem fixa; erros externos nunca são impressos.
     const safeMessages = new Set([
       "Uso: node scripts/diagnose-openrouter.js [--model identificador] [--send]",
